@@ -1,0 +1,45 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+const dateFormatter = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
+---
+
+<Layout title="Blog">
+	<section class="border-b border-kaki-200 bg-kaki-100/50 px-6 py-16">
+		<div class="mx-auto max-w-4xl">
+			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500">Blog</p>
+			<h1 class="mt-3 font-display text-4xl font-semibold text-brun-700">Carnet de bord</h1>
+			<p class="mt-6 max-w-2xl text-lg text-brun-500">
+				Coulisses de fabrication, retours d'expérience et actualités de La Boîte à Bivouac.
+			</p>
+		</div>
+	</section>
+
+	<section class="mx-auto max-w-4xl px-6 py-16">
+		<ul class="flex flex-col divide-y divide-kaki-200">
+			{
+				posts.map((post) => (
+					<li class="py-8 first:pt-0">
+						<a href={`/blog/${post.id}/`} class="group block">
+							<p class="text-sm text-brun-400">
+								{dateFormatter.format(post.data.pubDate)}
+							</p>
+							<h2 class="mt-2 font-display text-2xl font-semibold text-brun-700 group-hover:text-rouille-500">
+								{post.data.title}
+							</h2>
+							<p class="mt-3 text-brun-500">{post.data.description}</p>
+							<span class="mt-4 inline-block text-sm font-semibold text-rouille-500">
+								Lire l'article →
+							</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+</Layout>

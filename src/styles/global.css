@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+	--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+	--font-display: "Fraunces", ui-serif, Georgia, serif;
+
+	/* Palette terreuse / outdoor */
+	--color-ecru-50: #fdfbf7;
+	--color-ecru-100: #f7f2e9;
+	--color-ecru-200: #efe6d4;
+	--color-ecru-300: #e4d5b7;
+
+	--color-kaki-100: #e8e4d0;
+	--color-kaki-200: #d3cba3;
+	--color-kaki-300: #b8ab74;
+	--color-kaki-400: #98925a;
+	--color-kaki-500: #7a7548;
+	--color-kaki-600: #605c39;
+	--color-kaki-700: #47442a;
+
+	--color-brun-100: #d9c7ae;
+	--color-brun-200: #b99a75;
+	--color-brun-300: #96714e;
+	--color-brun-400: #7a5a3d;
+	--color-brun-500: #5c4530;
+	--color-brun-600: #43321f;
+	--color-brun-700: #2c2013;
+
+	--color-rouille-400: #b5602f;
+	--color-rouille-500: #9a4d24;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	background-color: var(--color-ecru-50);
+	color: var(--color-brun-700);
+}
