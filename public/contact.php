@@ -1,6 +1,11 @@
 <?php
 declare(strict_types=1);
 
+// Les avertissements PHP ne doivent jamais polluer la réponse JSON ni exposer
+// de chemins serveur : on les laisse aller au log plutôt qu'à la sortie.
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+
 header('Content-Type: application/json; charset=utf-8');
 
 function respond(int $status, array $payload): void
@@ -50,7 +55,9 @@ $safeName = $sanitizeHeader($name);
 $safeEmail = $sanitizeHeader($email);
 
 $to = 'contact@laboiteabivouac.fr';
-$subject = mb_encode_mimeheader("Nouveau message depuis le site - {$safeName}", 'UTF-8');
+// Encodage MIME manuel (RFC 2047) pour ne pas dépendre de l'extension mbstring,
+// pas toujours activée par défaut chez tous les hébergeurs.
+$subject = '=?UTF-8?B?' . base64_encode("Nouveau message depuis le site - {$safeName}") . '?=';
 
 $body = "Nouveau message reçu depuis le formulaire de contact du site.\n\n"
 	. "Nom : {$name}\n"
