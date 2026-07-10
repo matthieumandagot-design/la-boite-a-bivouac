@@ -1,5 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { TERRAINS } from "../consts";
 ---
 
 <Layout>
@@ -7,14 +9,14 @@ import Layout from "../layouts/Layout.astro";
 		<div class="mx-auto grid max-w-5xl gap-10 px-6 py-20 sm:py-28 lg:grid-cols-2 lg:items-center">
 			<div>
 				<p class="mb-4 inline-block rounded-full bg-brun-600 px-4 py-1 text-xs font-medium uppercase tracking-widest text-ecru-50">
-					Pensée pour la remorque ERDE 193
+					Conçu et fabriqué en Occitanie
 				</p>
 				<h1 class="font-display text-4xl font-semibold leading-tight text-brun-700 sm:text-5xl">
-					Une box modulaire pour partir léger, sans rien laisser derrière.
+					Un box modulaire pour la remorque que vous possédez déjà.
 				</h1>
 				<p class="mt-6 text-lg text-brun-500">
-					La Boîte à Bivouac transforme votre remorque ERDE 193 en espace de rangement démontable,
-					pensé pour transporter tente de toit et vélo VTT XXL sans compromis.
+					Le même module s'adapte au bivouac, à la montagne et à la mer, avec une structure
+					renforcée capable d'accueillir une tente de toit et un vélo VTT XXL.
 				</p>
 				<div class="mt-8 flex flex-wrap gap-4">
 					<a
@@ -32,54 +34,118 @@ import Layout from "../layouts/Layout.astro";
 				</div>
 			</div>
 			<div class="rounded-2xl border border-kaki-300 bg-ecru-100 p-8 shadow-sm">
-				<dl class="grid grid-cols-2 gap-6 text-brun-600">
-					<div>
-						<dt class="text-xs uppercase tracking-widest text-brun-400">Compatible</dt>
-						<dd class="mt-1 font-display text-xl font-semibold">Remorque ERDE 193</dd>
-					</div>
-					<div>
-						<dt class="text-xs uppercase tracking-widest text-brun-400">Montage</dt>
-						<dd class="mt-1 font-display text-xl font-semibold">Sans outil</dd>
-					</div>
-					<div>
-						<dt class="text-xs uppercase tracking-widest text-brun-400">Emporte</dt>
-						<dd class="mt-1 font-display text-xl font-semibold">Tente de toit</dd>
-					</div>
-					<div>
-						<dt class="text-xs uppercase tracking-widest text-brun-400">Et aussi</dt>
-						<dd class="mt-1 font-display text-xl font-semibold">VTT XXL</dd>
-					</div>
-				</dl>
+				<p class="text-xs uppercase tracking-widest text-brun-400">Un module, trois terrains</p>
+				<ul class="mt-6 space-y-5">
+					{
+						TERRAINS.map((terrain) => (
+							<li class="flex items-center gap-4">
+								<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-kaki-500 text-ecru-50">
+									<Icon name={terrain.icon} class="h-6 w-6" />
+								</span>
+								<span class="font-display text-lg font-semibold text-brun-700">
+									{terrain.title}
+								</span>
+							</li>
+						))
+					}
+				</ul>
 			</div>
 		</div>
 	</section>
 
 	<section class="mx-auto max-w-5xl px-6 py-20">
 		<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
-			Conçue pour l'aventure, pas pour le garage
+			Un module, trois terrains de jeu
 		</h2>
+		<p class="mt-4 max-w-2xl text-brun-500">
+			Pas besoin de changer d'équipement selon la destination : la Boîte à Bivouac suit le même
+			principe modulaire, du sentier de montagne à la route du littoral.
+		</p>
 		<div class="mt-10 grid gap-8 sm:grid-cols-3">
-			<article>
-				<div class="mb-4 text-3xl text-rouille-500" aria-hidden="true">⛺</div>
-				<h3 class="font-display text-lg font-semibold text-brun-700">Modulaire</h3>
-				<p class="mt-2 text-brun-500">
-					Chaque panneau se démonte et se range à plat, pour un volume minimal hors saison.
+			{
+				TERRAINS.map((terrain) => (
+					<article class="rounded-xl border border-kaki-200 bg-ecru-100 p-6">
+						<span class="flex h-12 w-12 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
+							<Icon name={terrain.icon} class="h-6 w-6" />
+						</span>
+						<h3 class="mt-5 font-display text-lg font-semibold text-brun-700">{terrain.title}</h3>
+						<p class="mt-2 text-brun-500">{terrain.text}</p>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="border-y border-kaki-200 bg-kaki-100/50 px-6 py-20">
+		<div class="mx-auto grid max-w-5xl gap-10 lg:grid-cols-2 lg:items-center">
+			<div>
+				<p class="text-xs font-medium uppercase tracking-widest text-rouille-500">Le produit</p>
+				<h2 class="mt-3 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+					Une structure renforcée, pensée pour l'usage réel
+				</h2>
+				<p class="mt-4 text-brun-500">
+					Panneaux modulaires démontables, montage sans outil, capacité pour une tente de toit et
+					un VTT XXL : chaque détail de la Boîte à Bivouac est pensé pour suivre vos sorties, pas
+					pour rester au garage.
 				</p>
-			</article>
-			<article>
-				<div class="mb-4 text-3xl text-rouille-500" aria-hidden="true">🚲</div>
-				<h3 class="font-display text-lg font-semibold text-brun-700">Grand volume</h3>
-				<p class="mt-2 text-brun-500">
-					Assez d'espace pour un vélo VTT XXL et son équipement, sans déborder du gabarit.
+				<a
+					href="/produit"
+					class="mt-6 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
+				>
+					Voir la fiche produit
+					<Icon name="tabler:arrow-right" class="h-4 w-4" />
+				</a>
+			</div>
+			<dl class="grid grid-cols-2 gap-6 rounded-2xl border border-kaki-300 bg-ecru-50 p-8 text-brun-600">
+				<div>
+					<dt class="text-xs uppercase tracking-widest text-brun-400">Montage</dt>
+					<dd class="mt-1 font-display text-xl font-semibold">Sans outil</dd>
+				</div>
+				<div>
+					<dt class="text-xs uppercase tracking-widest text-brun-400">Emporte</dt>
+					<dd class="mt-1 font-display text-xl font-semibold">Tente de toit</dd>
+				</div>
+				<div>
+					<dt class="text-xs uppercase tracking-widest text-brun-400">Et aussi</dt>
+					<dd class="mt-1 font-display text-xl font-semibold">VTT XXL</dd>
+				</div>
+				<div>
+					<dt class="text-xs uppercase tracking-widest text-brun-400">Structure</dt>
+					<dd class="mt-1 font-display text-xl font-semibold">Renforcée</dd>
+				</div>
+			</dl>
+		</div>
+	</section>
+
+	<section class="mx-auto max-w-5xl px-6 py-20">
+		<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
+			<div>
+				<span class="flex h-12 w-12 items-center justify-center rounded-full bg-brun-600 text-ecru-50">
+					<Icon name="tabler:map-pin" class="h-6 w-6" />
+				</span>
+				<h2 class="mt-5 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+					Conçu et fabriqué en Occitanie
+				</h2>
+				<p class="mt-4 text-brun-500">
+					Chaque Boîte à Bivouac est dessinée et assemblée dans notre atelier d'Occitanie. Un choix
+					de proximité qui nous permet de maîtriser la qualité de fabrication, de raccourcir les
+					délais et de rester à l'écoute de celles et ceux qui utilisent le produit sur le terrain.
 				</p>
-			</article>
-			<article>
-				<div class="mb-4 text-3xl text-rouille-500" aria-hidden="true">🛠️</div>
-				<h3 class="font-display text-lg font-semibold text-brun-700">Robuste</h3>
-				<p class="mt-2 text-brun-500">
-					Matériaux traités pour la route et le tout-terrain, résistants aux intempéries.
-				</p>
-			</article>
+			</div>
+			<div class="flex flex-wrap gap-4">
+				<div class="flex items-center gap-3 rounded-xl border border-kaki-200 bg-ecru-100 px-5 py-4">
+					<Icon name="tabler:tools" class="h-6 w-6 text-rouille-500" />
+					<span class="text-sm font-medium text-brun-600">Assemblage artisanal</span>
+				</div>
+				<div class="flex items-center gap-3 rounded-xl border border-kaki-200 bg-ecru-100 px-5 py-4">
+					<Icon name="tabler:leaf" class="h-6 w-6 text-rouille-500" />
+					<span class="text-sm font-medium text-brun-600">Circuit court</span>
+				</div>
+				<div class="flex items-center gap-3 rounded-xl border border-kaki-200 bg-ecru-100 px-5 py-4">
+					<Icon name="tabler:certificate" class="h-6 w-6 text-rouille-500" />
+					<span class="text-sm font-medium text-brun-600">Fabrication française</span>
+				</div>
+			</div>
 		</div>
 	</section>
 </Layout>
