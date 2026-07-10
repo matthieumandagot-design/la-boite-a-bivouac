@@ -35,18 +35,14 @@ const CONTACT_EMAIL = "contact@laboiteabivouac.fr";
 			</dl>
 		</div>
 
-		<form
-			class="space-y-6 lg:col-span-3"
-			method="post"
-			action={`mailto:${CONTACT_EMAIL}`}
-			enctype="text/plain"
-		>
+		<form id="contact-form" class="space-y-6 lg:col-span-3" method="post" novalidate>
 			<div>
 				<label for="name" class="block text-sm font-medium text-brun-600">Nom</label>
 				<input
 					id="name"
-					name="Nom"
+					name="name"
 					type="text"
+					autocomplete="name"
 					required
 					class="mt-2 w-full rounded-lg border border-kaki-300 bg-ecru-50 px-4 py-2.5 text-brun-700 focus:border-rouille-400 focus:outline-none focus:ring-2 focus:ring-rouille-400/30"
 				/>
@@ -55,8 +51,9 @@ const CONTACT_EMAIL = "contact@laboiteabivouac.fr";
 				<label for="email" class="block text-sm font-medium text-brun-600">Email</label>
 				<input
 					id="email"
-					name="Email"
+					name="email"
 					type="email"
+					autocomplete="email"
 					required
 					class="mt-2 w-full rounded-lg border border-kaki-300 bg-ecru-50 px-4 py-2.5 text-brun-700 focus:border-rouille-400 focus:outline-none focus:ring-2 focus:ring-rouille-400/30"
 				/>
@@ -65,18 +62,81 @@ const CONTACT_EMAIL = "contact@laboiteabivouac.fr";
 				<label for="message" class="block text-sm font-medium text-brun-600">Message</label>
 				<textarea
 					id="message"
-					name="Message"
+					name="message"
 					rows="5"
 					required
 					class="mt-2 w-full rounded-lg border border-kaki-300 bg-ecru-50 px-4 py-2.5 text-brun-700 focus:border-rouille-400 focus:outline-none focus:ring-2 focus:ring-rouille-400/30"
 				></textarea>
 			</div>
+
+			<!-- Honeypot : caché visuellement (hors écran, pas display:none) pour piéger les bots sans gêner les lecteurs d'écran, qui l'ignorent grâce à aria-hidden/tabindex. -->
+			<div class="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+				<label for="website">Laissez ce champ vide</label>
+				<input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+			</div>
+
+			<div id="form-status" role="status" aria-live="polite" class="hidden text-sm"></div>
+
 			<button
 				type="submit"
-				class="rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
+				class="rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-60"
 			>
 				Envoyer le message
 			</button>
 		</form>
 	</section>
 </Layout>
+
+<script>
+	const form = document.getElementById("contact-form") as HTMLFormElement | null;
+	const status = document.getElementById("form-status");
+	const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+
+	function showStatus(message: string, variant: "success" | "error") {
+		if (!status) return;
+		status.textContent = message;
+		status.classList.remove("hidden", "text-green-700", "text-red-700");
+		status.classList.add(variant === "success" ? "text-green-700" : "text-red-700");
+	}
+
+	form?.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		if (!form || !submitButton) return;
+
+		submitButton.disabled = true;
+		submitButton.textContent = "Envoi en cours…";
+
+		try {
+			const response = await fetch("/contact.php", {
+				method: "POST",
+				body: new FormData(form),
+				headers: { Accept: "application/json" },
+			});
+
+			let data: { success?: boolean; error?: string } = {};
+			try {
+				data = await response.json();
+			} catch {
+				// réponse non-JSON, on retombe sur le statut HTTP
+			}
+
+			if (response.ok && data.success) {
+				showStatus("Merci, votre message a bien été envoyé ! Nous vous répondons rapidement.", "success");
+				form.reset();
+			} else {
+				showStatus(
+					data.error ?? "Une erreur est survenue lors de l'envoi. Merci de réessayer.",
+					"error",
+				);
+			}
+		} catch {
+			showStatus(
+				"Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.",
+				"error",
+			);
+		} finally {
+			submitButton.disabled = false;
+			submitButton.textContent = "Envoyer le message";
+		}
+	});
+</script>
