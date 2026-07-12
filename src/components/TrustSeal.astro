@@ -1,0 +1,18 @@
+---
+// Écusson rond "Conçu et fabriqué en Occitanie" / "Robuste & durable 400 kg"
+interface Props {
+	variant?: "graphite" | "terracotta";
+	lines: string[]; // 2-3 lignes courtes, en capitales
+}
+const { variant = "graphite", lines } = Astro.props;
+const bg =
+	variant === "graphite"
+		? "bg-graphite text-sable"
+		: "border-2 border-terracotta text-terracotta bg-sable";
+---
+
+<div class={`w-28 h-28 rounded-full flex items-center justify-center text-center p-3 ${bg}`}>
+	<p class="font-display text-[11px] font-medium uppercase tracking-wide leading-tight">
+		{lines.map((line) => <>{line}<br /></>)}
+	</p>
+</div>

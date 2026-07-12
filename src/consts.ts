@@ -1,6 +1,13 @@
+import pineIcon from "./components/icons/pine.svg?raw";
+import mountainIcon from "./components/icons/mountain.svg?raw";
+import canoeIcon from "./components/icons/canoe.svg?raw";
+
 export const SITE_TITLE = "La Boîte à Bivouac";
+export const TAGLINE = "L'aventure tient dans une boîte";
 export const SITE_DESCRIPTION =
 	"La Boîte à Bivouac conçoit un box modulaire à installer sur une remorque que vous possédez déjà. Le même module s'adapte au bivouac, à la montagne et à la mer, avec une structure renforcée capable d'accueillir une tente de toit et un VTT XXL. Conçu et fabriqué en Occitanie.";
+export const HOME_DESCRIPTION =
+	"L'aventure tient dans une boîte. Box modulaire pour remorque, conçu et fabriqué en Occitanie, prêt pour la tente de toit et le vélo VTT XXL.";
 
 export const NAV_LINKS = [
 	{ href: "/", label: "Accueil" },
@@ -24,17 +31,17 @@ export const SOCIAL_LINKS = [
 
 export const TERRAINS = [
 	{
-		icon: "tabler:tent",
+		icon: pineIcon,
 		title: "Bivouac",
 		text: "Un module qui se monte en quelques minutes pour une nuit improvisée en pleine nature, tente de toit comprise.",
 	},
 	{
-		icon: "tabler:mountain",
+		icon: mountainIcon,
 		title: "Montagne",
 		text: "Structure renforcée pour encaisser pistes caillouteuses et cols escarpés, avec le VTT XXL solidement arrimé.",
 	},
 	{
-		icon: "tabler:sailboat",
+		icon: canoeIcon,
 		title: "Mer",
 		text: "Résistant aux embruns et à l'humidité, pour rallier le spot de surf ou la crique sans se soucier du matériel.",
 	},

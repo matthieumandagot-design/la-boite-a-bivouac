@@ -1,0 +1,18 @@
+---
+// Badge simple icône + label, utilisé sous le hero et dans la fiche produit
+// (tuile "4. BADGES / PICTOS COULEUR" et "6. bandeau d'usage" du moodboard)
+interface Props {
+	icon: string; // chemin vers un fichier dans src/components/icons/
+	label: string;
+	sublabel?: string;
+}
+const { icon, label, sublabel } = Astro.props;
+---
+
+<div class="flex flex-col items-center gap-2 text-center">
+	<span class="flex h-8 w-8 items-center justify-center text-mousse [&>svg]:h-full [&>svg]:w-full" set:html={icon} />
+	<div>
+		<p class="font-display text-sm font-medium text-graphite">{label}</p>
+		{sublabel && <p class="text-xs text-ardoise">{sublabel}</p>}
+	</div>
+</div>

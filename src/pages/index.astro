@@ -1,46 +1,51 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
-import { TERRAINS } from "../consts";
+import { TERRAINS, HOME_DESCRIPTION } from "../consts";
+import UsageBadge from "../components/UsageBadge.astro";
+import trailerBox from "../components/icons/trailer-box.svg?raw";
+import tent from "../components/icons/tent.svg?raw";
+import pine from "../components/icons/pine.svg?raw";
 ---
 
-<Layout>
-	<section class="border-b border-kaki-200 bg-gradient-to-b from-kaki-100 to-ecru-50">
+<Layout description={HOME_DESCRIPTION}>
+	<section class="border-b border-ardoise/30 bg-gradient-to-b from-sable to-ecru-50">
 		<div class="mx-auto grid max-w-5xl gap-10 px-6 py-20 sm:py-28 lg:grid-cols-2 lg:items-center">
 			<div>
 				<p class="mb-4 inline-block rounded-full bg-brun-600 px-4 py-1 text-xs font-medium uppercase tracking-widest text-ecru-50">
 					Conçu et fabriqué en Occitanie
 				</p>
 				<h1 class="font-display text-4xl font-semibold leading-tight text-brun-700 sm:text-5xl">
-					Un box modulaire pour la remorque que vous possédez déjà.
+					L'aventure tient dans une boîte
 				</h1>
+				<!-- Sous-titre validé, distinct de la tagline "L'aventure tient dans une boîte". -->
 				<p class="mt-6 text-lg text-brun-500">
-					Le même module s'adapte au bivouac, à la montagne et à la mer, avec une structure
-					renforcée capable d'accueillir une tente de toit et un vélo VTT XXL.
+					La Boîte à Bivouac transforme votre remorque en base de camp mobile : vélos, tente de
+					toit, matériel — tout trouve sa place.
 				</p>
 				<div class="mt-8 flex flex-wrap gap-4">
 					<a
 						href="/produit"
 						class="rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
 					>
-						Découvrir le produit
+						Découvrir
 					</a>
 					<a
 						href="/contact"
-						class="rounded-full border border-brun-300 px-6 py-3 text-sm font-semibold text-brun-600 transition-colors hover:bg-kaki-100"
+						class="rounded-full border border-brun-300 px-6 py-3 text-sm font-semibold text-brun-600 transition-colors hover:bg-sable"
 					>
 						Nous contacter
 					</a>
 				</div>
 			</div>
-			<div class="rounded-2xl border border-kaki-300 bg-ecru-100 p-8 shadow-sm">
+			<div class="rounded-2xl border border-ardoise/40 bg-ecru-100 p-8 shadow-sm">
 				<p class="text-xs uppercase tracking-widest text-brun-400">Un module, trois terrains</p>
 				<ul class="mt-6 space-y-5">
 					{
 						TERRAINS.map((terrain) => (
 							<li class="flex items-center gap-4">
-								<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-kaki-500 text-ecru-50">
-									<Icon name={terrain.icon} class="h-6 w-6" />
+								<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
+									<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
 								</span>
 								<span class="font-display text-lg font-semibold text-brun-700">
 									{terrain.title}
@@ -50,6 +55,14 @@ import { TERRAINS } from "../consts";
 					}
 				</ul>
 			</div>
+		</div>
+	</section>
+
+	<section class="bg-sable py-10">
+		<div class="mx-auto flex max-w-4xl flex-wrap justify-center gap-8 px-6 sm:gap-12">
+			<UsageBadge icon={trailerBox} label="Sur mesure" sublabel="Pilé dans la remorque" />
+			<UsageBadge icon={tent} label="Barres de toit" sublabel="Tente, canoë, vélos..." />
+			<UsageBadge icon={pine} label="Prêt pour l'aventure" />
 		</div>
 	</section>
 
@@ -64,9 +77,9 @@ import { TERRAINS } from "../consts";
 		<div class="mt-10 grid gap-8 sm:grid-cols-3">
 			{
 				TERRAINS.map((terrain) => (
-					<article class="rounded-xl border border-kaki-200 bg-ecru-100 p-6">
+					<article class="rounded-xl border border-ardoise/30 bg-ecru-100 p-6">
 						<span class="flex h-12 w-12 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
-							<Icon name={terrain.icon} class="h-6 w-6" />
+							<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
 						</span>
 						<h3 class="mt-5 font-display text-lg font-semibold text-brun-700">{terrain.title}</h3>
 						<p class="mt-2 text-brun-500">{terrain.text}</p>
@@ -76,7 +89,7 @@ import { TERRAINS } from "../consts";
 		</div>
 	</section>
 
-	<section class="border-y border-kaki-200 bg-kaki-100/50 px-6 py-20">
+	<section class="border-y border-ardoise/30 bg-sable/50 px-6 py-20">
 		<div class="mx-auto grid max-w-5xl gap-10 lg:grid-cols-2 lg:items-center">
 			<div>
 				<p class="text-xs font-medium uppercase tracking-widest text-rouille-500">Le produit</p>
@@ -96,7 +109,7 @@ import { TERRAINS } from "../consts";
 					<Icon name="tabler:arrow-right" class="h-4 w-4" />
 				</a>
 			</div>
-			<dl class="grid grid-cols-2 gap-6 rounded-2xl border border-kaki-300 bg-ecru-50 p-8 text-brun-600">
+			<dl class="grid grid-cols-2 gap-6 rounded-2xl border border-ardoise/40 bg-ecru-50 p-8 text-brun-600">
 				<div>
 					<dt class="text-xs uppercase tracking-widest text-brun-400">Montage</dt>
 					<dd class="mt-1 font-display text-xl font-semibold">Sans outil</dd>
@@ -133,15 +146,15 @@ import { TERRAINS } from "../consts";
 				</p>
 			</div>
 			<div class="flex flex-wrap gap-4">
-				<div class="flex items-center gap-3 rounded-xl border border-kaki-200 bg-ecru-100 px-5 py-4">
+				<div class="flex items-center gap-3 rounded-xl border border-ardoise/30 bg-ecru-100 px-5 py-4">
 					<Icon name="tabler:tools" class="h-6 w-6 text-rouille-500" />
 					<span class="text-sm font-medium text-brun-600">Assemblage artisanal</span>
 				</div>
-				<div class="flex items-center gap-3 rounded-xl border border-kaki-200 bg-ecru-100 px-5 py-4">
+				<div class="flex items-center gap-3 rounded-xl border border-ardoise/30 bg-ecru-100 px-5 py-4">
 					<Icon name="tabler:leaf" class="h-6 w-6 text-rouille-500" />
 					<span class="text-sm font-medium text-brun-600">Circuit court</span>
 				</div>
-				<div class="flex items-center gap-3 rounded-xl border border-kaki-200 bg-ecru-100 px-5 py-4">
+				<div class="flex items-center gap-3 rounded-xl border border-ardoise/30 bg-ecru-100 px-5 py-4">
 					<Icon name="tabler:certificate" class="h-6 w-6 text-rouille-500" />
 					<span class="text-sm font-medium text-brun-600">Fabrication française</span>
 				</div>
