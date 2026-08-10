@@ -1,0 +1,303 @@
+/* ============================================================
+   LA BOÎTE À BIVOUAC — Charte graphique officielle
+   Couleurs extraites des logos validés · Août 2026
+   Logo complet : Logo_image.png
+   Badge seul   : Logo.png
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600&family=Inter:wght@400;500;600&family=Caveat:wght@400;600&display=swap');
+
+/* ── Tokens couleurs (extraits des logos) ── */
+:root {
+  /* Vert forêt — couleur dominante du badge */
+  --color-forest:      #122218;
+  --color-forest-lt:   #1E3A28;
+  --color-forest-dk:   #0A1610;
+
+  /* Or OSB — couleur de la caisse dans le logo */
+  --color-gold:        #E8B428;
+  --color-gold-lt:     #F2D878;
+  --color-gold-dk:     #B88A18;
+
+  /* Ivoire — bordures et motifs du logo */
+  --color-ivory:       #E8E0C8;
+  --color-ivory-lt:    #F5ECD8;  /* = crème */
+
+  /* Neutres */
+  --color-anthracite:  #1A1A1A;
+  --color-silver:      #C0C8C8;
+  --color-white:       #FFFFFF;
+  --color-cream:       #F5ECD8;
+  --color-gray-100:    #F4F2EE;
+  --color-gray-200:    #E4E0D8;
+  --color-gray-400:    #A8A49C;
+
+  /* CTA */
+  --color-terra:       #B85438;
+  --color-terra-lt:    #D47050;
+  --color-terra-dk:    #8B3A22;
+
+  /* ── Typographie ── */
+  --font-heading: 'Bebas Neue', Impact, 'Arial Narrow', sans-serif;
+  --font-sub:     'Oswald', Arial, sans-serif;
+  --font-body:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-accent:  'Caveat', cursive;
+
+  /* ── Rayons ── */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   16px;
+  --radius-full: 9999px;
+
+  /* ── Ombres ── */
+  --shadow-sm:  0 1px 3px rgba(18,34,24,0.14);
+  --shadow-md:  0 4px 12px rgba(18,34,24,0.18);
+  --shadow-lg:  0 8px 28px rgba(18,34,24,0.22);
+}
+
+/* ── Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-anthracite);
+  background-color: var(--color-white);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2 {
+  font-family: var(--font-heading);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  color: var(--color-forest);
+  text-transform: uppercase;
+}
+
+h3, h4 {
+  font-family: var(--font-sub);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-forest);
+}
+
+a {
+  color: var(--color-forest);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+a:hover { color: var(--color-forest-lt); }
+
+/* ── Navbar ── */
+.navbar {
+  background-color: var(--color-forest);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+  border-bottom: 2px solid var(--color-gold);
+}
+.navbar-logo img { height: 40px; width: auto; }
+.navbar-link {
+  font-family: var(--font-sub);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-ivory);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s, color 0.15s;
+}
+.navbar-link:hover {
+  background-color: rgba(232,176,40,0.15);
+  color: var(--color-gold-lt);
+}
+
+/* ── Boutons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background-color: var(--color-gold);
+  color: var(--color-forest-dk);
+  font-family: var(--font-sub);
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover {
+  background-color: var(--color-gold-lt);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background-color: transparent;
+  color: var(--color-white);
+  font-family: var(--font-sub);
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-ivory);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:hover {
+  background-color: var(--color-ivory);
+  color: var(--color-forest);
+}
+
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background-color: var(--color-terra);
+  color: var(--color-white);
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-md);
+}
+.btn-cta:hover {
+  background-color: var(--color-terra-lt);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Hero ── */
+.hero {
+  background-color: var(--color-forest);
+  color: var(--color-white);
+  padding: 5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+.hero h1 { color: var(--color-white); }
+.hero-subtitle {
+  font-family: var(--font-accent);
+  font-size: 1.25rem;
+  color: var(--color-gold-lt);
+  margin-top: 0.75rem;
+}
+
+/* ── Carte ── */
+.card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-gray-200);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+
+/* ── Badge / tag ── */
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background-color: var(--color-forest);
+  color: var(--color-ivory);
+  font-family: var(--font-sub);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+}
+.badge-gold {
+  background-color: var(--color-gold);
+  color: var(--color-forest-dk);
+}
+
+/* ── Séparateur décoratif (style zigzag du logo) ── */
+.divider-brand {
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-forest-dk), var(--color-gold), var(--color-forest-dk));
+  border: none;
+  margin: 2rem 0;
+}
+
+/* ── Section à fond vert ── */
+.section-forest {
+  background-color: var(--color-forest);
+  color: var(--color-white);
+  padding: 4rem 2rem;
+}
+.section-forest h2, .section-forest h3 {
+  color: var(--color-gold-lt);
+}
+
+/* ── Section à fond crème ── */
+.section-cream {
+  background-color: var(--color-cream);
+  padding: 4rem 2rem;
+}
+
+/* ── Footer ── */
+.footer {
+  background-color: var(--color-forest-dk);
+  color: rgba(232,224,200,0.75);
+  padding: 3rem 2rem 2rem;
+  border-top: 3px solid var(--color-gold);
+}
+.footer-logo { margin-bottom: 1.5rem; }
+.footer hr {
+  border: none;
+  border-top: 1px solid rgba(232,224,200,0.15);
+  margin: 2rem 0 1rem;
+}
+.footer-copy {
+  font-size: 0.75rem;
+  color: rgba(232,224,200,0.4);
+}
+
+/* ── Utilitaires ── */
+.text-forest    { color: var(--color-forest); }
+.text-gold      { color: var(--color-gold); }
+.text-terra     { color: var(--color-terra); }
+.text-ivory     { color: var(--color-ivory); }
+.text-white     { color: var(--color-white); }
+.bg-forest      { background-color: var(--color-forest); }
+.bg-forest-lt   { background-color: var(--color-forest-lt); }
+.bg-gold        { background-color: var(--color-gold); }
+.bg-cream       { background-color: var(--color-cream); }
+.bg-terra       { background-color: var(--color-terra); }
+.font-heading   { font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.04em; }
+.font-sub       { font-family: var(--font-sub); }
+.font-body      { font-family: var(--font-body); }
+.font-accent    { font-family: var(--font-accent); }
