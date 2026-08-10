@@ -1,6 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
-import { SITE_TITLE, TAGLINE, SOCIAL_LINKS } from "../consts";
+import { SITE_TITLE, TAGLINE, NAV_LINKS, SOCIAL_LINKS } from "../consts";
 const year = new Date().getFullYear();
 ---
 
@@ -16,10 +16,15 @@ const year = new Date().getFullYear();
 			</div>
 			<nav aria-label="Navigation de pied de page">
 				<ul class="flex flex-wrap gap-x-6 gap-y-2">
-					<li><a href="/" class="hover:text-rouille-500">Accueil</a></li>
-					<li><a href="/produit" class="hover:text-rouille-500">Le produit</a></li>
-					<li><a href="/blog" class="hover:text-rouille-500">Blog</a></li>
-					<li><a href="/contact" class="hover:text-rouille-500">Contact</a></li>
+					{
+						NAV_LINKS.map((link) => (
+							<li>
+								<a href={link.href} class="hover:text-rouille-500">
+									{link.label}
+								</a>
+							</li>
+						))
+					}
 				</ul>
 			</nav>
 			<ul class="flex gap-3" aria-label="Réseaux sociaux">

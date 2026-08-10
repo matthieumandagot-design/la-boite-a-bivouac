@@ -12,20 +12,45 @@ export const HOME_DESCRIPTION =
 export const NAV_LINKS = [
 	{ href: "/", label: "Accueil" },
 	{ href: "/produit", label: "Le produit" },
-	{ href: "/blog", label: "Blog" },
+	{ href: "/actualites", label: "Actualités" },
 	{ href: "/contact", label: "Contact" },
 ];
 
 export const SOCIAL_LINKS = [
 	{
-		href: "https://www.facebook.com/laboiteabivouac/",
+		href: "https://www.instagram.com/laboiteabivouac/",
+		label: "Instagram",
+		icon: "tabler:brand-instagram",
+	},
+	{
+		href: "https://www.facebook.com/laboiteabivouac",
 		label: "Facebook",
 		icon: "tabler:brand-facebook",
 	},
 	{
-		href: "https://www.instagram.com/laboiteabivouac/",
-		label: "Instagram",
-		icon: "tabler:brand-instagram",
+		href: "https://www.tiktok.com/@laboiteabivouac8",
+		label: "TikTok",
+		icon: "tabler:brand-tiktok",
+	},
+	{
+		href: "https://www.youtube.com/@LaBo%C3%AEte%C3%A0Bivouac",
+		label: "YouTube",
+		icon: "tabler:brand-youtube",
+	},
+	{
+		href: "https://www.threads.com/@laboiteabivouac",
+		label: "Threads",
+		icon: "tabler:brand-threads",
+	},
+	{
+		href: "https://www.linkedin.com/company/laboiteabivouac",
+		label: "LinkedIn",
+		icon: "tabler:brand-linkedin",
+	},
+	{
+		href: "https://fr.pinterest.com/laboiteabivouac/",
+		label: "Pinterest",
+		icon: "tabler:brand-pinterest",
 	},
 ];
 
