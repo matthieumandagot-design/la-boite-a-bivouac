@@ -38,11 +38,6 @@ export const SOCIAL_LINKS = [
 		icon: "tabler:brand-youtube",
 	},
 	{
-		href: "https://www.threads.com/@laboiteabivouac",
-		label: "Threads",
-		icon: "tabler:brand-threads",
-	},
-	{
 		href: "https://www.linkedin.com/company/laboiteabivouac",
 		label: "LinkedIn",
 		icon: "tabler:brand-linkedin",
