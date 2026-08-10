@@ -55,40 +55,6 @@
   --shadow-lg:  0 8px 28px rgba(18,34,24,0.22);
 }
 
-/* ── Base ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: var(--font-body);
-  font-size: 1rem;
-  color: var(--color-anthracite);
-  background-color: var(--color-white);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-
-h1, h2 {
-  font-family: var(--font-heading);
-  letter-spacing: 0.04em;
-  line-height: 1.1;
-  color: var(--color-forest);
-  text-transform: uppercase;
-}
-
-h3, h4 {
-  font-family: var(--font-sub);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--color-forest);
-}
-
-a {
-  color: var(--color-forest);
-  text-decoration: none;
-  transition: color 0.15s ease;
-}
-a:hover { color: var(--color-forest-lt); }
-
 /* ── Navbar ── */
 .navbar {
   background-color: var(--color-forest);
