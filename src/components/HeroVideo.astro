@@ -348,7 +348,11 @@ const {
     if (slow) {
       video.style.display = 'none';
     } else {
-      video.play().catch(() => { video.style.display = 'none'; });
+      /* La lecture est déjà déclenchée par l'attribut autoplay du <video> :
+         appeler video.play() ici en plus créait une promesse concurrente qui
+         se faisait systématiquement interrompre (et donc rejeter) par
+         l'autoplay natif, masquant la vidéo alors qu'elle jouait bien. */
+      video.addEventListener('error', () => { video.style.display = 'none'; });
     }
   }
 </script>
