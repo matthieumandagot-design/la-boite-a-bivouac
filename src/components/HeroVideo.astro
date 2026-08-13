@@ -1,0 +1,354 @@
+---
+/**
+ * HeroVideo.astro — Section hero avec vidéo en arrière-plan
+ * Layout exact de la maquette : col gauche (titre + CTA) + col droite (carte terrains)
+ *
+ * USAGE dans index.astro :
+ *   import HeroVideo from '../components/HeroVideo.astro';
+ *   <HeroVideo />
+ *
+ * FICHIERS REQUIS :
+ *   public/videos/hero.mp4          ← votre vidéo terrain
+ *   public/images/hero-poster.jpg   ← frame de couverture (optionnel)
+ */
+
+interface Props {
+  videoSrc?:  string;
+  posterSrc?: string;
+}
+
+const {
+  videoSrc  = '/videos/hero.mp4',
+  posterSrc = '/images/hero-poster.jpg',
+} = Astro.props;
+---
+
+<section class="hero">
+
+  <!-- ── Vidéo en arrière-plan ──────────────────────────────── -->
+  <div class="hero__bg" aria-hidden="true">
+    <video
+      class="hero__video"
+      src={videoSrc}
+      poster={posterSrc}
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="none"
+    ></video>
+    <!-- Overlay crème semi-transparent pour lisibilité -->
+    <div class="hero__overlay"></div>
+  </div>
+
+  <!-- ── Contenu ────────────────────────────────────────────── -->
+  <div class="hero__inner">
+
+    <!-- Colonne gauche -->
+    <div class="hero__left">
+
+      <span class="hero__badge">Conçu et fabriqué en Occitanie</span>
+
+      <h1 class="hero__title">
+        L'aventure tient<br />dans une boîte
+      </h1>
+
+      <p class="hero__desc">
+        La Boîte à Bivouac transforme votre remorque en base
+        de camp mobile&nbsp;: vélos, tente de toit, matériel&nbsp;—
+        tout trouve sa place.
+      </p>
+
+      <div class="hero__ctas">
+        <a href="/produit"   class="btn btn--primary">Découvrir</a>
+        <a href="/contact"   class="btn btn--outline">Nous contacter</a>
+      </div>
+
+    </div>
+
+    <!-- Colonne droite — carte terrains -->
+    <div class="hero__right">
+      <div class="hero__card">
+
+        <p class="hero__card-eyebrow">Un module, trois terrains</p>
+
+        <ul class="hero__terrains">
+          <li class="terrain">
+            <span class="terrain__icon" aria-hidden="true">
+              <!-- Icône pin / forêt -->
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L7 9h3l-4 6h4l-5 7h14l-5-7h4l-4-6h3L12 2z"
+                      fill="currentColor"/>
+              </svg>
+            </span>
+            <span class="terrain__label">Bivouac</span>
+          </li>
+          <li class="terrain">
+            <span class="terrain__icon" aria-hidden="true">
+              <!-- Icône montagne -->
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 20l6-10 3 4 3-6 6 12H3z" fill="currentColor"/>
+              </svg>
+            </span>
+            <span class="terrain__label">Montagne</span>
+          </li>
+          <li class="terrain">
+            <span class="terrain__icon" aria-hidden="true">
+              <!-- Icône vague / mer -->
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 14c1.5-2 3-2 4.5 0S9.5 16 11 14s3-2 4.5 0 3 2 4.5 0
+                         M2 18c1.5-2 3-2 4.5 0S9.5 20 11 18s3-2 4.5 0 3 2 4.5 0"
+                      stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" fill="none"/>
+              </svg>
+            </span>
+            <span class="terrain__label">Mer</span>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<style>
+/* ────────────────────────────────────────────────────────────────
+   HERO — variables
+──────────────────────────────────────────────────────────────── */
+.hero {
+  --forest:   #1C3828;
+  --gold:     #B88A18;
+  --cream:    #F2EDE2;
+  --dark:     #1A1A18;
+  --terra:    #B85438;
+  --card-bg:  rgba(242, 237, 226, 0.82);
+
+  position:   relative;
+  overflow:   hidden;
+  min-height: 560px;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   VIDÉO DE FOND
+──────────────────────────────────────────────────────────────── */
+.hero__bg {
+  position: absolute;
+  inset:    0;
+  z-index:  0;
+}
+
+.hero__video {
+  width:           100%;
+  height:          100%;
+  object-fit:      cover;
+  object-position: center;
+}
+
+/* Overlay crème : laisse transparaître la vidéo
+   tout en gardant le texte parfaitement lisible */
+.hero__overlay {
+  position:   absolute;
+  inset:      0;
+  background: linear-gradient(
+    135deg,
+    rgba(242, 237, 226, 0.82) 0%,
+    rgba(242, 237, 226, 0.72) 50%,
+    rgba(242, 237, 226, 0.60) 100%
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────
+   INNER LAYOUT
+──────────────────────────────────────────────────────────────── */
+.hero__inner {
+  position:        relative;
+  z-index:         1;
+  display:         grid;
+  grid-template-columns: 1fr 1fr;
+  gap:             3rem;
+  align-items:     center;
+  max-width:       1200px;
+  margin:          0 auto;
+  padding:         5rem 2rem;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   COLONNE GAUCHE
+──────────────────────────────────────────────────────────────── */
+.hero__badge {
+  display:         inline-block;
+  padding:         0.35rem 0.9rem;
+  background:      var(--dark);
+  color:           var(--cream);
+  font-family:     'Oswald', Arial, sans-serif;
+  font-size:       0.7rem;
+  font-weight:     500;
+  letter-spacing:  0.18em;
+  text-transform:  uppercase;
+  border-radius:   999px;
+  margin-bottom:   1.25rem;
+}
+
+.hero__title {
+  font-family:   'Inter', system-ui, sans-serif;
+  font-size:     clamp(2.4rem, 5vw, 3.6rem);
+  font-weight:   800;
+  line-height:   1.1;
+  color:         var(--dark);
+  margin:        0 0 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.hero__desc {
+  font-family:  'Inter', system-ui, sans-serif;
+  font-size:    1.0rem;
+  line-height:  1.7;
+  color:        rgba(26, 26, 24, 0.75);
+  margin:       0 0 2rem;
+  max-width:    42ch;
+}
+
+/* ── CTA buttons ─────────────────────────────────────────────── */
+.hero__ctas {
+  display:    flex;
+  flex-wrap:  wrap;
+  gap:        0.75rem;
+  align-items: center;
+}
+
+.btn {
+  display:         inline-flex;
+  align-items:     center;
+  padding:         0.7rem 1.6rem;
+  font-family:     'Inter', system-ui, sans-serif;
+  font-size:       0.9rem;
+  font-weight:     600;
+  border-radius:   999px;
+  text-decoration: none;
+  transition:      all 0.18s ease;
+  white-space:     nowrap;
+}
+
+.btn--primary {
+  background:  var(--terra);
+  color:       #fff;
+  border:      2px solid var(--terra);
+}
+.btn--primary:hover {
+  background: #a0462c;
+  border-color: #a0462c;
+  transform:  translateY(-1px);
+}
+
+.btn--outline {
+  background:   transparent;
+  color:        var(--dark);
+  border:       2px solid rgba(26, 26, 24, 0.30);
+}
+.btn--outline:hover {
+  border-color: var(--dark);
+  background:   rgba(26, 26, 24, 0.06);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   COLONNE DROITE — CARTE
+──────────────────────────────────────────────────────────────── */
+.hero__card {
+  background:    var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border:        1px solid rgba(26, 26, 24, 0.08);
+  border-radius: 16px;
+  padding:       2rem 2rem 2.25rem;
+}
+
+.hero__card-eyebrow {
+  font-family:    'Oswald', Arial, sans-serif;
+  font-size:      0.68rem;
+  font-weight:    500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color:          var(--gold);
+  margin:         0 0 1.5rem;
+}
+
+/* ── Liste terrains ──────────────────────────────────────────── */
+.hero__terrains {
+  list-style: none;
+  margin:     0;
+  padding:    0;
+  display:    flex;
+  flex-direction: column;
+  gap:        1rem;
+}
+
+.terrain {
+  display:     flex;
+  align-items: center;
+  gap:         1rem;
+}
+
+.terrain__icon {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  width:           44px;
+  height:          44px;
+  border-radius:   50%;
+  background:      var(--gold);
+  color:           #fff;
+  flex-shrink:     0;
+}
+
+.terrain__icon svg {
+  width:  22px;
+  height: 22px;
+}
+
+.terrain__label {
+  font-family:  'Inter', system-ui, sans-serif;
+  font-size:    1rem;
+  font-weight:  700;
+  color:        var(--dark);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RESPONSIVE
+──────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero__inner {
+    grid-template-columns: 1fr;
+    padding: 3.5rem 1.25rem 3rem;
+    gap: 2rem;
+  }
+
+  .hero__title {
+    font-size: 2.4rem;
+  }
+}
+
+/* ── Reduced motion ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .hero__video { display: none; }
+  .hero__overlay {
+    background: rgba(242, 237, 226, 0.96);
+  }
+}
+</style>
+
+
+<script>
+  /* Gestion de la lecture vidéo */
+  const video = document.querySelector('.hero__video') as HTMLVideoElement | null;
+  if (video) {
+    const conn = (navigator as any).connection;
+    const slow = conn && (conn.saveData || ['slow-2g','2g','3g'].includes(conn.effectiveType));
+    if (slow) {
+      video.style.display = 'none';
+    } else {
+      video.play().catch(() => { video.style.display = 'none'; });
+    }
+  }
+</script>

@@ -3,60 +3,14 @@ import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
 import { TERRAINS, HOME_DESCRIPTION } from "../consts";
 import UsageBadge from "../components/UsageBadge.astro";
+import HeroVideo from "../components/HeroVideo.astro";
 import trailerBox from "../components/icons/trailer-box.svg?raw";
 import tent from "../components/icons/tent.svg?raw";
 import pine from "../components/icons/pine.svg?raw";
 ---
 
 <Layout description={HOME_DESCRIPTION}>
-	<section class="border-b border-ardoise/30 bg-gradient-to-b from-sable to-ecru-50">
-		<div class="mx-auto grid max-w-5xl gap-10 px-6 py-20 sm:py-28 lg:grid-cols-2 lg:items-center">
-			<div>
-				<p class="mb-4 inline-block rounded-full bg-brun-600 px-4 py-1 text-xs font-medium uppercase tracking-widest text-ecru-50">
-					Conçu et fabriqué en Occitanie
-				</p>
-				<h1 class="font-display text-4xl font-semibold leading-tight text-brun-700 sm:text-5xl">
-					L'aventure tient dans une boîte
-				</h1>
-				<!-- Sous-titre validé, distinct de la tagline "L'aventure tient dans une boîte". -->
-				<p class="mt-6 text-lg text-brun-500">
-					La Boîte à Bivouac transforme votre remorque en base de camp mobile : vélos, tente de
-					toit, matériel — tout trouve sa place.
-				</p>
-				<div class="mt-8 flex flex-wrap gap-4">
-					<a
-						href="/produit"
-						class="rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
-					>
-						Découvrir
-					</a>
-					<a
-						href="/contact"
-						class="rounded-full border border-brun-300 px-6 py-3 text-sm font-semibold text-brun-600 transition-colors hover:bg-sable"
-					>
-						Nous contacter
-					</a>
-				</div>
-			</div>
-			<div class="rounded-2xl border border-ardoise/40 bg-ecru-100 p-8 shadow-sm">
-				<p class="text-xs uppercase tracking-widest text-brun-400">Un module, trois terrains</p>
-				<ul class="mt-6 space-y-5">
-					{
-						TERRAINS.map((terrain) => (
-							<li class="flex items-center gap-4">
-								<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
-									<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
-								</span>
-								<span class="font-display text-lg font-semibold text-brun-700">
-									{terrain.title}
-								</span>
-							</li>
-						))
-					}
-				</ul>
-			</div>
-		</div>
-	</section>
+	<HeroVideo />
 
 	<section class="bg-sable py-10">
 		<div class="mx-auto flex max-w-4xl flex-wrap justify-center gap-8 px-6 sm:gap-12">
