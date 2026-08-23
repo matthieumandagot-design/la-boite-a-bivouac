@@ -28,24 +28,9 @@ export const SOCIAL_LINKS = [
 		icon: "tabler:brand-facebook",
 	},
 	{
-		href: "https://www.tiktok.com/@laboiteabivouac8",
-		label: "TikTok",
-		icon: "tabler:brand-tiktok",
-	},
-	{
-		href: "https://www.youtube.com/@LaBo%C3%AEte%C3%A0Bivouac",
-		label: "YouTube",
-		icon: "tabler:brand-youtube",
-	},
-	{
 		href: "https://www.linkedin.com/company/laboiteabivouac",
 		label: "LinkedIn",
 		icon: "tabler:brand-linkedin",
-	},
-	{
-		href: "https://fr.pinterest.com/laboiteabivouac/",
-		label: "Pinterest",
-		icon: "tabler:brand-pinterest",
 	},
 ];
 
