@@ -1,0 +1,224 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+---
+
+<Layout
+	title="La Boîte"
+	description="La Boîte à Bivouac : une caisse amovible en acier et bois qui transforme votre remorque standard en base d'aventure, sans condamner son usage classique."
+>
+	<section class="relative flex min-h-[420px] items-end overflow-hidden bg-graphite text-ecru-50">
+		<img
+			src="/images/produit-remorque.jpeg"
+			alt=""
+			aria-hidden="true"
+			class="absolute inset-0 h-full w-full object-cover opacity-60"
+		/>
+		<div class="absolute inset-0 bg-gradient-to-t from-graphite via-graphite/60 to-graphite/10"></div>
+		<div class="relative mx-auto max-w-5xl px-6 py-16">
+			<h1 class="font-display text-4xl font-semibold sm:text-5xl">La Boîte à Bivouac</h1>
+			<p class="mt-4 max-w-xl text-lg text-ecru-100/90">
+				Une caisse. Une remorque. Une base d'aventure.
+			</p>
+		</div>
+	</section>
+
+	<section class="mx-auto max-w-5xl px-6 py-20">
+		<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
+			<div>
+				<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">Le concept</h2>
+				<p class="mt-4 text-brun-500">
+					La Boîte à Bivouac, c'est une caisse modulaire en acier et bois qui vient s'installer dans
+					une remorque utilitaire standard. Sur le dessus, une tente de toit. À l'intérieur, de la
+					place pour transporter ce qui compte&nbsp;: vélos, matériel de camping, équipement outdoor.
+				</p>
+				<p class="mt-4 text-brun-500">
+					Aucune modification de la remorque. Aucun usage condamné. La semaine, c'est une remorque.
+					Le week-end, c'est une base.
+				</p>
+			</div>
+			<img
+				src="/images/produit-interieur.jpeg"
+				alt="Intérieur de la Boîte à Bivouac, aménagé pour le transport"
+				loading="lazy"
+				class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+			/>
+		</div>
+	</section>
+
+	<section class="bg-ecru-100 px-6 py-20">
+		<div class="mx-auto max-w-5xl">
+			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+				Fabriquée à la main, en Occitanie.
+			</h2>
+			<p class="mt-4 max-w-2xl text-brun-500">
+				Le châssis est entièrement soudé à la main. Tubes acier, panneaux OSB, charnières robustes.
+				Un produit conçu pour durer et pour être réparable.
+			</p>
+			<div class="mt-10 grid gap-6 sm:grid-cols-2">
+				<img
+					src="/images/fabrication-chassis.jpeg"
+					alt="Châssis acier soudé"
+					loading="lazy"
+					class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+				/>
+				<img
+					src="/images/fabrication-garage.jpeg"
+					alt="Caisse finalisée"
+					loading="lazy"
+					class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+				/>
+			</div>
+		</div>
+	</section>
+
+	<section class="mx-auto max-w-5xl px-6 py-20">
+		<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
+			<img
+				src="/images/produit-34.jpeg"
+				alt="La Boîte à Bivouac, prototype V1"
+				loading="lazy"
+				class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+			/>
+			<div>
+				<span class="inline-block rounded-full bg-mousse px-4 py-1 text-xs font-medium uppercase tracking-widest text-brun-700">
+					Testée · En conditions réelles
+				</span>
+				<h2 class="mt-4 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+					V1 — Le prototype validé
+				</h2>
+				<p class="mt-4 text-brun-500">
+					La V1 a roulé, bivouaqué et été testée pendant des semaines. Elle a validé le concept
+					: la caisse tient sur la remorque, la tente de toit fonctionne, les vélos rentrent. Les
+					apprentissages de ces essais alimentent directement la suite.
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<section class="border-t border-ardoise/30 bg-sable/50 px-6 py-20">
+		<div class="mx-auto max-w-5xl">
+			<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
+				<div class="lg:order-2">
+					<img
+						src="/images/produit-tente.jpeg"
+						alt="La Boîte à Bivouac, aperçu de la V2"
+						loading="lazy"
+						class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+					/>
+				</div>
+				<div class="lg:order-1">
+					<span class="inline-block rounded-full bg-rouille-500 px-4 py-1 text-xs font-medium uppercase tracking-widest text-ecru-50">
+						Septembre 2026
+					</span>
+					<h2 class="mt-4 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+						V2 — Ce qui arrive en septembre
+					</h2>
+					<p class="mt-4 text-brun-500">
+						La V2 intègre les retours des tests terrain. Plus légère, plus aérodynamique, avec un
+						vrai système de fixation à la remorque conçu pour être installé et retiré en moins de
+						10 minutes. Elle sera disponible en pré-commande à l'automne.
+					</p>
+					<a
+						href="#contact"
+						class="mt-6 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
+					>
+						Être notifié à la sortie
+						<Icon name="tabler:arrow-right" class="h-4 w-4" />
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section id="contact" class="bg-graphite px-6 py-20 text-ecru-50">
+		<div class="mx-auto max-w-xl text-center">
+			<h2 class="font-display text-2xl font-semibold sm:text-3xl">Rester informé</h2>
+			<p class="mt-4 text-ecru-100/80">
+				La V2 arrive en septembre. Laissez votre email pour être parmi les premiers à la découvrir.
+			</p>
+
+			<form id="notify-form" class="mt-8 flex flex-col gap-3 sm:flex-row" method="post" novalidate>
+				<label for="notify-email" class="sr-only">Adresse email</label>
+				<input
+					id="notify-email"
+					name="email"
+					type="email"
+					autocomplete="email"
+					required
+					placeholder="vous@exemple.fr"
+					class="w-full rounded-full border border-ecru-50/30 bg-ecru-50/10 px-5 py-3 text-ecru-50 placeholder:text-ecru-100/50 focus:border-mousse focus:outline-none focus:ring-2 focus:ring-mousse/40"
+				/>
+				<button
+					type="submit"
+					class="shrink-0 rounded-full bg-mousse px-6 py-3 text-sm font-semibold text-brun-700 shadow-sm transition-colors hover:bg-mousse/85 disabled:cursor-not-allowed disabled:opacity-60"
+				>
+					Je m'inscris
+				</button>
+			</form>
+
+			<div id="notify-status" role="status" aria-live="polite" class="mt-4 hidden text-sm"></div>
+		</div>
+	</section>
+</Layout>
+
+<script>
+	const form = document.getElementById("notify-form") as HTMLFormElement | null;
+	const status = document.getElementById("notify-status");
+	const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+
+	function showStatus(message: string, variant: "success" | "error") {
+		if (!status) return;
+		status.textContent = message;
+		status.classList.remove("hidden", "text-green-400", "text-red-400");
+		status.classList.add(variant === "success" ? "text-green-400" : "text-red-400");
+	}
+
+	form?.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		if (!form || !submitButton) return;
+
+		const email = (form.elements.namedItem("email") as HTMLInputElement | null)?.value ?? "";
+
+		submitButton.disabled = true;
+		submitButton.textContent = "Envoi en cours…";
+
+		try {
+			const body = new FormData();
+			body.set("name", "Inscription V2 — La Boîte à Bivouac");
+			body.set("email", email);
+			body.set("message", `Demande de notification pour la sortie de la V2 (page /la-boite). Email : ${email}`);
+
+			const response = await fetch("/contact.php", {
+				method: "POST",
+				body,
+				headers: { Accept: "application/json" },
+			});
+
+			let data: { success?: boolean; error?: string } = {};
+			try {
+				data = await response.json();
+			} catch {
+				// réponse non-JSON, on retombe sur le statut HTTP
+			}
+
+			if (response.ok && data.success) {
+				showStatus("Merci ! Vous serez prévenu·e dès la sortie de la V2.", "success");
+				form.reset();
+			} else {
+				showStatus(
+					data.error ?? "Une erreur est survenue lors de l'inscription. Merci de réessayer.",
+					"error",
+				);
+			}
+		} catch {
+			showStatus(
+				"Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.",
+				"error",
+			);
+		} finally {
+			submitButton.disabled = false;
+			submitButton.textContent = "Je m'inscris";
+		}
+	});
+</script>

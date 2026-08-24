@@ -1,12 +1,38 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
-import { TERRAINS, HOME_DESCRIPTION } from "../consts";
+import { HOME_DESCRIPTION } from "../consts";
 import UsageBadge from "../components/UsageBadge.astro";
 import HeroVideo from "../components/HeroVideo.astro";
 import trailerBox from "../components/icons/trailer-box.svg?raw";
 import tent from "../components/icons/tent.svg?raw";
 import pine from "../components/icons/pine.svg?raw";
+import bike from "../components/icons/bike.svg?raw";
+import canoe from "../components/icons/canoe.svg?raw";
+
+const PRINCIPLES = [
+	{
+		icon: "tabler:tent",
+		title: "Sur le dessus",
+		text: "Une tente de toit. Vous dormez en hauteur, partout où vous vous arrêtez.",
+	},
+	{
+		icon: "tabler:box",
+		title: "À l'intérieur",
+		text: "Du volume pour les vélos, le matériel de camping et l'équipement outdoor.",
+	},
+	{
+		icon: "tabler:puzzle",
+		title: "Amovible",
+		text: "La boîte se retire. La remorque redevient une remorque.",
+	},
+];
+
+const PLAY_TERRAINS = [
+	{ icon: pine, title: "Bivouac", text: "Forêt, montagne, bord de lac." },
+	{ icon: bike, title: "Trail & VTT", text: "Les vélos rentrent. Le matériel aussi." },
+	{ icon: canoe, title: "Côte & campings", text: "Base fixe, exploration mobile." },
+];
 ---
 
 <Layout description={HOME_DESCRIPTION}>
@@ -20,98 +46,71 @@ import pine from "../components/icons/pine.svg?raw";
 		</div>
 	</section>
 
-	<section class="mx-auto max-w-5xl px-6 py-20">
-		<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
-			Un module, trois terrains de jeu
-		</h2>
-		<p class="mt-4 max-w-2xl text-brun-500">
-			Pas besoin de changer d'équipement selon la destination : la Boîte à Bivouac suit le même
-			principe modulaire, du sentier de montagne à la route du littoral.
-		</p>
-		<div class="mt-10 grid gap-8 sm:grid-cols-3">
-			{
-				TERRAINS.map((terrain) => (
-					<article class="rounded-xl border border-ardoise/30 bg-ecru-100 p-6">
-						<span class="flex h-12 w-12 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
-							<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
-						</span>
-						<h3 class="mt-5 font-display text-lg font-semibold text-brun-700">{terrain.title}</h3>
-						<p class="mt-2 text-brun-500">{terrain.text}</p>
-					</article>
-				))
-			}
+	<section class="bg-ecru-100 px-6 py-20">
+		<div class="mx-auto max-w-5xl">
+			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+				Un principe simple.
+			</h2>
+			<div class="mt-10 grid gap-8 sm:grid-cols-3">
+				{
+					PRINCIPLES.map((item) => (
+						<article class="rounded-xl border border-ardoise/30 bg-ecru-50 p-6">
+							<span class="flex h-12 w-12 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
+								<Icon name={item.icon} class="h-6 w-6" />
+							</span>
+							<h3 class="mt-5 font-display text-lg font-semibold text-brun-700">{item.title}</h3>
+							<p class="mt-2 text-brun-500">{item.text}</p>
+						</article>
+					))
+				}
+			</div>
 		</div>
 	</section>
 
 	<section class="border-y border-ardoise/30 bg-sable/50 px-6 py-20">
 		<div class="mx-auto grid max-w-5xl gap-10 lg:grid-cols-2 lg:items-center">
+			<img
+				src="/images/produit-cote.jpeg"
+				alt="La Boîte à Bivouac en situation"
+				loading="lazy"
+				class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+			/>
 			<div>
-				<p class="text-xs font-medium uppercase tracking-widest text-rouille-500">Le produit</p>
-				<h2 class="mt-3 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
-					Une structure renforcée, pensée pour l'usage réel
+				<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+					Déjà testée en conditions réelles.
 				</h2>
 				<p class="mt-4 text-brun-500">
-					Panneaux modulaires démontables, montage sans outil, capacité pour une tente de toit et
-					un VTT XXL : chaque détail de la Boîte à Bivouac est pensé pour suivre vos sorties, pas
-					pour rester au garage.
+					La première version existe. Elle a roulé, bivouaqué et été testée pendant des semaines en
+					conditions réelles. Les résultats de ces essais guident directement ce qui arrive ensuite.
 				</p>
 				<a
-					href="/produit"
-					class="mt-6 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
+					href="/la-boite"
+					class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-rouille-500 transition-colors hover:text-rouille-400"
 				>
-					Voir la fiche produit
+					Voir la Boîte
 					<Icon name="tabler:arrow-right" class="h-4 w-4" />
 				</a>
 			</div>
-			<dl class="grid grid-cols-2 gap-6 rounded-2xl border border-ardoise/40 bg-ecru-50 p-8 text-brun-600">
-				<div>
-					<dt class="text-xs uppercase tracking-widest text-brun-400">Montage</dt>
-					<dd class="mt-1 font-display text-xl font-semibold">Sans outil</dd>
-				</div>
-				<div>
-					<dt class="text-xs uppercase tracking-widest text-brun-400">Emporte</dt>
-					<dd class="mt-1 font-display text-xl font-semibold">Tente de toit</dd>
-				</div>
-				<div>
-					<dt class="text-xs uppercase tracking-widest text-brun-400">Et aussi</dt>
-					<dd class="mt-1 font-display text-xl font-semibold">VTT XXL</dd>
-				</div>
-				<div>
-					<dt class="text-xs uppercase tracking-widest text-brun-400">Structure</dt>
-					<dd class="mt-1 font-display text-xl font-semibold">Renforcée</dd>
-				</div>
-			</dl>
 		</div>
 	</section>
 
-	<section class="mx-auto max-w-5xl px-6 py-20">
-		<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
-			<div>
-				<span class="flex h-12 w-12 items-center justify-center rounded-full bg-brun-600 text-ecru-50">
-					<Icon name="tabler:map-pin" class="h-6 w-6" />
-				</span>
-				<h2 class="mt-5 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
-					Conçu et fabriqué en Occitanie
-				</h2>
-				<p class="mt-4 text-brun-500">
-					Chaque Boîte à Bivouac est dessinée et assemblée dans notre atelier d'Occitanie. Un choix
-					de proximité qui nous permet de maîtriser la qualité de fabrication, de raccourcir les
-					délais et de rester à l'écoute de celles et ceux qui utilisent le produit sur le terrain.
-				</p>
-			</div>
-			<div class="flex flex-wrap gap-4">
-				<div class="flex items-center gap-3 rounded-xl border border-ardoise/30 bg-ecru-100 px-5 py-4">
-					<Icon name="tabler:tools" class="h-6 w-6 text-rouille-500" />
-					<span class="text-sm font-medium text-brun-600">Assemblage artisanal</span>
-				</div>
-				<div class="flex items-center gap-3 rounded-xl border border-ardoise/30 bg-ecru-100 px-5 py-4">
-					<Icon name="tabler:leaf" class="h-6 w-6 text-rouille-500" />
-					<span class="text-sm font-medium text-brun-600">Circuit court</span>
-				</div>
-				<div class="flex items-center gap-3 rounded-xl border border-ardoise/30 bg-ecru-100 px-5 py-4">
-					<Icon name="tabler:certificate" class="h-6 w-6 text-rouille-500" />
-					<span class="text-sm font-medium text-brun-600">Fabrication française</span>
-				</div>
+	<section class="bg-graphite px-6 py-20 text-ecru-50">
+		<div class="mx-auto max-w-5xl">
+			<h2 class="font-display text-2xl font-semibold sm:text-3xl">Un module, des terrains</h2>
+			<div class="mt-10 grid gap-8 sm:grid-cols-3">
+				{
+					PLAY_TERRAINS.map((terrain) => (
+						<div class="flex items-center gap-4">
+							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
+								<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
+							</span>
+							<div>
+								<h3 class="font-display text-lg font-semibold">{terrain.title}</h3>
+								<p class="mt-1 text-ecru-100/80">{terrain.text}</p>
+							</div>
+						</div>
+					))
+				}
 			</div>
 		</div>
 	</section>

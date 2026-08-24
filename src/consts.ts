@@ -1,7 +1,3 @@
-import pineIcon from "./components/icons/pine.svg?raw";
-import mountainIcon from "./components/icons/mountain.svg?raw";
-import canoeIcon from "./components/icons/canoe.svg?raw";
-
 export const SITE_TITLE = "La Boîte à Bivouac";
 export const TAGLINE = "L'aventure tient dans une boîte";
 export const SITE_DESCRIPTION =
@@ -11,7 +7,7 @@ export const HOME_DESCRIPTION =
 
 export const NAV_LINKS = [
 	{ href: "/", label: "Accueil" },
-	{ href: "/produit", label: "Le produit" },
+	{ href: "/la-boite", label: "La Boîte" },
 	{ href: "/actualites", label: "Actualités" },
 	{ href: "/contact", label: "Contact" },
 ];
@@ -31,23 +27,5 @@ export const SOCIAL_LINKS = [
 		href: "https://www.linkedin.com/company/laboiteabivouac",
 		label: "LinkedIn",
 		icon: "tabler:brand-linkedin",
-	},
-];
-
-export const TERRAINS = [
-	{
-		icon: pineIcon,
-		title: "Bivouac",
-		text: "Un module qui se monte en quelques minutes pour une nuit improvisée en pleine nature, tente de toit comprise.",
-	},
-	{
-		icon: mountainIcon,
-		title: "Montagne",
-		text: "Structure renforcée pour encaisser pistes caillouteuses et cols escarpés, avec le VTT XXL solidement arrimé.",
-	},
-	{
-		icon: canoeIcon,
-		title: "Mer",
-		text: "Résistant aux embruns et à l'humidité, pour rallier le spot de surf ou la crique sans se soucier du matériel.",
 	},
 ];
