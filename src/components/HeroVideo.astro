@@ -12,6 +12,8 @@
  *   public/images/hero-poster.jpg   ← frame de couverture (optionnel)
  */
 
+import { Icon } from 'astro-icon/components';
+
 interface Props {
   videoSrc?:  string;
   posterSrc?: string;
@@ -71,39 +73,26 @@ const {
     <div class="hero__right">
       <div class="hero__card">
 
-        <p class="hero__card-eyebrow">Un module, trois terrains</p>
+        <p class="hero__card-eyebrow">L'essentiel</p>
 
         <ul class="hero__terrains">
           <li class="terrain">
             <span class="terrain__icon" aria-hidden="true">
-              <!-- Icône pin / forêt -->
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L7 9h3l-4 6h4l-5 7h14l-5-7h4l-4-6h3L12 2z"
-                      fill="currentColor"/>
-              </svg>
+              <Icon name="tabler:ruler-2" width={22} height={22} />
             </span>
-            <span class="terrain__label">Bivouac</span>
+            <span class="terrain__label">Sur mesure</span>
           </li>
           <li class="terrain">
             <span class="terrain__icon" aria-hidden="true">
-              <!-- Icône montagne -->
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 20l6-10 3 4 3-6 6 12H3z" fill="currentColor"/>
-              </svg>
+              <Icon name="tabler:shield-check" width={22} height={22} />
             </span>
-            <span class="terrain__label">Montagne</span>
+            <span class="terrain__label">Robuste et sécurisée</span>
           </li>
           <li class="terrain">
             <span class="terrain__icon" aria-hidden="true">
-              <!-- Icône vague / mer -->
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 14c1.5-2 3-2 4.5 0S9.5 16 11 14s3-2 4.5 0 3 2 4.5 0
-                         M2 18c1.5-2 3-2 4.5 0S9.5 20 11 18s3-2 4.5 0 3 2 4.5 0"
-                      stroke="currentColor" stroke-width="2"
-                      stroke-linecap="round" fill="none"/>
-              </svg>
+              <Icon name="tabler:compass" width={22} height={22} />
             </span>
-            <span class="terrain__label">Mer</span>
+            <span class="terrain__label">Prêt pour l'aventure</span>
           </li>
         </ul>
 
