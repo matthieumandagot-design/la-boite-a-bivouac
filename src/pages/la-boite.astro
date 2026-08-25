@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
+import { SOCIAL_LINKS } from "../consts";
 
 const CONCEPT_POINTS = [
 	{
@@ -153,6 +154,37 @@ const CONCEPT_POINTS = [
 					</a>
 				</div>
 			</div>
+		</div>
+	</section>
+
+	<section class="bg-ecru-100 px-6 py-20">
+		<div class="mx-auto max-w-4xl">
+			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">Nous suivre</h2>
+			<ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{
+					SOCIAL_LINKS.map((social) => (
+						<li>
+							<a
+								href={social.href}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="group flex items-center gap-4 rounded-xl border border-ardoise/30 bg-ecru-50 px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-rouille-500 hover:bg-rouille-500 hover:shadow-md"
+							>
+								<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-mousse text-sable transition-colors group-hover:bg-ecru-50 group-hover:text-rouille-500">
+									<Icon name={social.icon} class="h-6 w-6" />
+								</span>
+								<span class="font-display text-base font-semibold text-brun-700 transition-colors group-hover:text-ecru-50">
+									{social.label}
+								</span>
+								<Icon
+									name="tabler:arrow-up-right"
+									class="ml-auto h-5 w-5 text-brun-400 transition-colors group-hover:text-ecru-50"
+								/>
+							</a>
+						</li>
+					))
+				}
+			</ul>
 		</div>
 	</section>
 </Layout>
