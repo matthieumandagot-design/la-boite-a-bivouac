@@ -1,6 +1,24 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
+
+const CONCEPT_POINTS = [
+	{
+		icon: "tabler:tent",
+		title: "Sur le dessus",
+		text: "Barres de toit intégrées.",
+	},
+	{
+		icon: "tabler:box",
+		title: "À l'intérieur",
+		text: "Espace fermé et verrouillé.",
+	},
+	{
+		icon: "tabler:puzzle",
+		title: "Amovible",
+		text: "La boîte se retire, la remorque redevient une remorque.",
+	},
+];
 ---
 
 <Layout
@@ -16,26 +34,45 @@ import { Icon } from "astro-icon/components";
 		/>
 	</section>
 
-	<section class="mx-auto max-w-5xl px-6 py-20">
-		<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
+	<section class="relative flex min-h-[90vh] items-center overflow-hidden bg-graphite text-ecru-50">
+		<img
+			src="/images/produit-remorque.jpeg"
+			alt=""
+			aria-hidden="true"
+			class="absolute inset-0 h-full w-full object-cover"
+		/>
+		<div class="absolute inset-0 bg-gradient-to-r from-graphite/90 via-graphite/70 to-graphite/40"></div>
+		<div class="relative mx-auto grid max-w-5xl gap-10 px-6 py-20 lg:grid-cols-2 lg:items-center">
 			<div>
-				<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">Le concept</h2>
-				<p class="mt-4 text-brun-500">
+				<h2 class="font-display text-3xl font-semibold sm:text-4xl">Le concept</h2>
+				<p class="mt-4 text-ecru-100/90">
 					La Boîte à Bivouac, c'est une caisse modulaire en acier et bois qui vient s'installer dans
 					une remorque utilitaire standard. Sur le dessus, une tente de toit. À l'intérieur, de la
 					place pour transporter ce qui compte&nbsp;: vélos, matériel de camping, équipement outdoor.
 				</p>
-				<p class="mt-4 text-brun-500">
+				<p class="mt-4 text-ecru-100/90">
 					Aucune modification de la remorque. Aucun usage condamné. La semaine, c'est une remorque.
 					Le week-end, c'est une base.
 				</p>
 			</div>
-			<img
-				src="/images/produit-interieur.jpeg"
-				alt="Intérieur de la Boîte à Bivouac, aménagé pour le transport"
-				loading="lazy"
-				class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
-			/>
+			<div class="rounded-2xl border border-ecru-50/15 bg-graphite/55 p-8 shadow-sm backdrop-blur-md">
+				<p class="text-xs font-medium uppercase tracking-widest text-mousse">L'essentiel</p>
+				<ul class="mt-6 space-y-5">
+					{
+						CONCEPT_POINTS.map((point) => (
+							<li class="flex items-center gap-4">
+								<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
+									<Icon name={point.icon} class="h-6 w-6" />
+								</span>
+								<div>
+									<p class="font-display text-base font-semibold">{point.title}</p>
+									<p class="text-sm text-ecru-100/75">{point.text}</p>
+								</div>
+							</li>
+						))
+					}
+				</ul>
+			</div>
 		</div>
 	</section>
 
