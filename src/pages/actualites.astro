@@ -25,6 +25,18 @@ function excerpt(text: string, maxLength = 140) {
 	if (text.length <= maxLength) return text;
 	return `${text.slice(0, maxLength).trimEnd()}…`;
 }
+
+const GALLERY_IMAGES = [
+	{ src: "/images/galerie-caisse-1.jpeg", alt: "La Boîte à Bivouac — caisse en cours de fabrication" },
+	{ src: "/images/galerie-caisse-2.jpeg", alt: "La Boîte à Bivouac — caisse ouverte, portes dépliées" },
+	{ src: "/images/galerie-remorque-1.jpeg", alt: "La Boîte à Bivouac montée sur sa remorque" },
+	{ src: "/images/galerie-remorque-velos.jpeg", alt: "La Boîte à Bivouac, portes ouvertes avec des vélos à l'intérieur" },
+	{ src: "/images/galerie-remorque-2.jpeg", alt: "La Boîte à Bivouac sur sa remorque, vue de face" },
+	{ src: "/images/galerie-tente-1.jpeg", alt: "La Boîte à Bivouac avec la tente de toit déployée" },
+	{ src: "/images/galerie-remorque-3.jpeg", alt: "La Boîte à Bivouac avec la housse de la tente de toit" },
+	{ src: "/images/galerie-remorque-4.jpeg", alt: "La Boîte à Bivouac en situation, à l'arrêt" },
+	{ src: "/images/galerie-tente-2.jpeg", alt: "La Boîte à Bivouac, tente de toit déployée avec l'échelle" },
+];
 ---
 
 <Layout
@@ -69,6 +81,24 @@ function excerpt(text: string, maxLength = 140) {
 				))
 			}
 		</ul>
+	</section>
+
+	<section class="border-t border-ardoise/30 px-6 py-16">
+		<div class="mx-auto max-w-4xl">
+			<h2 class="font-display text-2xl font-semibold text-brun-700">En images</h2>
+			<div class="mt-8 grid grid-cols-3 gap-4">
+				{
+					GALLERY_IMAGES.map((img) => (
+						<img
+							src={img.src}
+							alt={img.alt}
+							loading="lazy"
+							class="aspect-square w-full rounded-xl object-cover shadow-sm"
+						/>
+					))
+				}
+			</div>
+		</div>
 	</section>
 
 	{
