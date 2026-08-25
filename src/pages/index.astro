@@ -56,6 +56,27 @@ const PLAY_TERRAINS = [
 		</div>
 	</section>
 
+	<section class="bg-graphite px-6 py-20 text-ecru-50">
+		<div class="mx-auto max-w-5xl">
+			<h2 class="font-display text-2xl font-semibold sm:text-3xl">Un module, des terrains</h2>
+			<div class="mt-10 grid gap-8 sm:grid-cols-3">
+				{
+					PLAY_TERRAINS.map((terrain) => (
+						<div class="flex items-center gap-4">
+							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
+								<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
+							</span>
+							<div>
+								<h3 class="font-display text-lg font-semibold">{terrain.title}</h3>
+								<p class="mt-1 text-ecru-100/80">{terrain.text}</p>
+							</div>
+						</div>
+					))
+				}
+			</div>
+		</div>
+	</section>
+
 	<section class="border-y border-ardoise/30 bg-sable/50 px-6 py-20">
 		<div class="mx-auto grid max-w-5xl gap-10 lg:grid-cols-2 lg:items-center">
 			<img
@@ -98,28 +119,7 @@ const PLAY_TERRAINS = [
 		</div>
 	</section>
 
-	<section class="bg-graphite px-6 py-20 text-ecru-50">
-		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold sm:text-3xl">Un module, des terrains</h2>
-			<div class="mt-10 grid gap-8 sm:grid-cols-3">
-				{
-					PLAY_TERRAINS.map((terrain) => (
-						<div class="flex items-center gap-4">
-							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
-								<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
-							</span>
-							<div>
-								<h3 class="font-display text-lg font-semibold">{terrain.title}</h3>
-								<p class="mt-1 text-ecru-100/80">{terrain.text}</p>
-							</div>
-						</div>
-					))
-				}
-			</div>
-		</div>
-	</section>
-
-	<section class="border-t border-ecru-50/10 bg-graphite px-6 py-20 text-center text-ecru-50">
+	<section class="bg-graphite px-6 py-20 text-center text-ecru-50">
 		<div class="mx-auto max-w-2xl">
 			<h2 class="font-display text-2xl font-semibold sm:text-3xl">
 				Vous avez une remorque. On a une boîte.
@@ -129,7 +129,7 @@ const PLAY_TERRAINS = [
 				la suite ensemble.
 			</p>
 			<a
-				href="mailto:contact@laboiteabivouac.fr"
+				href="/contact"
 				class="bg-gold text-forest mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-sm transition-opacity hover:opacity-90"
 			>
 				Prendre contact
