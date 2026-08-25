@@ -26,9 +26,21 @@ const PRINCIPLES = [
 ];
 
 const PLAY_TERRAINS = [
-	{ icon: pine, title: "Bivouac", text: "Forêt, montagne, bord de lac." },
-	{ icon: bike, title: "Trail & VTT", text: "Les vélos rentrent. Le matériel aussi." },
-	{ icon: canoe, title: "Côte & campings", text: "Base fixe, exploration mobile." },
+	{
+		icon: pine,
+		title: "Bivouac",
+		text: "Forêt, montagne, bord de lac. Installez la tente de toit, ouvrez les portes, posez le camp. La Boîte à Bivouac fait de n'importe quel endroit votre base.",
+	},
+	{
+		icon: bike,
+		title: "Trail & VTT",
+		text: "Les vélos rentrent debout, le matériel est verrouillé, la tente est prête sur le dessus. Arrivez sur le spot, ouvrez les portes — et partez rouler.",
+	},
+	{
+		icon: canoe,
+		title: "Côte & campings",
+		text: "Base fixe, exploration mobile. La Boîte à Bivouac devient votre quartier général — vous repartez visiter la région avec un véhicule agile, sans compromis.",
+	},
 ];
 ---
 
@@ -62,7 +74,7 @@ const PLAY_TERRAINS = [
 			<div class="mt-10 grid gap-8 sm:grid-cols-3">
 				{
 					PLAY_TERRAINS.map((terrain) => (
-						<div class="flex items-center gap-4">
+						<div class="flex items-start gap-4">
 							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
 								<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
 							</span>
