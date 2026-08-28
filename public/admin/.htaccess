@@ -1,0 +1,6 @@
+# PHP en CGI/FastCGI (hébergement mutualisé OVH) ne transmet pas l'en-tête
+# Authorization à PHP par défaut. Cette règle force Apache à le faire passer
+# via HTTP_AUTHORIZATION, lu manuellement dans admin/index.php.
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]

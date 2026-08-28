@@ -22,8 +22,35 @@ function denyAccess(): void
 	exit;
 }
 
-$user = $_SERVER['PHP_AUTH_USER'] ?? null;
-$pass = $_SERVER['PHP_AUTH_PW'] ?? null;
+/**
+ * Sur PHP en CGI/FastCGI (courant en hébergement mutualisé), l'en-tête
+ * Authorization n'est pas exposé via PHP_AUTH_USER/PHP_AUTH_PW : il faut le
+ * relire manuellement dans HTTP_AUTHORIZATION (voir .htaccess ci-contre qui
+ * force Apache à le transmettre).
+ */
+function basicAuthCredentials(): ?array
+{
+	if (isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'])) {
+		return [$_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']];
+	}
+
+	$header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null;
+	if ($header === null && function_exists('apache_request_headers')) {
+		$headers = apache_request_headers();
+		$header = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+	}
+
+	if ($header !== null && stripos($header, 'Basic ') === 0) {
+		$decoded = base64_decode(substr($header, 6), true);
+		if ($decoded !== false && str_contains($decoded, ':')) {
+			return explode(':', $decoded, 2);
+		}
+	}
+
+	return null;
+}
+
+[$user, $pass] = basicAuthCredentials() ?? [null, null];
 
 if ($user === null || $pass === null) {
 	denyAccess();
