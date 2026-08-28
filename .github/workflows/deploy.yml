@@ -43,6 +43,12 @@ jobs:
       - name: Build site
         run: npm run build
 
+      - name: Write admin credentials
+        run: node scripts/write-admin-config.mjs
+        env:
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
