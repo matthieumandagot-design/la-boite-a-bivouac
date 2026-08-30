@@ -7,11 +7,12 @@ import "../styles/brand.css";
 
 interface Props {
 	title?: string;
+	fullTitle?: string;
 	description?: string;
 }
 
-const { title, description = SITE_DESCRIPTION } = Astro.props;
-const pageTitle = title ? `${title} · ${SITE_TITLE}` : SITE_TITLE;
+const { title, fullTitle, description = SITE_DESCRIPTION } = Astro.props;
+const pageTitle = fullTitle ?? (title ? `${title} · ${SITE_TITLE}` : SITE_TITLE);
 ---
 
 <!doctype html>
