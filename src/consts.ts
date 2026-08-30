@@ -8,14 +8,8 @@ export const HOME_DESCRIPTION =
 export const NAV_LINKS = [
 	{ href: "/", label: "Accueil" },
 	{ href: "/la-boite", label: "La Boîte" },
-	{ href: "/faq", label: "FAQ" },
+	{ href: "/actualites", label: "Actualités" },
 	{ href: "/contact", label: "Contact" },
-];
-
-export const NAVBAR_SOCIAL_LINKS = [
-	{ href: "https://www.instagram.com/laboiteabivouac", label: "Instagram", icon: "instagram" },
-	{ href: "https://www.facebook.com/laboiteabivouac", label: "Facebook", icon: "facebook" },
-	{ href: "https://www.linkedin.com/in/matthieumandagot", label: "LinkedIn", icon: "linkedin" },
 ];
 
 export const SOCIAL_LINKS = [

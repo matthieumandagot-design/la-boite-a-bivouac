@@ -1,0 +1,147 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { SOCIAL_LINKS } from "../consts";
+import rawSocialData from "../data/social-posts.json";
+
+interface SocialPost {
+	id: string;
+	source: "instagram" | "facebook";
+	text: string;
+	image: string | null;
+	url: string;
+	date: string;
+}
+
+const socialData = rawSocialData as { updatedAt: string | null; posts: SocialPost[] };
+const socialPosts = socialData.posts.slice(0, 6);
+
+const sourceIcon: Record<string, string> = {
+	instagram: "tabler:brand-instagram",
+	facebook: "tabler:brand-facebook",
+};
+
+function excerpt(text: string, maxLength = 140) {
+	if (text.length <= maxLength) return text;
+	return `${text.slice(0, maxLength).trimEnd()}…`;
+}
+
+const GALLERY_IMAGES = [
+	{ src: "/images/galerie-caisse-1.jpeg", alt: "La Boîte à Bivouac — caisse en cours de fabrication" },
+	{ src: "/images/galerie-caisse-2.jpeg", alt: "La Boîte à Bivouac — caisse ouverte, portes dépliées" },
+	{ src: "/images/galerie-remorque-1.jpeg", alt: "La Boîte à Bivouac montée sur sa remorque" },
+	{ src: "/images/galerie-remorque-velos.jpeg", alt: "La Boîte à Bivouac, portes ouvertes avec des vélos à l'intérieur" },
+	{ src: "/images/galerie-remorque-2.jpeg", alt: "La Boîte à Bivouac sur sa remorque, vue de face" },
+	{ src: "/images/galerie-tente-1.jpeg", alt: "La Boîte à Bivouac avec la tente de toit déployée" },
+	{ src: "/images/galerie-remorque-3.jpeg", alt: "La Boîte à Bivouac avec la housse de la tente de toit" },
+	{ src: "/images/galerie-remorque-4.jpeg", alt: "La Boîte à Bivouac en situation, à l'arrêt" },
+	{ src: "/images/galerie-tente-2.jpeg", alt: "La Boîte à Bivouac, tente de toit déployée avec l'échelle" },
+];
+---
+
+<Layout
+	title="Actualités"
+	description="Suivez La Boîte à Bivouac sur les réseaux sociaux : coulisses de fabrication, sorties terrain et dernières publications."
+>
+	<section class="border-b border-ardoise/30 bg-sable/50 px-6 py-16">
+		<div class="mx-auto max-w-4xl">
+			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500">Actualités</p>
+			<h1 class="mt-3 font-display text-4xl font-semibold text-brun-700">Suivez l'aventure</h1>
+			<p class="mt-6 max-w-2xl text-lg text-brun-500">
+				Coulisses de fabrication, sorties terrain et actualités de La Boîte à Bivouac : retrouvez-nous
+				sur les réseaux sociaux.
+			</p>
+		</div>
+	</section>
+
+	<section class="mx-auto max-w-4xl px-6 py-16">
+		<h2 class="font-display text-2xl font-semibold text-brun-700">Nos réseaux</h2>
+		<ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			{
+				SOCIAL_LINKS.map((social) => (
+					<li>
+						<a
+							href={social.href}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="group flex items-center gap-4 rounded-xl border border-ardoise/30 bg-ecru-100 px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-rouille-500 hover:bg-rouille-500 hover:shadow-md"
+						>
+							<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-mousse text-sable transition-colors group-hover:bg-ecru-50 group-hover:text-rouille-500">
+								<Icon name={social.icon} class="h-6 w-6" />
+							</span>
+							<span class="font-display text-base font-semibold text-brun-700 transition-colors group-hover:text-ecru-50">
+								{social.label}
+							</span>
+							<Icon
+								name="tabler:arrow-up-right"
+								class="ml-auto h-5 w-5 text-brun-400 transition-colors group-hover:text-ecru-50"
+							/>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+
+	<section class="border-t border-ardoise/30 px-6 py-16">
+		<div class="mx-auto max-w-4xl">
+			<h2 class="font-display text-2xl font-semibold text-brun-700">En images</h2>
+			<div class="mt-8 grid grid-cols-3 gap-4">
+				{
+					GALLERY_IMAGES.map((img) => (
+						<img
+							src={img.src}
+							alt={img.alt}
+							loading="lazy"
+							class="aspect-square w-full rounded-xl object-cover shadow-sm"
+						/>
+					))
+				}
+			</div>
+		</div>
+	</section>
+
+	{
+		socialPosts.length > 0 && (
+			<section class="border-t border-ardoise/30 bg-sable/50 px-6 py-16">
+				<div class="mx-auto max-w-4xl">
+					<h2 class="font-display text-2xl font-semibold text-brun-700">Dernières publications</h2>
+					<div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+						{socialPosts.map((post) => (
+							<a
+								href={post.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="group flex flex-col overflow-hidden rounded-xl border border-ardoise/30 bg-ecru-50 transition-shadow hover:shadow-md"
+							>
+								{post.image ? (
+									<img
+										src={post.image}
+										alt=""
+										loading="lazy"
+										class="aspect-video w-full object-cover"
+									/>
+								) : (
+									<div class="flex aspect-video w-full items-center justify-center bg-sable">
+										<Icon name={sourceIcon[post.source]} class="h-8 w-8 text-brun-500" />
+									</div>
+								)}
+								<div class="flex flex-1 flex-col p-5">
+									<span class="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-brun-400">
+										<Icon name={sourceIcon[post.source]} class="h-4 w-4" />
+										{post.source === "instagram" ? "Instagram" : "Facebook"}
+									</span>
+									<p class="mt-3 flex-1 text-sm text-brun-600">{excerpt(post.text)}</p>
+									<span class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-rouille-500 group-hover:underline">
+										Voir la publication
+										<Icon name="tabler:arrow-right" class="h-4 w-4" />
+									</span>
+								</div>
+							</a>
+						))}
+					</div>
+				</div>
+			</section>
+		)
+	}
+</Layout>
