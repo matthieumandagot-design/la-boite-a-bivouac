@@ -20,6 +20,10 @@ preview.err.log
 .env
 .env.production
 
+# FAQ live-editée via /admin (public/admin/index.php) : état serveur, jamais commité.
+# Le contenu par défaut/de secours reste dans public/data/faq.default.json.
+public/data/faq.json
+
 # macOS-specific files
 .DS_Store
 
