@@ -15,6 +15,41 @@ import Layout from "../layouts/Layout.astro";
 		</div>
 	</section>
 
+	<section class="border-b border-ardoise/30 bg-ecru-50 px-6 py-12">
+		<div class="mx-auto max-w-3xl">
+			<h2 class="font-display text-xl font-semibold text-brun-600">Vous ne trouvez pas votre réponse ?</h2>
+			<p class="mt-2 text-brun-500">Posez votre question ici, nous y répondrons prochainement.</p>
+
+			<form id="ask-question-form" class="relative mt-6" method="post" novalidate>
+				<label for="visitor-question" class="sr-only">Votre question</label>
+				<textarea
+					id="visitor-question"
+					name="question"
+					rows="3"
+					required
+					maxlength="1000"
+					placeholder="Écrivez votre question ici…"
+					class="w-full rounded-lg border border-ardoise/40 bg-ecru-50 px-4 py-2.5 text-brun-700 focus:border-rouille-400 focus:outline-none focus:ring-2 focus:ring-rouille-400/30"
+				></textarea>
+
+				<!-- Honeypot : caché visuellement (hors écran, pas display:none) pour piéger les bots sans gêner les lecteurs d'écran, qui l'ignorent grâce à aria-hidden/tabindex. -->
+				<div class="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+					<label for="ask-question-website">Laissez ce champ vide</label>
+					<input id="ask-question-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+				</div>
+
+				<div id="ask-question-status" role="status" aria-live="polite" class="mt-3 hidden text-sm"></div>
+
+				<button
+					type="submit"
+					class="mt-4 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-60"
+				>
+					Envoyer ma question
+				</button>
+			</form>
+		</div>
+	</section>
+
 	<section class="bg-ecru-100 px-6 pb-20">
 		<div class="mx-auto max-w-3xl">
 			<p id="faq-status" class="text-brun-500">Chargement des questions…</p>
@@ -119,4 +154,58 @@ import Layout from "../layouts/Layout.astro";
 	}
 
 	loadFaq();
+</script>
+
+<script>
+	const askForm = document.getElementById("ask-question-form") as HTMLFormElement | null;
+	const askStatus = document.getElementById("ask-question-status");
+	const askSubmitButton = askForm?.querySelector<HTMLButtonElement>('button[type="submit"]');
+
+	function showAskStatus(message: string, variant: "success" | "error") {
+		if (!askStatus) return;
+		askStatus.textContent = message;
+		askStatus.classList.remove("hidden", "text-green-700", "text-red-700");
+		askStatus.classList.add(variant === "success" ? "text-green-700" : "text-red-700");
+	}
+
+	askForm?.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		if (!askForm || !askSubmitButton) return;
+
+		askSubmitButton.disabled = true;
+		askSubmitButton.textContent = "Envoi en cours…";
+
+		try {
+			const response = await fetch("/ask-question.php", {
+				method: "POST",
+				body: new FormData(askForm),
+				headers: { Accept: "application/json" },
+			});
+
+			let data: { success?: boolean; error?: string } = {};
+			try {
+				data = await response.json();
+			} catch {
+				// réponse non-JSON, on retombe sur le statut HTTP
+			}
+
+			if (response.ok && data.success) {
+				showAskStatus("Merci, votre question a bien été envoyée !", "success");
+				askForm.reset();
+			} else {
+				showAskStatus(
+					data.error ?? "Une erreur est survenue lors de l'envoi. Merci de réessayer.",
+					"error",
+				);
+			}
+		} catch {
+			showAskStatus(
+				"Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.",
+				"error",
+			);
+		} finally {
+			askSubmitButton.disabled = false;
+			askSubmitButton.textContent = "Envoyer ma question";
+		}
+	});
 </script>

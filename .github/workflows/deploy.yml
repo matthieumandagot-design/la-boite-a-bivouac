@@ -57,7 +57,9 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
           server-dir: ./laboiteabivouac/
-          # data/faq.json est écrit en live par l'admin PHP (voir public/admin/index.php) :
-          # jamais commité, donc exclu du déploiement pour ne pas être supprimé par ce sync.
+          # data/faq.json et data/questions.json sont écrits en live par le PHP
+          # (voir public/admin/index.php et public/ask-question.php) : jamais
+          # commités, donc exclus du déploiement pour ne pas être supprimés par ce sync.
           exclude: |
             **/data/faq.json
+            **/data/questions.json

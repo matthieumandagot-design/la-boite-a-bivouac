@@ -71,6 +71,7 @@ $csrfToken = $_SESSION['csrf_token'];
 $dataDir = __DIR__ . '/../data';
 $liveFaqPath = $dataDir . '/faq.json';
 $defaultFaqPath = $dataDir . '/faq.default.json';
+$questionsPath = $dataDir . '/questions.json';
 
 /**
  * @return array<int, array{question: string, answer: string}>
@@ -86,9 +87,46 @@ function loadFaqItems(string $liveFaqPath, string $defaultFaqPath): array
 	return is_array($decoded) ? $decoded : [];
 }
 
+/**
+ * @return array<int, array{id: string, question: string, submittedAt: string, status: string, answer: ?string, answeredAt: ?string}>
+ */
+function loadQuestions(string $path): array
+{
+	if (!is_file($path)) {
+		return [];
+	}
+
+	$decoded = json_decode((string) file_get_contents($path), true);
+	return is_array($decoded) ? $decoded : [];
+}
+
+function saveJsonFile(string $dataDir, string $path, array $data): bool
+{
+	if (!is_dir($dataDir)) {
+		@mkdir($dataDir, 0755, true);
+	}
+
+	if (!is_dir($dataDir) || !is_writable($dataDir)) {
+		return false;
+	}
+
+	$encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	if ($encoded === false) {
+		return false;
+	}
+
+	return file_put_contents($path, $encoded, LOCK_EX) !== false;
+}
+
 function e(string $value): string
 {
 	return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+}
+
+function formatSubmittedAt(string $isoDate): string
+{
+	$timestamp = strtotime($isoDate);
+	return $timestamp === false ? $isoDate : date('d/m/Y à H:i', $timestamp);
 }
 
 $flashMessage = null;
@@ -123,16 +161,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 			$updatedItems[] = ['question' => $newQuestion, 'answer' => $newAnswer];
 		}
 
-		if (!is_dir($dataDir)) {
-			@mkdir($dataDir, 0755, true);
-		}
-
-		$encoded = json_encode($updatedItems, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-		if ($encoded === false || !is_dir($dataDir) || !is_writable($dataDir)) {
+		if (!saveJsonFile($dataDir, $liveFaqPath, $updatedItems)) {
 			$flashError = "Impossible d'enregistrer : le dossier data est introuvable ou non accessible en écriture.";
-		} elseif (file_put_contents($liveFaqPath, $encoded, LOCK_EX) === false) {
-			$flashError = "Échec de l'écriture du fichier.";
 		} else {
 			header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?saved=1');
 			exit;
@@ -140,11 +170,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 	}
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'handle_question') {
+	if (!hash_equals($csrfToken, $_POST['csrf_token'] ?? '')) {
+		$flashError = 'Session expirée, merci de réessayer.';
+	} else {
+		$questionId = (string) ($_POST['question_id'] ?? '');
+		$do = (string) ($_POST['do'] ?? '');
+		$questions = loadQuestions($questionsPath);
+
+		$questionFound = false;
+		$updatedQuestions = [];
+
+		foreach ($questions as $entry) {
+			if (($entry['id'] ?? '') !== $questionId) {
+				$updatedQuestions[] = $entry;
+				continue;
+			}
+
+			$questionFound = true;
+
+			if ($do === 'delete') {
+				// Question omise du tableau reconstruit : suppression définitive.
+				continue;
+			}
+
+			if ($do === 'publish') {
+				$publishedQuestion = trim((string) ($_POST['question_text'] ?? $entry['question'] ?? ''));
+				$answer = trim((string) ($_POST['answer'] ?? ''));
+
+				if ($publishedQuestion === '' || $answer === '') {
+					$flashError = "La question et la réponse sont requises pour publier dans la FAQ.";
+					$updatedQuestions[] = $entry;
+					continue;
+				}
+
+				$faqItems = loadFaqItems($liveFaqPath, $defaultFaqPath);
+				$faqItems[] = ['question' => $publishedQuestion, 'answer' => $answer];
+
+				if (!saveJsonFile($dataDir, $liveFaqPath, $faqItems)) {
+					$flashError = "Impossible de publier dans la FAQ : le dossier data est introuvable ou non accessible en écriture.";
+					$updatedQuestions[] = $entry;
+					continue;
+				}
+
+				$entry['status'] = 'answered';
+				$entry['question'] = $publishedQuestion;
+				$entry['answer'] = $answer;
+				$entry['answeredAt'] = gmdate('c');
+			}
+
+			$updatedQuestions[] = $entry;
+		}
+
+		if ($questionFound && $flashError === null) {
+			if (!saveJsonFile($dataDir, $questionsPath, $updatedQuestions)) {
+				$flashError = "Impossible d'enregistrer : le dossier data est introuvable ou non accessible en écriture.";
+			} else {
+				header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?saved=1');
+				exit;
+			}
+		}
+	}
+}
+
 if (($_GET['saved'] ?? '') === '1') {
-	$flashMessage = 'FAQ mise à jour.';
+	$flashMessage = 'Enregistré.';
 }
 
 $faqItems = loadFaqItems($liveFaqPath, $defaultFaqPath);
+$allQuestions = loadQuestions($questionsPath);
+$pendingQuestions = array_filter($allQuestions, static fn(array $q): bool => ($q['status'] ?? 'pending') !== 'answered');
+$answeredQuestions = array_filter($allQuestions, static fn(array $q): bool => ($q['status'] ?? 'pending') === 'answered');
 ?>
 <!doctype html>
 <html lang="fr">
@@ -170,60 +266,158 @@ $faqItems = loadFaqItems($liveFaqPath, $defaultFaqPath);
 				</p>
 			<?php endif; ?>
 
-			<form method="post">
-				<input type="hidden" name="action" value="save_faq" />
-				<input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+			<section style="margin-bottom:3rem;">
+				<h2 style="font-size:1.25rem;font-weight:700;margin:0 0 .35rem;">
+					Questions des visiteurs
+					<?php if ($pendingQuestions !== []): ?>
+						<span style="display:inline-flex;align-items:center;justify-content:center;min-width:1.5rem;height:1.5rem;padding:0 .4rem;border-radius:9999px;background:#b85438;color:#f5ecd8;font-size:.8rem;font-weight:700;vertical-align:middle;"><?= count($pendingQuestions) ?></span>
+					<?php endif; ?>
+				</h2>
+				<p style="color:#546754;font-size:.9rem;margin:0 0 1.5rem;">
+					Posées depuis le formulaire de la page FAQ. Publier une réponse l'ajoute directement à la FAQ publique.
+				</p>
 
-				<?php foreach ($faqItems as $index => $item): ?>
-					<fieldset style="border:1px solid #c0c8c8;border-radius:.75rem;padding:1.25rem;margin-bottom:1.25rem;">
-						<legend style="font-weight:700;padding:0 .5rem;">Question <?= (int) $index + 1 ?></legend>
+				<?php if ($pendingQuestions === []): ?>
+					<p style="color:#7f8a77;font-style:italic;">Aucune question en attente.</p>
+				<?php endif; ?>
+
+				<?php foreach ($pendingQuestions as $entry): ?>
+					<form method="post" style="border:1px solid #c0c8c8;border-radius:.75rem;padding:1.25rem;margin-bottom:1.25rem;background:#fdfaf2;">
+						<input type="hidden" name="action" value="handle_question" />
+						<input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+						<input type="hidden" name="question_id" value="<?= e((string) $entry['id']) ?>" />
+
+						<p style="font-size:.8rem;color:#7f8a77;margin:0 0 .75rem;">
+							Posée le <?= e(formatSubmittedAt((string) ($entry['submittedAt'] ?? ''))) ?>
+						</p>
 
 						<label style="display:block;font-weight:600;font-size:.875rem;margin-bottom:.35rem;">Question</label>
 						<textarea
-							name="question[<?= (int) $index ?>]"
+							name="question_text"
 							rows="2"
 							style="width:100%;box-sizing:border-box;padding:.6rem;margin-bottom:1rem;font-family:inherit;font-size:1rem;border:1px solid #c0c8c8;border-radius:.375rem;"
-						><?= e((string) ($item['question'] ?? '')) ?></textarea>
+						><?= e((string) ($entry['question'] ?? '')) ?></textarea>
+
+						<label style="display:block;font-weight:600;font-size:.875rem;margin-bottom:.35rem;">Votre réponse</label>
+						<textarea
+							name="answer"
+							rows="4"
+							placeholder="Rédigez la réponse à publier dans la FAQ…"
+							style="width:100%;box-sizing:border-box;padding:.6rem;margin-bottom:1rem;font-family:inherit;font-size:1rem;border:1px solid #c0c8c8;border-radius:.375rem;"
+						></textarea>
+
+						<div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+							<button
+								type="submit"
+								name="do"
+								value="publish"
+								style="background:#122218;color:#f5ecd8;border:none;border-radius:9999px;padding:.6rem 1.25rem;font-weight:600;font-size:.9rem;cursor:pointer;"
+							>
+								Publier dans la FAQ
+							</button>
+							<button
+								type="submit"
+								name="do"
+								value="delete"
+								onclick="return confirm('Supprimer définitivement cette question ?');"
+								style="background:transparent;color:#8b1c1c;border:1px solid #8b1c1c;border-radius:9999px;padding:.6rem 1.25rem;font-weight:600;font-size:.9rem;cursor:pointer;"
+							>
+								Supprimer
+							</button>
+						</div>
+					</form>
+				<?php endforeach; ?>
+
+				<?php if ($answeredQuestions !== []): ?>
+					<details style="margin-top:1.5rem;">
+						<summary style="cursor:pointer;font-weight:600;color:#546754;">
+							Questions déjà traitées (<?= count($answeredQuestions) ?>)
+						</summary>
+						<?php foreach ($answeredQuestions as $entry): ?>
+							<div style="border:1px solid #e4e0d8;border-radius:.75rem;padding:1rem 1.25rem;margin-top:1rem;">
+								<p style="font-size:.8rem;color:#7f8a77;margin:0 0 .5rem;">
+									Posée le <?= e(formatSubmittedAt((string) ($entry['submittedAt'] ?? ''))) ?>
+								</p>
+								<p style="font-weight:600;margin:0 0 .5rem;"><?= e((string) $entry['question']) ?></p>
+								<p style="color:#546754;margin:0 0 1rem;"><?= e((string) ($entry['answer'] ?? '')) ?></p>
+								<form method="post">
+									<input type="hidden" name="action" value="handle_question" />
+									<input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+									<input type="hidden" name="question_id" value="<?= e((string) $entry['id']) ?>" />
+									<button
+										type="submit"
+										name="do"
+										value="delete"
+										onclick="return confirm('Supprimer cette question de la liste ?');"
+										style="background:transparent;color:#8b1c1c;border:1px solid #8b1c1c;border-radius:9999px;padding:.4rem 1rem;font-weight:600;font-size:.85rem;cursor:pointer;"
+									>
+										Supprimer de la liste
+									</button>
+								</form>
+							</div>
+						<?php endforeach; ?>
+					</details>
+				<?php endif; ?>
+			</section>
+
+			<section>
+				<h2 style="font-size:1.25rem;font-weight:700;margin:0 0 1.5rem;">FAQ publiée</h2>
+
+				<form method="post">
+					<input type="hidden" name="action" value="save_faq" />
+					<input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+
+					<?php foreach ($faqItems as $index => $item): ?>
+						<fieldset style="border:1px solid #c0c8c8;border-radius:.75rem;padding:1.25rem;margin-bottom:1.25rem;">
+							<legend style="font-weight:700;padding:0 .5rem;">Question <?= (int) $index + 1 ?></legend>
+
+							<label style="display:block;font-weight:600;font-size:.875rem;margin-bottom:.35rem;">Question</label>
+							<textarea
+								name="question[<?= (int) $index ?>]"
+								rows="2"
+								style="width:100%;box-sizing:border-box;padding:.6rem;margin-bottom:1rem;font-family:inherit;font-size:1rem;border:1px solid #c0c8c8;border-radius:.375rem;"
+							><?= e((string) ($item['question'] ?? '')) ?></textarea>
+
+							<label style="display:block;font-weight:600;font-size:.875rem;margin-bottom:.35rem;">Réponse</label>
+							<textarea
+								name="answer[<?= (int) $index ?>]"
+								rows="4"
+								style="width:100%;box-sizing:border-box;padding:.6rem;margin-bottom:1rem;font-family:inherit;font-size:1rem;border:1px solid #c0c8c8;border-radius:.375rem;"
+							><?= e((string) ($item['answer'] ?? '')) ?></textarea>
+
+							<label style="display:flex;align-items:center;gap:.5rem;color:#8b1c1c;font-size:.9rem;">
+								<input type="checkbox" name="delete[<?= (int) $index ?>]" value="1" />
+								Supprimer cette question
+							</label>
+						</fieldset>
+					<?php endforeach; ?>
+
+					<fieldset style="border:2px dashed #b88a18;border-radius:.75rem;padding:1.25rem;margin-bottom:1.5rem;">
+						<legend style="font-weight:700;padding:0 .5rem;">Ajouter une question</legend>
+
+						<label style="display:block;font-weight:600;font-size:.875rem;margin-bottom:.35rem;">Question</label>
+						<textarea
+							name="new_question"
+							rows="2"
+							style="width:100%;box-sizing:border-box;padding:.6rem;margin-bottom:1rem;font-family:inherit;font-size:1rem;border:1px solid #c0c8c8;border-radius:.375rem;"
+						></textarea>
 
 						<label style="display:block;font-weight:600;font-size:.875rem;margin-bottom:.35rem;">Réponse</label>
 						<textarea
-							name="answer[<?= (int) $index ?>]"
+							name="new_answer"
 							rows="4"
-							style="width:100%;box-sizing:border-box;padding:.6rem;margin-bottom:1rem;font-family:inherit;font-size:1rem;border:1px solid #c0c8c8;border-radius:.375rem;"
-						><?= e((string) ($item['answer'] ?? '')) ?></textarea>
-
-						<label style="display:flex;align-items:center;gap:.5rem;color:#8b1c1c;font-size:.9rem;">
-							<input type="checkbox" name="delete[<?= (int) $index ?>]" value="1" />
-							Supprimer cette question
-						</label>
+							style="width:100%;box-sizing:border-box;padding:.6rem;font-family:inherit;font-size:1rem;border:1px solid #c0c8c8;border-radius:.375rem;"
+						></textarea>
 					</fieldset>
-				<?php endforeach; ?>
 
-				<fieldset style="border:2px dashed #b88a18;border-radius:.75rem;padding:1.25rem;margin-bottom:1.5rem;">
-					<legend style="font-weight:700;padding:0 .5rem;">Ajouter une question</legend>
-
-					<label style="display:block;font-weight:600;font-size:.875rem;margin-bottom:.35rem;">Question</label>
-					<textarea
-						name="new_question"
-						rows="2"
-						style="width:100%;box-sizing:border-box;padding:.6rem;margin-bottom:1rem;font-family:inherit;font-size:1rem;border:1px solid #c0c8c8;border-radius:.375rem;"
-					></textarea>
-
-					<label style="display:block;font-weight:600;font-size:.875rem;margin-bottom:.35rem;">Réponse</label>
-					<textarea
-						name="new_answer"
-						rows="4"
-						style="width:100%;box-sizing:border-box;padding:.6rem;font-family:inherit;font-size:1rem;border:1px solid #c0c8c8;border-radius:.375rem;"
-					></textarea>
-				</fieldset>
-
-				<button
-					type="submit"
-					style="background:#122218;color:#f5ecd8;border:none;border-radius:9999px;padding:.85rem 1.75rem;font-weight:600;font-size:1rem;cursor:pointer;"
-				>
-					Enregistrer les modifications
-				</button>
-			</form>
+					<button
+						type="submit"
+						style="background:#122218;color:#f5ecd8;border:none;border-radius:9999px;padding:.85rem 1.75rem;font-weight:600;font-size:1rem;cursor:pointer;"
+					>
+						Enregistrer les modifications
+					</button>
+				</form>
+			</section>
 		</main>
 	</body>
 </html>

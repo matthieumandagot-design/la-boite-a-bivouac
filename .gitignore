@@ -24,6 +24,10 @@ preview.err.log
 # Le contenu par défaut/de secours reste dans public/data/faq.default.json.
 public/data/faq.json
 
+# Questions envoyées par les visiteurs depuis /faq (public/ask-question.php) : état
+# serveur, jamais commité.
+public/data/questions.json
+
 # macOS-specific files
 .DS_Store
 
