@@ -117,7 +117,7 @@ const {
 
   position:   relative;
   overflow:   hidden;
-  min-height: 560px;
+  min-height: 100vh;
 }
 
 /* ────────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ const {
 
 .hero__title {
   font-family:   'Inter', system-ui, sans-serif;
-  font-size:     clamp(2.4rem, 5vw, 3.6rem);
+  font-size:     clamp(2rem, 5vw, 4rem);
   font-weight:   800;
   line-height:   1.1;
   color:         var(--dark);
@@ -308,14 +308,17 @@ const {
    RESPONSIVE
 ──────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .hero {
+    /* 100svh (small viewport height) plutôt que 100vh : exclut la zone
+       recouverte par les barres d'adresse/navigation des navigateurs
+       mobiles, pour éviter que le hero déborde sous le pli au chargement. */
+    min-height: 100svh;
+  }
+
   .hero__inner {
     grid-template-columns: 1fr;
     padding: 3.5rem 1.25rem 3rem;
     gap: 2rem;
-  }
-
-  .hero__title {
-    font-size: 2.4rem;
   }
 }
 

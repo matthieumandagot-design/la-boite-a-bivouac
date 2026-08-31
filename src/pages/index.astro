@@ -49,7 +49,7 @@ const PLAY_TERRAINS = [
 
 	<section class="bg-ecru-100 px-6 py-20">
 		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+			<h2 class="font-display text-fluid-h2 font-semibold text-brun-700">
 				Un principe simple.
 			</h2>
 			<div class="mt-10 grid gap-8 sm:grid-cols-3">
@@ -59,7 +59,7 @@ const PLAY_TERRAINS = [
 							<span class="flex h-12 w-12 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
 								<Icon name={item.icon} class="h-6 w-6" />
 							</span>
-							<h3 class="mt-5 font-display text-lg font-semibold text-brun-700">{item.title}</h3>
+							<h3 class="mt-5 font-display text-fluid-h3 font-semibold text-brun-700">{item.title}</h3>
 							<p class="mt-2 text-brun-500">{item.text}</p>
 						</article>
 					))
@@ -70,7 +70,7 @@ const PLAY_TERRAINS = [
 
 	<section class="bg-graphite px-6 py-20 text-ecru-50">
 		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold sm:text-3xl">Un module, des terrains</h2>
+			<h2 class="font-display text-fluid-h2 font-semibold">Un module, des terrains</h2>
 			<div class="mt-10 grid gap-8 sm:grid-cols-3">
 				{
 					PLAY_TERRAINS.map((terrain) => (
@@ -79,7 +79,7 @@ const PLAY_TERRAINS = [
 								<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
 							</span>
 							<div>
-								<h3 class="font-display text-lg font-semibold">{terrain.title}</h3>
+								<h3 class="font-display text-fluid-h3 font-semibold">{terrain.title}</h3>
 								<p class="mt-1 text-ecru-100/80">{terrain.text}</p>
 							</div>
 						</div>
@@ -98,7 +98,7 @@ const PLAY_TERRAINS = [
 				class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
 			/>
 			<div>
-				<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+				<h2 class="font-display text-fluid-h2 font-semibold text-brun-700">
 					Déjà testée en conditions réelles.
 				</h2>
 				<p class="mt-4 text-brun-500">
@@ -119,7 +119,7 @@ const PLAY_TERRAINS = [
 	<section class="bg-ecru-100 px-6 py-20 text-center">
 		<div class="mx-auto max-w-2xl">
 			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500">LE PRIX</p>
-			<p class="mt-4 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+			<p class="mt-4 font-display text-fluid-h2 font-semibold text-brun-700">
 				2&nbsp;000&nbsp;€.
 			</p>
 			<p class="mt-4 text-brun-500">
@@ -135,7 +135,7 @@ const PLAY_TERRAINS = [
 
 	<section class="bg-graphite px-6 py-20 text-center text-ecru-50">
 		<div class="mx-auto max-w-2xl">
-			<h2 class="font-display text-2xl font-semibold sm:text-3xl">
+			<h2 class="font-display text-fluid-h2 font-semibold">
 				Vous avez une remorque. On a une boîte.
 			</h2>
 			<p class="mt-4 text-ecru-100/80">

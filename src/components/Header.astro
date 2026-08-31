@@ -52,7 +52,7 @@ const socialIconPaths: Record<string, string> = {
 			</ul>
 		</nav>
 
-		<ul class="hidden items-center gap-3 md:flex">
+		<ul class="flex items-center">
 			{
 				NAVBAR_SOCIAL_LINKS.map((social) => (
 					<li>
@@ -61,7 +61,7 @@ const socialIconPaths: Record<string, string> = {
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label={social.label}
-							class="block text-black opacity-60 transition-opacity duration-200 ease-in-out hover:opacity-100"
+							class="flex h-11 w-11 items-center justify-center text-black opacity-60 transition-opacity duration-200 ease-in-out hover:opacity-100"
 						>
 							<svg
 								width="20"
@@ -83,7 +83,7 @@ const socialIconPaths: Record<string, string> = {
 		<button
 			id="nav-toggle"
 			type="button"
-			class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-brun-600 transition-colors hover:bg-sable md:hidden"
+			class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-brun-600 transition-colors hover:bg-sable md:hidden"
 			aria-expanded="false"
 			aria-controls="mobile-nav"
 			aria-label="Ouvrir le menu"
@@ -102,40 +102,13 @@ const socialIconPaths: Record<string, string> = {
 							href={link.href}
 							aria-current={isActive(link.href) ? "page" : undefined}
 							class:list={[
-								"block rounded-lg px-4 py-2.5 font-medium transition-colors",
+								"block rounded-lg px-4 py-3 font-medium transition-colors",
 								isActive(link.href)
 									? "bg-mousse text-sable"
 									: "text-brun-600 hover:bg-sable",
 							]}
 						>
 							{link.label}
-						</a>
-					</li>
-				))
-			}
-		</ul>
-		<ul class="flex items-center justify-center gap-3 border-t border-ardoise/30 px-6 py-4">
-			{
-				NAVBAR_SOCIAL_LINKS.map((social) => (
-					<li>
-						<a
-							href={social.href}
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label={social.label}
-							class="block text-black opacity-60 transition-opacity duration-200 ease-in-out hover:opacity-100"
-						>
-							<svg
-								width="20"
-								height="20"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								set:html={socialIconPaths[social.icon]}
-							/>
 						</a>
 					</li>
 				))
