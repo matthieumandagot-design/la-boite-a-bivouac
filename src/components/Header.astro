@@ -23,13 +23,13 @@ const socialIconPaths: Record<string, string> = {
 	<div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 sm:py-4">
 		<a
 			href="/"
-			class="flex min-w-0 shrink items-center gap-2 justify-self-start font-display text-base font-semibold tracking-tight text-brun-600 sm:text-lg"
+			class="col-start-1 flex min-w-0 shrink items-center gap-2 justify-self-start font-display text-base font-semibold tracking-tight text-brun-600 sm:text-lg"
 		>
 			<img src="/images/logo-badge.png" alt="" aria-hidden="true" class="h-9 w-auto shrink-0 object-contain sm:h-12" />
 			<span class="truncate">{SITE_TITLE}</span>
 		</a>
 
-		<nav aria-label="Navigation principale" class="hidden justify-self-center md:block">
+		<nav aria-label="Navigation principale" class="col-start-2 hidden justify-self-center md:block">
 			<ul class="flex gap-1 text-sm">
 				{
 					NAV_LINKS.map((link) => (
@@ -52,7 +52,7 @@ const socialIconPaths: Record<string, string> = {
 			</ul>
 		</nav>
 
-		<div class="flex items-center justify-self-end gap-3">
+		<div class="col-start-3 flex items-center justify-self-end gap-3">
 			<ul class="hidden items-center gap-3 md:flex">
 				{
 					NAVBAR_SOCIAL_LINKS.map((social) => (
