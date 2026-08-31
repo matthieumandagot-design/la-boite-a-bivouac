@@ -31,28 +31,11 @@
 
 html {
 	scroll-behavior: smooth;
-	max-width: 100%;
-	overflow-x: hidden;
 }
 
 body {
 	background-color: var(--color-ecru-50);
 	color: var(--color-brun-700);
-	max-width: 100%;
-	overflow-x: hidden;
-}
-
-/* Typographie fluide : mise à l'échelle continue entre les breakpoints
-   plutôt que des sauts de taille fixes, pour rester lisible et ne jamais
-   déborder du viewport (320px → 1920px+). */
-@utility text-fluid-h1 {
-	font-size: clamp(2rem, 5vw, 4rem);
-}
-@utility text-fluid-h2 {
-	font-size: clamp(1.5rem, 3vw, 2.5rem);
-}
-@utility text-fluid-h3 {
-	font-size: clamp(1.1rem, 2vw, 1.5rem);
 }
 
 /* Micro-typo de la charte graphique : labels/boutons courts en capitales */
