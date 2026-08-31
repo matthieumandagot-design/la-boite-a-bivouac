@@ -15,7 +15,7 @@ export const NAV_LINKS = [
 export const NAVBAR_SOCIAL_LINKS = [
 	{ href: "https://www.instagram.com/laboiteabivouac", label: "Instagram", icon: "instagram" },
 	{ href: "https://www.facebook.com/laboiteabivouac", label: "Facebook", icon: "facebook" },
-	{ href: "https://www.linkedin.com/in/matthieumandagot", label: "LinkedIn", icon: "linkedin" },
+	{ href: "https://www.linkedin.com/company/laboiteabivouac", label: "LinkedIn", icon: "linkedin" },
 ];
 
 export const SOCIAL_LINKS = [
