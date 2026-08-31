@@ -20,16 +20,16 @@ const socialIconPaths: Record<string, string> = {
 ---
 
 <header class="border-b border-ardoise/30 bg-ecru-50/95 backdrop-blur sticky top-0 z-50">
-	<div class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-6 py-3 sm:py-4">
+	<div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 sm:py-4">
 		<a
 			href="/"
-			class="flex min-w-0 shrink items-center gap-2 font-display text-base font-semibold tracking-tight text-brun-600 sm:text-lg"
+			class="flex min-w-0 shrink items-center gap-2 justify-self-start font-display text-base font-semibold tracking-tight text-brun-600 sm:text-lg"
 		>
 			<img src="/images/logo-badge.png" alt="" aria-hidden="true" class="h-9 w-auto shrink-0 object-contain sm:h-12" />
 			<span class="truncate">{SITE_TITLE}</span>
 		</a>
 
-		<nav aria-label="Navigation principale" class="hidden md:block">
+		<nav aria-label="Navigation principale" class="hidden justify-self-center md:block">
 			<ul class="flex gap-1 text-sm">
 				{
 					NAV_LINKS.map((link) => (
@@ -52,45 +52,47 @@ const socialIconPaths: Record<string, string> = {
 			</ul>
 		</nav>
 
-		<ul class="hidden items-center gap-3 md:flex">
-			{
-				NAVBAR_SOCIAL_LINKS.map((social) => (
-					<li>
-						<a
-							href={social.href}
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label={social.label}
-							class="block text-black opacity-60 transition-opacity duration-200 ease-in-out hover:opacity-100"
-						>
-							<svg
-								width="20"
-								height="20"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								set:html={socialIconPaths[social.icon]}
-							/>
-						</a>
-					</li>
-				))
-			}
-		</ul>
+		<div class="flex items-center justify-self-end gap-3">
+			<ul class="hidden items-center gap-3 md:flex">
+				{
+					NAVBAR_SOCIAL_LINKS.map((social) => (
+						<li>
+							<a
+								href={social.href}
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label={social.label}
+								class="block text-black opacity-60 transition-opacity duration-200 ease-in-out hover:opacity-100"
+							>
+								<svg
+									width="20"
+									height="20"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									set:html={socialIconPaths[social.icon]}
+								/>
+							</a>
+						</li>
+					))
+				}
+			</ul>
 
-		<button
-			id="nav-toggle"
-			type="button"
-			class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-brun-600 transition-colors hover:bg-sable md:hidden"
-			aria-expanded="false"
-			aria-controls="mobile-nav"
-			aria-label="Ouvrir le menu"
-		>
-			<Icon id="nav-icon-open" name="tabler:menu-2" class="h-6 w-6" />
-			<Icon id="nav-icon-close" name="tabler:x" class="hidden h-6 w-6" />
-		</button>
+			<button
+				id="nav-toggle"
+				type="button"
+				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-brun-600 transition-colors hover:bg-sable md:hidden"
+				aria-expanded="false"
+				aria-controls="mobile-nav"
+				aria-label="Ouvrir le menu"
+			>
+				<Icon id="nav-icon-open" name="tabler:menu-2" class="h-6 w-6" />
+				<Icon id="nav-icon-close" name="tabler:x" class="hidden h-6 w-6" />
+			</button>
+		</div>
 	</div>
 
 	<nav id="mobile-nav" aria-label="Navigation principale (mobile)" class="hidden border-t border-ardoise/30 md:hidden">

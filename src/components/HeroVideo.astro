@@ -117,7 +117,10 @@ const {
 
   position:   relative;
   overflow:   hidden;
-  min-height: 560px;
+  /* Hauteur proportionnelle à la largeur de la fenêtre (ratio ~16:9),
+     avec un plancher et un plafond. min-height (pas height) : la section
+     grandit si le contenu a besoin de plus de place, jamais de recadrage. */
+  min-height: clamp(480px, 56.25vw, 900px);
 }
 
 /* ────────────────────────────────────────────────────────────────
