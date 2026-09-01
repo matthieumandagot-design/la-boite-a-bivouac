@@ -1,0 +1,265 @@
+---
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
+
+const NAV_ITEMS = [
+	{ href: "/admin", label: "Tableau de bord", icon: "🏠" },
+	{ href: "/admin/subscribers", label: "Abonnés", icon: "📧" },
+	{ href: "/admin/send-news", label: "Envoyer une news", icon: "📨" },
+	{ href: "/admin/faq.php", label: "FAQ", icon: "❓" },
+];
+---
+
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex, nofollow" />
+		<title>{title} — Administration · La Boîte à Bivouac</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				font-family: "Inter", system-ui, sans-serif;
+				background: #f4f2ee;
+			}
+			a {
+				color: inherit;
+			}
+		</style>
+	</head>
+	<body>
+		<div
+			id="admin-login-gate"
+			style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#122218;padding:1.5rem;"
+		>
+			<form
+				id="admin-login-form"
+				style="width:100%;max-width:360px;background:#fdfaf2;border-radius:1rem;padding:2rem;box-shadow:0 8px 28px rgba(18,34,24,0.35);"
+			>
+				<p style="text-transform:uppercase;letter-spacing:.08em;font-size:.7rem;font-weight:700;color:#b88a18;margin:0 0 .35rem;">
+					La Boîte à Bivouac
+				</p>
+				<h1 style="font-size:1.35rem;font-weight:700;margin:0 0 1.5rem;color:#122218;">Administration</h1>
+
+				<label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.35rem;color:#122218;">
+					Identifiant
+				</label>
+				<input
+					id="admin-username"
+					type="text"
+					autocomplete="username"
+					required
+					style="width:100%;padding:.65rem .75rem;margin-bottom:1rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:1rem;"
+				/>
+
+				<label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.35rem;color:#122218;">
+					Mot de passe
+				</label>
+				<input
+					id="admin-password"
+					type="password"
+					autocomplete="current-password"
+					required
+					style="width:100%;padding:.65rem .75rem;margin-bottom:1.25rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:1rem;"
+				/>
+
+				<p id="admin-login-error" style="display:none;color:#8b1c1c;font-size:.85rem;margin:0 0 1rem;"></p>
+
+				<button
+					type="submit"
+					style="width:100%;background:#e8b428;color:#0a1610;border:none;border-radius:9999px;padding:.75rem;font-weight:700;font-size:.95rem;cursor:pointer;"
+				>
+					Se connecter
+				</button>
+			</form>
+		</div>
+
+		<div id="admin-shell" style="display:none;min-height:100vh;">
+			<aside
+				style="width:220px;flex-shrink:0;background:#122218;color:#e8e0c8;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;"
+			>
+				<div style="padding:1.5rem 1.25rem;border-bottom:1px solid rgba(232,224,200,0.12);">
+					<p style="text-transform:uppercase;letter-spacing:.08em;font-size:.65rem;font-weight:700;color:#e8b428;margin:0 0 .2rem;">
+						La Boîte à Bivouac
+					</p>
+					<p style="font-weight:700;font-size:1rem;margin:0;">Administration</p>
+				</div>
+				<nav style="flex:1;padding:1rem 0.75rem;">
+					{
+						NAV_ITEMS.map((item) => {
+							const active = currentPath === item.href;
+							return (
+								<a
+									href={item.href}
+									style={`display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:${active ? "#0a1610" : "#e8e0c8"};background:${active ? "#e8b428" : "transparent"};`}
+								>
+									<span aria-hidden="true">{item.icon}</span>
+									{item.label}
+								</a>
+							);
+						})
+					}
+					<a
+						href="/"
+						target="_blank"
+						rel="noopener"
+						style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-top:.75rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#babba8;border-top:1px solid rgba(232,224,200,0.12);padding-top:1rem;"
+					>
+						<span aria-hidden="true">🌐</span>
+						Voir le site
+					</a>
+				</nav>
+				<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);">
+					<button
+						id="admin-logout"
+						style="width:100%;background:transparent;border:1px solid rgba(232,224,200,0.3);color:#e8e0c8;border-radius:.5rem;padding:.5rem;font-size:.85rem;cursor:pointer;"
+					>
+						Déconnexion
+					</button>
+				</div>
+			</aside>
+
+			<div style="margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;">
+				<header
+					style="background:#fff;border-bottom:1px solid #e4e0d8;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;"
+				>
+					<h1 style="font-size:1.1rem;font-weight:700;color:#122218;margin:0;">{title}</h1>
+				</header>
+				<main style="flex:1;padding:2rem;">
+					<slot />
+				</main>
+			</div>
+		</div>
+
+		<script>
+			const STORAGE_KEY = "lbb_admin_credentials";
+
+			type Credentials = { username: string; password: string };
+
+			function getStoredCredentials(): Credentials | null {
+				try {
+					const raw = sessionStorage.getItem(STORAGE_KEY);
+					return raw ? (JSON.parse(raw) as Credentials) : null;
+				} catch {
+					return null;
+				}
+			}
+
+			function setStoredCredentials(username: string, password: string) {
+				sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ username, password }));
+			}
+
+			function clearStoredCredentials() {
+				sessionStorage.removeItem(STORAGE_KEY);
+			}
+
+			function authHeader(): string | null {
+				const creds = getStoredCredentials();
+				if (!creds) return null;
+				return "Basic " + btoa(`${creds.username}:${creds.password}`);
+			}
+
+			const loginGate = document.getElementById("admin-login-gate")!;
+			const shell = document.getElementById("admin-shell")!;
+
+			function showLoginGate() {
+				loginGate.style.display = "flex";
+				shell.style.display = "none";
+			}
+
+			function showShell() {
+				loginGate.style.display = "none";
+				shell.style.display = "flex";
+			}
+
+			async function adminFetch(url: string, options: RequestInit = {}): Promise<Response> {
+				const header = authHeader();
+				const headers = new Headers(options.headers);
+				if (header) headers.set("Authorization", header);
+				const response = await fetch(url, { ...options, headers });
+				if (response.status === 401) {
+					clearStoredCredentials();
+					showLoginGate();
+				}
+				return response;
+			}
+
+			// Exposé pour les scripts des pages admin (tableau de bord, abonnés, envoi de news).
+			(window as any).adminFetch = adminFetch;
+
+			async function verifyAndReveal() {
+				const creds = getStoredCredentials();
+				if (!creds) {
+					showLoginGate();
+					return;
+				}
+
+				try {
+					const response = await fetch("/api/subscribers.php", {
+						headers: { Authorization: "Basic " + btoa(`${creds.username}:${creds.password}`) },
+					});
+					if (response.ok) {
+						showShell();
+						window.dispatchEvent(new CustomEvent("admin-authenticated"));
+					} else {
+						clearStoredCredentials();
+						showLoginGate();
+					}
+				} catch {
+					// Hors-ligne : on garde la session ouverte plutôt que de forcer une reconnexion.
+					showShell();
+				}
+			}
+
+			const loginForm = document.getElementById("admin-login-form") as HTMLFormElement;
+			const loginError = document.getElementById("admin-login-error")!;
+
+			loginForm.addEventListener("submit", async (event) => {
+				event.preventDefault();
+				const username = (document.getElementById("admin-username") as HTMLInputElement).value;
+				const password = (document.getElementById("admin-password") as HTMLInputElement).value;
+
+				loginError.style.display = "none";
+
+				try {
+					const response = await fetch("/api/subscribers.php", {
+						headers: { Authorization: "Basic " + btoa(`${username}:${password}`) },
+					});
+
+					if (response.ok) {
+						setStoredCredentials(username, password);
+						showShell();
+						window.dispatchEvent(new CustomEvent("admin-authenticated"));
+					} else {
+						loginError.textContent = "Identifiant ou mot de passe incorrect.";
+						loginError.style.display = "block";
+					}
+				} catch {
+					loginError.textContent = "Impossible de contacter le serveur.";
+					loginError.style.display = "block";
+				}
+			});
+
+			document.getElementById("admin-logout")?.addEventListener("click", () => {
+				clearStoredCredentials();
+				showLoginGate();
+			});
+
+			verifyAndReveal();
+		</script>
+	</body>
+</html>

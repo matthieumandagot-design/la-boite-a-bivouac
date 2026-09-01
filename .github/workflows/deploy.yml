@@ -49,6 +49,14 @@ jobs:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
 
+      - name: Write newsletter API credentials
+        run: node scripts/write-api-config.mjs
+        env:
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          NEWSLETTER_TOKEN_SALT: ${{ secrets.NEWSLETTER_TOKEN_SALT }}
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -57,9 +65,11 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
           server-dir: ./laboiteabivouac/
-          # data/faq.json et data/questions.json sont écrits en live par le PHP
-          # (voir public/admin/index.php et public/ask-question.php) : jamais
+          # data/faq.json, data/questions.json et data/subscribers.json sont
+          # écrits en live par le PHP (voir public/admin/faq.php,
+          # public/ask-question.php et public/api/subscribe.php) : jamais
           # commités, donc exclus du déploiement pour ne pas être supprimés par ce sync.
           exclude: |
             **/data/faq.json
             **/data/questions.json
+            **/data/subscribers.json

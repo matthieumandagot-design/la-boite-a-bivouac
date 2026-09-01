@@ -15,7 +15,7 @@ function escapeSingleQuoted(value) {
 async function main() {
 	if (!ADMIN_USERNAME || !ADMIN_PASSWORD_HASH) {
 		console.warn(
-			"[write-admin-config] ADMIN_USERNAME ou ADMIN_PASSWORD_HASH manquant : dist/admin/config.php non généré, /admin répondra 503.",
+			"[write-admin-config] ADMIN_USERNAME ou ADMIN_PASSWORD_HASH manquant : dist/admin/config.php non généré, /admin/faq.php répondra 503.",
 		);
 		return;
 	}

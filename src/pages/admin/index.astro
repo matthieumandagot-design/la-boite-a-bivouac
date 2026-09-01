@@ -1,0 +1,72 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Tableau de bord">
+	<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.25rem;margin-bottom:2rem;">
+		<div style="background:#fff;border:1px solid #e4e0d8;border-radius:.75rem;padding:1.5rem;">
+			<p style="font-size:.8rem;color:#7f8a77;margin:0 0 .5rem;text-transform:uppercase;letter-spacing:.05em;">
+				Abonnés au total
+			</p>
+			<p id="stat-total" style="font-size:2rem;font-weight:700;color:#122218;margin:0;">—</p>
+		</div>
+		<div style="background:#fff;border:1px solid #e4e0d8;border-radius:.75rem;padding:1.5rem;">
+			<p style="font-size:.8rem;color:#7f8a77;margin:0 0 .5rem;text-transform:uppercase;letter-spacing:.05em;">
+				Abonnés actifs
+			</p>
+			<p id="stat-active" style="font-size:2rem;font-weight:700;color:#122218;margin:0;">—</p>
+		</div>
+		<div style="background:#fff;border:1px solid #e4e0d8;border-radius:.75rem;padding:1.5rem;">
+			<p style="font-size:.8rem;color:#7f8a77;margin:0 0 .5rem;text-transform:uppercase;letter-spacing:.05em;">
+				Dernier inscrit
+			</p>
+			<p id="stat-last" style="font-size:1.1rem;font-weight:700;color:#122218;margin:0;">—</p>
+		</div>
+	</div>
+
+	<div style="display:flex;gap:1rem;flex-wrap:wrap;">
+		<a
+			href="/admin/subscribers"
+			style="background:#122218;color:#f5ecd8;border-radius:9999px;padding:.7rem 1.5rem;font-weight:600;font-size:.9rem;text-decoration:none;"
+		>
+			Gérer les abonnés
+		</a>
+		<a
+			href="/admin/send-news"
+			style="background:#e8b428;color:#0a1610;border-radius:9999px;padding:.7rem 1.5rem;font-weight:600;font-size:.9rem;text-decoration:none;"
+		>
+			Envoyer une news
+		</a>
+	</div>
+</AdminLayout>
+
+<script>
+	type Subscriber = { email: string; created_at: string; status: string };
+
+	async function loadStats() {
+		try {
+			const response = await (window as any).adminFetch("/api/subscribers.php");
+			if (!response.ok) return;
+			const subscribers: Subscriber[] = await response.json();
+
+			const total = subscribers.length;
+			const active = subscribers.filter((s) => s.status === "active").length;
+			const last = subscribers
+				.map((s) => s.created_at)
+				.filter(Boolean)
+				.sort()
+				.at(-1);
+
+			document.getElementById("stat-total")!.textContent = String(total);
+			document.getElementById("stat-active")!.textContent = String(active);
+			document.getElementById("stat-last")!.textContent = last
+				? new Date(last).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
+				: "Aucun";
+		} catch {
+			// Silencieux : les cartes restent sur "—" si l'API est injoignable.
+		}
+	}
+
+	loadStats();
+	window.addEventListener("admin-authenticated", loadStats);
+</script>

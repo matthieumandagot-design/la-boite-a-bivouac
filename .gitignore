@@ -20,13 +20,23 @@ preview.err.log
 .env
 .env.production
 
-# FAQ live-editée via /admin (public/admin/index.php) : état serveur, jamais commité.
+# FAQ live-editée via /admin/faq.php : état serveur, jamais commité.
 # Le contenu par défaut/de secours reste dans public/data/faq.default.json.
 public/data/faq.json
 
 # Questions envoyées par les visiteurs depuis /faq (public/ask-question.php) : état
 # serveur, jamais commité.
 public/data/questions.json
+
+# Abonnés newsletter écrits en live par public/api/subscribe.php et
+# désinscriptions par public/api/unsubscribe.php : état serveur, jamais commité.
+public/data/subscribers.json
+
+# Config générée au déploiement à partir des secrets GitHub Actions (voir
+# scripts/write-admin-config.mjs et scripts/write-api-config.mjs) : n'existe
+# jamais dans le repo, seulement dans dist/ après build en CI.
+public/admin/config.php
+public/api/config.php
 
 # macOS-specific files
 .DS_Store

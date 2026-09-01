@@ -1,0 +1,173 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Envoyer une news">
+	<div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;">
+		<form id="news-form">
+			<label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:.4rem;color:#122218;">
+				Sujet
+			</label>
+			<input
+				id="news-subject"
+				type="text"
+				required
+				style="width:100%;padding:.65rem .8rem;margin-bottom:1.25rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:1rem;"
+			/>
+
+			<label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:.4rem;color:#122218;">
+				Message
+			</label>
+			<textarea
+				id="news-message"
+				rows="14"
+				required
+				style="width:100%;padding:.8rem;margin-bottom:1rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:1rem;font-family:inherit;resize:vertical;"
+			></textarea>
+
+			<p id="recipient-count" style="color:#546754;font-size:.9rem;margin:0 0 1.25rem;">
+				Chargement des abonnés…
+			</p>
+
+			<button
+				type="submit"
+				style="background:#b85438;color:#fff;border:none;border-radius:9999px;padding:.85rem 1.75rem;font-weight:700;font-size:.95rem;cursor:pointer;"
+			>
+				Envoyer à tous les abonnés actifs
+			</button>
+
+			<p id="send-status" style="display:none;margin-top:1rem;font-size:.9rem;"></p>
+		</form>
+
+		<div>
+			<p style="font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:#7f8a77;margin:0 0 .75rem;">
+				Aperçu de l'email
+			</p>
+			<div style="background:#fff;border:1px solid #e4e0d8;border-radius:.75rem;padding:1.5rem;min-height:320px;">
+				<p style="font-size:.8rem;color:#7f8a77;margin:0 0 .25rem;">
+					De : La Boîte à Bivouac &lt;contact@laboiteabivouac.fr&gt;
+				</p>
+				<p id="preview-subject" style="font-weight:700;font-size:1.1rem;margin:0 0 1rem;color:#122218;">
+					(Sujet de l'email)
+				</p>
+				<p id="preview-body" style="white-space:pre-wrap;color:#3a3a3a;font-size:.95rem;line-height:1.6;margin:0;">
+					(Le corps du message apparaîtra ici)
+				</p>
+				<hr style="margin:1.5rem 0 .75rem;border:none;border-top:1px solid #e4e0d8;" />
+				<p style="font-size:.8rem;color:#a8a49c;margin:0;">
+					Pour vous désinscrire : lien de désinscription personnalisé
+				</p>
+			</div>
+		</div>
+	</div>
+
+	<div
+		id="confirm-modal"
+		style="display:none;position:fixed;inset:0;background:rgba(10,22,16,0.6);align-items:center;justify-content:center;z-index:50;"
+	>
+		<div style="background:#fff;border-radius:.75rem;padding:2rem;max-width:400px;width:90%;">
+			<h2 style="font-size:1.15rem;font-weight:700;margin:0 0 .75rem;color:#122218;">Êtes-vous sûr ?</h2>
+			<p id="confirm-text" style="color:#546754;margin:0 0 1.5rem;font-size:.9rem;"></p>
+			<div style="display:flex;gap:.75rem;justify-content:flex-end;">
+				<button
+					id="confirm-cancel"
+					style="background:transparent;border:1px solid #c0c8c8;color:#122218;border-radius:9999px;padding:.6rem 1.25rem;font-weight:600;font-size:.9rem;cursor:pointer;"
+				>
+					Annuler
+				</button>
+				<button
+					id="confirm-send"
+					style="background:#b85438;color:#fff;border:none;border-radius:9999px;padding:.6rem 1.25rem;font-weight:600;font-size:.9rem;cursor:pointer;"
+				>
+					Confirmer l'envoi
+				</button>
+			</div>
+		</div>
+	</div>
+</AdminLayout>
+
+<script>
+	let activeCount = 0;
+
+	const subjectInput = document.getElementById("news-subject") as HTMLInputElement;
+	const messageInput = document.getElementById("news-message") as HTMLTextAreaElement;
+	const previewSubject = document.getElementById("preview-subject")!;
+	const previewBody = document.getElementById("preview-body")!;
+	const recipientCount = document.getElementById("recipient-count")!;
+	const sendStatus = document.getElementById("send-status")!;
+	const modal = document.getElementById("confirm-modal")!;
+	const confirmText = document.getElementById("confirm-text")!;
+	const form = document.getElementById("news-form") as HTMLFormElement;
+
+	function updatePreview() {
+		previewSubject.textContent = subjectInput.value.trim() || "(Sujet de l'email)";
+		previewBody.textContent = messageInput.value.trim() || "(Le corps du message apparaîtra ici)";
+	}
+
+	subjectInput.addEventListener("input", updatePreview);
+	messageInput.addEventListener("input", updatePreview);
+
+	async function loadRecipientCount() {
+		try {
+			const response = await (window as any).adminFetch("/api/subscribers.php");
+			if (!response.ok) return;
+			const subscribers: { status: string }[] = await response.json();
+			activeCount = subscribers.filter((s) => s.status === "active").length;
+			recipientCount.textContent = `${activeCount} abonné${activeCount > 1 ? "s" : ""} actif${activeCount > 1 ? "s" : ""} vont recevoir cet email.`;
+		} catch {
+			recipientCount.textContent = "Impossible de charger le nombre d'abonnés.";
+		}
+	}
+
+	form.addEventListener("submit", (event) => {
+		event.preventDefault();
+		if (!subjectInput.value.trim() || !messageInput.value.trim()) return;
+
+		confirmText.textContent = `Cet email sera envoyé à ${activeCount} abonné${activeCount > 1 ? "s" : ""} actif${activeCount > 1 ? "s" : ""}. Cette action est irréversible.`;
+		modal.style.display = "flex";
+	});
+
+	document.getElementById("confirm-cancel")!.addEventListener("click", () => {
+		modal.style.display = "none";
+	});
+
+	document.getElementById("confirm-send")!.addEventListener("click", async () => {
+		modal.style.display = "none";
+		const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+		submitButton.disabled = true;
+		submitButton.textContent = "Envoi en cours…";
+		sendStatus.style.display = "none";
+
+		try {
+			const response = await (window as any).adminFetch("/api/send-news.php", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ subject: subjectInput.value.trim(), message: messageInput.value.trim() }),
+			});
+
+			const data = await response.json();
+
+			sendStatus.style.display = "block";
+			if (response.ok && data.success) {
+				sendStatus.style.color = "#1b5e20";
+				sendStatus.textContent = `✓ News envoyée à ${data.sent} abonné${data.sent > 1 ? "s" : ""}.`;
+				form.reset();
+				updatePreview();
+				loadRecipientCount();
+			} else {
+				sendStatus.style.color = "#8b1c1c";
+				sendStatus.textContent = data.error ?? "Une erreur est survenue lors de l'envoi.";
+			}
+		} catch {
+			sendStatus.style.display = "block";
+			sendStatus.style.color = "#8b1c1c";
+			sendStatus.textContent = "Impossible de contacter le serveur.";
+		} finally {
+			submitButton.disabled = false;
+			submitButton.textContent = "Envoyer à tous les abonnés actifs";
+		}
+	});
+
+	loadRecipientCount();
+	window.addEventListener("admin-authenticated", loadRecipientCount);
+</script>

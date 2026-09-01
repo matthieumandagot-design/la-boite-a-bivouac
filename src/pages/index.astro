@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
 import { HOME_DESCRIPTION } from "../consts";
 import HeroVideo from "../components/HeroVideo.astro";
+import SubscribeForm from "../components/SubscribeForm.astro";
 import pine from "../components/icons/pine.svg?raw";
 import bike from "../components/icons/bike.svg?raw";
 import canoe from "../components/icons/canoe.svg?raw";
@@ -142,9 +143,12 @@ const PLAY_TERRAINS = [
 				Parlez-nous de votre projet, de votre usage, de ce que vous transportez. On construira
 				la suite ensemble.
 			</p>
+			<div class="mx-auto mt-10 max-w-md">
+				<SubscribeForm />
+			</div>
 			<a
 				href="/contact"
-				class="bg-gold text-forest mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-sm transition-opacity hover:opacity-90"
+				class="bg-gold text-forest mt-6 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-sm transition-opacity hover:opacity-90"
 			>
 				Prendre contact
 				<Icon name="tabler:arrow-right" class="h-4 w-4" />

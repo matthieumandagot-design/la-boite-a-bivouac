@@ -1,0 +1,200 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Abonnés">
+	<div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+		<div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+			<input
+				id="search-input"
+				type="search"
+				placeholder="Rechercher par email…"
+				style="padding:.55rem .8rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.9rem;min-width:220px;"
+			/>
+			<select
+				id="status-filter"
+				style="padding:.55rem .8rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.9rem;"
+			>
+				<option value="all">Tous les statuts</option>
+				<option value="active">Actifs</option>
+				<option value="unsubscribed">Désinscrits</option>
+			</select>
+		</div>
+		<button
+			id="export-csv"
+			style="background:#122218;color:#f5ecd8;border:none;border-radius:9999px;padding:.6rem 1.25rem;font-weight:600;font-size:.85rem;cursor:pointer;"
+		>
+			Exporter CSV
+		</button>
+	</div>
+
+	<p id="list-status" style="color:#7f8a77;font-size:.9rem;">Chargement…</p>
+
+	<div style="overflow-x:auto;">
+		<table style="width:100%;border-collapse:collapse;background:#fff;border-radius:.75rem;overflow:hidden;">
+			<thead>
+				<tr style="background:#f4f2ee;text-align:left;">
+					<th style="padding:.75rem 1rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:#7f8a77;">
+						Email
+					</th>
+					<th style="padding:.75rem 1rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:#7f8a77;">
+						Date d'inscription
+					</th>
+					<th style="padding:.75rem 1rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:#7f8a77;">
+						Statut
+					</th>
+					<th style="padding:.75rem 1rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:#7f8a77;">
+						Actions
+					</th>
+				</tr>
+			</thead>
+			<tbody id="subscribers-body"></tbody>
+		</table>
+	</div>
+
+	<div id="pagination" style="display:flex;gap:.5rem;justify-content:center;margin-top:1.5rem;"></div>
+</AdminLayout>
+
+<script>
+	type Subscriber = { id: string; email: string; created_at: string; status: string };
+
+	const PAGE_SIZE = 50;
+	let allSubscribers: Subscriber[] = [];
+	let currentPage = 1;
+
+	const tbody = document.getElementById("subscribers-body")!;
+	const listStatus = document.getElementById("list-status")!;
+	const pagination = document.getElementById("pagination")!;
+	const searchInput = document.getElementById("search-input") as HTMLInputElement;
+	const statusFilter = document.getElementById("status-filter") as HTMLSelectElement;
+
+	function formatDate(iso: string): string {
+		const date = new Date(iso);
+		return Number.isNaN(date.getTime())
+			? iso
+			: date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+	}
+
+	function getFiltered(): Subscriber[] {
+		const query = searchInput.value.trim().toLowerCase();
+		const status = statusFilter.value;
+
+		return allSubscribers.filter((s) => {
+			const matchesQuery = query === "" || s.email.toLowerCase().includes(query);
+			const matchesStatus = status === "all" || s.status === status;
+			return matchesQuery && matchesStatus;
+		});
+	}
+
+	function escapeHtml(value: string): string {
+		const div = document.createElement("div");
+		div.textContent = value;
+		return div.innerHTML;
+	}
+
+	function render() {
+		const filtered = getFiltered();
+		const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+		currentPage = Math.min(currentPage, totalPages);
+
+		const start = (currentPage - 1) * PAGE_SIZE;
+		const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+		listStatus.textContent = `${filtered.length} abonné${filtered.length > 1 ? "s" : ""}`;
+
+		tbody.innerHTML = pageItems
+			.map(
+				(s) => `
+				<tr style="border-top:1px solid #e4e0d8;">
+					<td style="padding:.75rem 1rem;font-size:.9rem;color:#122218;">${escapeHtml(s.email)}</td>
+					<td style="padding:.75rem 1rem;font-size:.9rem;color:#546754;">${formatDate(s.created_at)}</td>
+					<td style="padding:.75rem 1rem;font-size:.85rem;">
+						<span style="padding:.15rem .6rem;border-radius:9999px;font-weight:600;background:${s.status === "active" ? "#e3f3e5" : "#f4f2ee"};color:${s.status === "active" ? "#1b5e20" : "#7f8a77"};">
+							${s.status === "active" ? "Actif" : "Désinscrit"}
+						</span>
+					</td>
+					<td style="padding:.75rem 1rem;">
+						<button data-delete-id="${escapeHtml(s.id)}" style="background:transparent;color:#8b1c1c;border:1px solid #8b1c1c;border-radius:9999px;padding:.35rem .9rem;font-size:.8rem;font-weight:600;cursor:pointer;">
+							Supprimer
+						</button>
+					</td>
+				</tr>`,
+			)
+			.join("");
+
+		pagination.innerHTML = "";
+		if (totalPages > 1) {
+			for (let page = 1; page <= totalPages; page++) {
+				const btn = document.createElement("button");
+				btn.textContent = String(page);
+				btn.style.cssText = `padding:.4rem .8rem;border-radius:.4rem;border:1px solid #c0c8c8;background:${page === currentPage ? "#122218" : "#fff"};color:${page === currentPage ? "#f5ecd8" : "#122218"};cursor:pointer;font-size:.85rem;`;
+				btn.addEventListener("click", () => {
+					currentPage = page;
+					render();
+				});
+				pagination.appendChild(btn);
+			}
+		}
+
+		tbody.querySelectorAll<HTMLButtonElement>("[data-delete-id]").forEach((button) => {
+			button.addEventListener("click", () => deleteSubscriber(button.dataset.deleteId!));
+		});
+	}
+
+	async function deleteSubscriber(id: string) {
+		if (!confirm("Supprimer définitivement cet abonné ?")) return;
+
+		try {
+			const response = await (window as any).adminFetch("/api/delete-subscriber.php", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ id }),
+			});
+			if (response.ok) {
+				allSubscribers = allSubscribers.filter((s) => s.id !== id);
+				render();
+			}
+		} catch {
+			// Le tableau reste inchangé si la requête échoue ; l'utilisateur peut réessayer.
+		}
+	}
+
+	function exportCsv() {
+		const rows = [
+			["Email", "Date d'inscription", "Statut"],
+			...getFiltered().map((s) => [s.email, s.created_at, s.status]),
+		];
+		const csv = rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\r\n");
+		const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = "abonnes-la-boite-a-bivouac.csv";
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
+	async function loadSubscribers() {
+		try {
+			const response = await (window as any).adminFetch("/api/subscribers.php");
+			if (!response.ok) return;
+			allSubscribers = await response.json();
+			render();
+		} catch {
+			listStatus.textContent = "Impossible de charger les abonnés.";
+		}
+	}
+
+	searchInput.addEventListener("input", () => {
+		currentPage = 1;
+		render();
+	});
+	statusFilter.addEventListener("change", () => {
+		currentPage = 1;
+		render();
+	});
+	document.getElementById("export-csv")!.addEventListener("click", exportCsv);
+
+	loadSubscribers();
+	window.addEventListener("admin-authenticated", loadSubscribers);
+</script>
