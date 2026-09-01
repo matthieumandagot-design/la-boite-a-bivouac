@@ -56,6 +56,8 @@ try {
 // Envoi individuel à chaque abonné (voir consigne) : un email par destinataire
 // plutôt qu'un envoi groupé, pour limiter le risque d'être marqué comme spam.
 $sent = 0;
+$lastError = null;
+
 foreach ($active as $subscriber) {
 	$email = (string) $subscriber['email'];
 	$token = unsubscribeToken($email);
@@ -65,17 +67,37 @@ foreach ($active as $subscriber) {
 	try {
 		$smtp->sendMail($email, $subject, $body, $unsubscribeUrl);
 		$sent++;
-	} catch (SmtpException) {
+	} catch (SmtpException $e) {
 		// Un échec isolé (ex. destinataire refusé) ne doit pas interrompre
 		// l'envoi aux abonnés suivants : on tente de reconnecter et on continue.
+		// L'erreur est conservée pour être remontée à l'admin plutôt que masquée
+		// derrière un faux "succès" — voir la vérification de $sent ci-dessous.
+		$lastError = $e->getMessage();
+		error_log('[send-news] échec envoi à ' . $email . ' : ' . $lastError);
 		try {
 			$smtp->connect();
-		} catch (SmtpException) {
+		} catch (SmtpException $reconnectError) {
+			$lastError = $reconnectError->getMessage();
 			break;
 		}
 	}
 }
 
-$smtp->quit();
+try {
+	$smtp->quit();
+} catch (SmtpException) {
+	// La connexion peut déjà être dans un état incohérent après une série
+	// d'échecs : sans conséquence sur le résultat déjà déterminé ci-dessus.
+}
 
-respond(200, ['success' => true, 'sent' => $sent]);
+$failed = count($active) - $sent;
+
+if ($sent === 0) {
+	respond(502, [
+		'success' => false,
+		'error' => "Échec de l'envoi à tous les abonnés."
+			. ($lastError !== null ? " Détail technique : {$lastError}" : ''),
+	]);
+}
+
+respond(200, ['success' => true, 'sent' => $sent, 'failed' => $failed]);

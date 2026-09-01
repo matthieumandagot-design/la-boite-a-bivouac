@@ -176,8 +176,10 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
 			sendStatus.style.display = "block";
 			if (response.ok && data.success) {
-				sendStatus.style.color = "#1b5e20";
-				sendStatus.textContent = `✓ News envoyée à ${data.sent} abonné${data.sent > 1 ? "s" : ""}.`;
+				sendStatus.style.color = data.failed > 0 ? "#b88a18" : "#1b5e20";
+				sendStatus.textContent = data.failed > 0
+					? `✓ Envoyée à ${data.sent} abonné${data.sent > 1 ? "s" : ""}, échec pour ${data.failed}.`
+					: `✓ News envoyée à ${data.sent} abonné${data.sent > 1 ? "s" : ""}.`;
 				form.reset();
 				updatePreview();
 				loadRecipientCount();
