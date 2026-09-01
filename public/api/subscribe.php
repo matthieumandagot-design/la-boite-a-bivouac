@@ -95,7 +95,7 @@ $body = "Vous êtes inscrit aux actualités de La Boîte à Bivouac. Vous serez 
 try {
 	$smtp = new SimpleSmtp(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS);
 	$smtp->connect();
-	$smtp->sendMail($email, 'Bienvenue — La Boîte à Bivouac', $body);
+	$smtp->sendMail($email, 'Bienvenue — La Boîte à Bivouac', $body, $unsubscribeUrl);
 	$smtp->quit();
 } catch (SmtpException) {
 	// L'inscription est déjà enregistrée : un échec d'envoi de l'email de

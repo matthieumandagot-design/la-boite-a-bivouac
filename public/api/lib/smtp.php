@@ -50,7 +50,7 @@ final class SimpleSmtp
 		$this->command(base64_encode($this->password), 235);
 	}
 
-	public function sendMail(string $toEmail, string $subject, string $body): void
+	public function sendMail(string $toEmail, string $subject, string $body, ?string $unsubscribeUrl = null): void
 	{
 		$this->command('MAIL FROM:<' . SMTP_FROM . '>', 250);
 		$this->command('RCPT TO:<' . $toEmail . '>', 250);
@@ -76,6 +76,15 @@ final class SimpleSmtp
 			// échapper manuellement les lignes du message.
 			'Content-Transfer-Encoding: base64',
 		];
+
+		if ($unsubscribeUrl !== null) {
+			// Requis par Gmail/Yahoo pour tout envoi assimilable à une newsletter :
+			// son absence est elle-même un signal de spam. One-Click (RFC 8058)
+			// fonctionne car unsubscribe.php lit email/token depuis la query string,
+			// que la requête du client mail arrive en GET ou en POST.
+			$headers[] = "List-Unsubscribe: <{$unsubscribeUrl}>";
+			$headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
+		}
 
 		$encodedBody = chunk_split(base64_encode($body));
 

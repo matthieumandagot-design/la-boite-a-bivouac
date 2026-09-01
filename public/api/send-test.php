@@ -47,7 +47,7 @@ $body = $message . "\n\n---\nPour vous désinscrire : {$unsubscribeUrl}\n";
 try {
 	$smtp = new SimpleSmtp(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS);
 	$smtp->connect();
-	$smtp->sendMail($testEmail, '[Test] ' . $subject, $body);
+	$smtp->sendMail($testEmail, '[Test] ' . $subject, $body, $unsubscribeUrl);
 	$smtp->quit();
 } catch (SmtpException) {
 	respond(502, ['success' => false, 'error' => "Échec de l'envoi du test. Merci de réessayer plus tard."]);

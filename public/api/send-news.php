@@ -63,7 +63,7 @@ foreach ($active as $subscriber) {
 	$body = $message . "\n\n---\nPour vous désinscrire : {$unsubscribeUrl}\n";
 
 	try {
-		$smtp->sendMail($email, $subject, $body);
+		$smtp->sendMail($email, $subject, $body, $unsubscribeUrl);
 		$sent++;
 	} catch (SmtpException) {
 		// Un échec isolé (ex. destinataire refusé) ne doit pas interrompre
