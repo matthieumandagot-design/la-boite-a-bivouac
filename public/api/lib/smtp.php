@@ -63,6 +63,12 @@ final class SimpleSmtp
 			"From: {$encodedFromName} <" . SMTP_FROM . '>',
 			"To: <{$toEmail}>",
 			"Subject: {$encodedSubject}",
+			// Un message sans Date/Message-ID est un signal fort pour les filtres
+			// anti-spam (Gmail notamment) : le serveur OVH peut accepter l'envoi
+			// (250 OK) alors que le message est ensuite classé en spam ou rejeté
+			// silencieusement chez le destinataire final.
+			'Date: ' . date('r'),
+			'Message-ID: <' . bin2hex(random_bytes(16)) . '@laboiteabivouac.fr>',
 			'MIME-Version: 1.0',
 			'Content-Type: text/plain; charset=UTF-8',
 			// Corps encodé en base64 : l'alphabet base64 ne contient jamais de
