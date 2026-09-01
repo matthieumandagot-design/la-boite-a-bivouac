@@ -131,9 +131,24 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 		}
 	}
 
-	form.addEventListener("submit", (event) => {
+	form.addEventListener("submit", async (event) => {
 		event.preventDefault();
 		if (!subjectInput.value.trim() || !messageInput.value.trim()) return;
+
+		// Recompte en direct avant confirmation : le chiffre affiché à l'ouverture
+		// de la page peut être périmé (désinscription entre-temps, etc.) et ne doit
+		// jamais servir de base à la confirmation d'un envoi irréversible.
+		const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+		submitButton.disabled = true;
+		await loadRecipientCount();
+		submitButton.disabled = false;
+
+		if (activeCount === 0) {
+			sendStatus.style.display = "block";
+			sendStatus.style.color = "#8b1c1c";
+			sendStatus.textContent = "Aucun abonné actif pour le moment : rien à envoyer.";
+			return;
+		}
 
 		confirmText.textContent = `Cet email sera envoyé à ${activeCount} abonné${activeCount > 1 ? "s" : ""} actif${activeCount > 1 ? "s" : ""}. Cette action est irréversible.`;
 		modal.style.display = "flex";
