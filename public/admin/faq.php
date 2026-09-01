@@ -248,12 +248,51 @@ $answeredQuestions = array_filter($allQuestions, static fn(array $q): bool => ($
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="robots" content="noindex, nofollow" />
-		<title>Admin — La Boîte à Bivouac</title>
+		<title>FAQ — Administration · La Boîte à Bivouac</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
 	</head>
-	<body style="margin:0;background:#f5ecd8;color:#122218;font-family:system-ui,sans-serif;">
-		<main style="max-width:720px;margin:0 auto;padding:2.5rem 1.5rem 5rem;">
-			<p style="text-transform:uppercase;letter-spacing:.05em;font-size:.75rem;font-weight:600;color:#b88a18;margin:0;">Admin</p>
-			<h1 style="font-size:1.75rem;font-weight:700;margin:.25rem 0 2rem;">FAQ — Questions fréquentes</h1>
+	<body style="margin:0;font-family:'Inter',system-ui,sans-serif;background:#f4f2ee;color:#122218;">
+		<div style="min-height:100vh;display:flex;">
+			<aside style="width:220px;flex-shrink:0;background:#122218;color:#e8e0c8;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;">
+				<div style="padding:1.5rem 1.25rem;border-bottom:1px solid rgba(232,224,200,0.12);">
+					<p style="text-transform:uppercase;letter-spacing:.08em;font-size:.65rem;font-weight:700;color:#e8b428;margin:0 0 .2rem;">
+						La Boîte à Bivouac
+					</p>
+					<p style="font-weight:700;font-size:1rem;margin:0;">Administration</p>
+				</div>
+				<nav style="flex:1;padding:1rem 0.75rem;">
+					<a href="/admin" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
+						<span aria-hidden="true">🏠</span> Tableau de bord
+					</a>
+					<a href="/admin/subscribers" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
+						<span aria-hidden="true">📧</span> Abonnés
+					</a>
+					<a href="/admin/send-news" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
+						<span aria-hidden="true">📨</span> Envoyer une news
+					</a>
+					<a href="/admin/faq.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#0a1610;background:#e8b428;">
+						<span aria-hidden="true">❓</span> FAQ
+					</a>
+					<a href="/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-top:.75rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#babba8;border-top:1px solid rgba(232,224,200,0.12);padding-top:1rem;">
+						<span aria-hidden="true">🌐</span> Voir le site
+					</a>
+				</nav>
+				<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);font-size:.75rem;color:#babba8;">
+					Fermez l'onglet pour vous déconnecter (authentification navigateur).
+				</div>
+			</aside>
+
+			<div style="margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;">
+				<header style="background:#fff;border-bottom:1px solid #e4e0d8;padding:1rem 2rem;">
+					<h1 style="font-size:1.1rem;font-weight:700;color:#122218;margin:0;">FAQ</h1>
+				</header>
+				<main style="flex:1;padding:2rem;">
+					<div style="max-width:720px;">
 
 			<?php if ($flashMessage !== null): ?>
 				<p style="background:#e3f3e5;border:1px solid #2e7d32;color:#1b5e20;padding:.75rem 1rem;border-radius:.5rem;margin:0 0 1.5rem;">
@@ -418,6 +457,9 @@ $answeredQuestions = array_filter($allQuestions, static fn(array $q): bool => ($
 					</button>
 				</form>
 			</section>
-		</main>
+					</div>
+				</main>
+			</div>
+		</div>
 	</body>
 </html>
