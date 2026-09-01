@@ -29,13 +29,23 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 				Chargement des abonnés…
 			</p>
 
-			<button
-				type="submit"
-				style="background:#b85438;color:#fff;border:none;border-radius:9999px;padding:.85rem 1.75rem;font-weight:700;font-size:.95rem;cursor:pointer;"
-			>
-				Envoyer à tous les abonnés actifs
-			</button>
+			<div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;">
+				<button
+					type="submit"
+					style="background:#b85438;color:#fff;border:none;border-radius:9999px;padding:.85rem 1.75rem;font-weight:700;font-size:.95rem;cursor:pointer;"
+				>
+					Envoyer à tous les abonnés actifs
+				</button>
+				<button
+					type="button"
+					id="send-test"
+					style="background:transparent;color:#122218;border:1px solid #c0c8c8;border-radius:9999px;padding:.85rem 1.5rem;font-weight:600;font-size:.9rem;cursor:pointer;"
+				>
+					Envoyer un test à contact@laboiteabivouac.fr
+				</button>
+			</div>
 
+			<p id="test-status" style="display:none;margin-top:1rem;font-size:.9rem;"></p>
 			<p id="send-status" style="display:none;margin-top:1rem;font-size:.9rem;"></p>
 		</form>
 
@@ -95,6 +105,8 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 	const previewBody = document.getElementById("preview-body")!;
 	const recipientCount = document.getElementById("recipient-count")!;
 	const sendStatus = document.getElementById("send-status")!;
+	const testStatus = document.getElementById("test-status")!;
+	const testButton = document.getElementById("send-test") as HTMLButtonElement;
 	const modal = document.getElementById("confirm-modal")!;
 	const confirmText = document.getElementById("confirm-text")!;
 	const form = document.getElementById("news-form") as HTMLFormElement;
@@ -165,6 +177,47 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 		} finally {
 			submitButton.disabled = false;
 			submitButton.textContent = "Envoyer à tous les abonnés actifs";
+		}
+	});
+
+	testButton.addEventListener("click", async () => {
+		const subject = subjectInput.value.trim();
+		const message = messageInput.value.trim();
+		if (!subject || !message) {
+			testStatus.style.display = "block";
+			testStatus.style.color = "#8b1c1c";
+			testStatus.textContent = "Renseignez le sujet et le message avant d'envoyer un test.";
+			return;
+		}
+
+		testButton.disabled = true;
+		testButton.textContent = "Envoi du test…";
+		testStatus.style.display = "none";
+
+		try {
+			const response = await (window as any).adminFetch("/api/send-test.php", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ subject, message }),
+			});
+
+			const data = await response.json();
+
+			testStatus.style.display = "block";
+			if (response.ok && data.success) {
+				testStatus.style.color = "#1b5e20";
+				testStatus.textContent = "✓ Email de test envoyé à contact@laboiteabivouac.fr.";
+			} else {
+				testStatus.style.color = "#8b1c1c";
+				testStatus.textContent = data.error ?? "Une erreur est survenue lors de l'envoi du test.";
+			}
+		} catch {
+			testStatus.style.display = "block";
+			testStatus.style.color = "#8b1c1c";
+			testStatus.textContent = "Impossible de contacter le serveur.";
+		} finally {
+			testButton.disabled = false;
+			testButton.textContent = "Envoyer un test à contact@laboiteabivouac.fr";
 		}
 	});
 
