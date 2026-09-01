@@ -6,9 +6,13 @@ declare(strict_types=1);
 // scripts/write-api-config.mjs à partir des secrets GitHub Actions (voir
 // .github/workflows/deploy.yml), exactement comme public/admin/config.php.
 
-define('SMTP_HOST', 'ssl0.ovh.net');
+// Relais SMTP Brevo (ex-Sendinblue) plutôt que la boîte OVH : meilleure
+// délivrabilité (réputation d'IP, DKIM/DMARC gérés par eux). SMTP_USER est
+// l'identifiant SMTP généré dans Brevo (Settings > SMTP & API > SMTP),
+// distinct de l'adresse d'expédition visible (SMTP_FROM).
+define('SMTP_HOST', 'smtp-relay.brevo.com');
 define('SMTP_PORT', 465);
-define('SMTP_USER', 'contact@laboiteabivouac.fr');
+define('SMTP_USER', '');
 define('SMTP_PASS', '');
 define('SMTP_FROM', 'contact@laboiteabivouac.fr');
 define('SMTP_NAME', 'La Boîte à Bivouac');

@@ -54,6 +54,7 @@ jobs:
         env:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+          SMTP_LOGIN: ${{ secrets.SMTP_LOGIN }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           NEWSLETTER_TOKEN_SALT: ${{ secrets.NEWSLETTER_TOKEN_SALT }}
 

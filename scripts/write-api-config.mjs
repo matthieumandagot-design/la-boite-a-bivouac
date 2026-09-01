@@ -6,26 +6,32 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.join(__dirname, "..", "dist", "api");
 const OUTPUT_PATH = path.join(OUTPUT_DIR, "config.php");
 
-const { ADMIN_USERNAME, ADMIN_PASSWORD_HASH, SMTP_PASSWORD, NEWSLETTER_TOKEN_SALT } = process.env;
+const { ADMIN_USERNAME, ADMIN_PASSWORD_HASH, SMTP_LOGIN, SMTP_PASSWORD, NEWSLETTER_TOKEN_SALT } = process.env;
 
 function escapeSingleQuoted(value) {
 	return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 async function main() {
-	if (!ADMIN_USERNAME || !ADMIN_PASSWORD_HASH || !SMTP_PASSWORD || !NEWSLETTER_TOKEN_SALT) {
+	if (!ADMIN_USERNAME || !ADMIN_PASSWORD_HASH || !SMTP_LOGIN || !SMTP_PASSWORD || !NEWSLETTER_TOKEN_SALT) {
 		console.warn(
-			"[write-api-config] Secret(s) manquant(s) (ADMIN_USERNAME, ADMIN_PASSWORD_HASH, SMTP_PASSWORD, NEWSLETTER_TOKEN_SALT) : dist/api/config.php non généré, /api/* répondra 503.",
+			"[write-api-config] Secret(s) manquant(s) (ADMIN_USERNAME, ADMIN_PASSWORD_HASH, SMTP_LOGIN, SMTP_PASSWORD, NEWSLETTER_TOKEN_SALT) : dist/api/config.php non généré, /api/* répondra 503.",
 		);
 		return;
 	}
 
+	// Relais SMTP Brevo (ex-Sendinblue) plutôt que ssl0.ovh.net : une boîte
+	// mutualisée OVH n'est pas conçue pour ce volume/type d'envoi et souffre
+	// d'une réputation d'IP partagée. SMTP_LOGIN est l'identifiant SMTP généré
+	// par Brevo (Settings > SMTP & API > SMTP), distinct de l'adresse
+	// d'expédition visible (SMTP_FROM) : Brevo autorise un compte à envoyer au
+	// nom de n'importe quel expéditeur vérifié.
 	const content = `<?php
 declare(strict_types=1);
 
-define('SMTP_HOST', 'ssl0.ovh.net');
+define('SMTP_HOST', 'smtp-relay.brevo.com');
 define('SMTP_PORT', 465);
-define('SMTP_USER', 'contact@laboiteabivouac.fr');
+define('SMTP_USER', '${escapeSingleQuoted(SMTP_LOGIN)}');
 define('SMTP_PASS', '${escapeSingleQuoted(SMTP_PASSWORD)}');
 define('SMTP_FROM', 'contact@laboiteabivouac.fr');
 define('SMTP_NAME', 'La Boîte à Bivouac');
