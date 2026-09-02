@@ -32,6 +32,10 @@ public/data/questions.json
 # désinscriptions par public/api/unsubscribe.php : état serveur, jamais commité.
 public/data/subscribers.json
 
+# Compteurs de limitation de débit (public/lib/rate-limit.php), écrits en live
+# par contact.php et api/subscribe.php : état serveur, jamais commité.
+public/data/rate-limits.json
+
 # Config générée au déploiement à partir des secrets GitHub Actions (voir
 # scripts/write-admin-config.mjs et scripts/write-api-config.mjs) : n'existe
 # jamais dans le repo, seulement dans dist/ après build en CI.

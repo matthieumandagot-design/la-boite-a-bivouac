@@ -36,6 +36,14 @@ if (!is_file($configPath)) {
 require $configPath;
 require __DIR__ . '/lib/subscribers-store.php';
 require __DIR__ . '/lib/smtp.php';
+require __DIR__ . '/../lib/rate-limit.php';
+
+// Limite les inscriptions en masse depuis une même adresse IP (script
+// abusif ajoutant de nombreuses adresses d'un coup) : au-delà, on bloque
+// avant même de valider l'email ou de toucher au fichier des abonnés.
+if (isRateLimited('subscribe:' . clientIp(), 10, 600)) {
+	respond(429, ['success' => false, 'error' => 'Trop de tentatives. Merci de réessayer dans quelques minutes.']);
+}
 
 // Accepte { email } en JSON ou en form-data.
 $rawBody = (string) file_get_contents('php://input');

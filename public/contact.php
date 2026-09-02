@@ -19,6 +19,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 	respond(405, ['success' => false, 'error' => 'Méthode non autorisée.']);
 }
 
+require __DIR__ . '/lib/rate-limit.php';
+
+// Limite les envois répétés depuis une même adresse IP (formulaire de
+// contact utilisé en boucle, script ou humain) : au-delà, on bloque avant
+// même de valider les champs ou d'envoyer un email.
+if (isRateLimited('contact:' . clientIp(), 5, 900)) {
+	respond(429, ['success' => false, 'error' => 'Trop de messages envoyés récemment. Merci de réessayer dans quelques minutes.']);
+}
+
 $name = trim((string) ($_POST['name'] ?? ''));
 $email = trim((string) ($_POST['email'] ?? ''));
 $message = trim((string) ($_POST['message'] ?? ''));

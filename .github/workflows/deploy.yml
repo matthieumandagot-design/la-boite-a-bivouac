@@ -66,11 +66,13 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
           server-dir: ./laboiteabivouac/
-          # data/faq.json, data/questions.json et data/subscribers.json sont
-          # écrits en live par le PHP (voir public/admin/faq.php,
-          # public/ask-question.php et public/api/subscribe.php) : jamais
+          # data/faq.json, data/questions.json, data/subscribers.json et
+          # data/rate-limits.json sont écrits en live par le PHP (voir
+          # public/admin/faq.php, public/ask-question.php,
+          # public/api/subscribe.php et public/lib/rate-limit.php) : jamais
           # commités, donc exclus du déploiement pour ne pas être supprimés par ce sync.
           exclude: |
             **/data/faq.json
             **/data/questions.json
             **/data/subscribers.json
+            **/data/rate-limits.json
