@@ -1,7 +1,11 @@
-<form id="subscribe-form" class="flex w-full max-w-sm flex-col gap-2 sm:flex-row" novalidate>
-	<label for="subscribe-email" class="sr-only">Adresse email</label>
+---
+const uid = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+---
+
+<form class="js-subscribe-form flex w-full max-w-sm flex-col gap-2 sm:flex-row" novalidate>
+	<label for={`subscribe-email-${uid}`} class="sr-only">Adresse email</label>
 	<input
-		id="subscribe-email"
+		id={`subscribe-email-${uid}`}
 		name="email"
 		type="email"
 		autocomplete="email"
@@ -12,8 +16,8 @@
 
 	<!-- Honeypot : caché visuellement (hors écran, pas display:none) pour piéger les bots sans gêner les lecteurs d'écran, qui l'ignorent grâce à aria-hidden/tabindex. -->
 	<div class="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
-		<label for="subscribe-website">Laissez ce champ vide</label>
-		<input id="subscribe-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+		<label for={`subscribe-website-${uid}`}>Laissez ce champ vide</label>
+		<input id={`subscribe-website-${uid}`} name="website" type="text" tabindex="-1" autocomplete="off" />
 	</div>
 
 	<button
@@ -23,61 +27,68 @@
 		M'inscrire
 	</button>
 </form>
-<p id="subscribe-status" role="status" aria-live="polite" class="mt-2 hidden text-xs"></p>
+<p class="js-subscribe-status mt-2 hidden text-xs" role="status" aria-live="polite"></p>
 
 <script>
-	const form = document.getElementById("subscribe-form") as HTMLFormElement | null;
-	const status = document.getElementById("subscribe-status");
-	const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+	// Une page peut afficher plusieurs SubscribeForm (footer + section dédiée) :
+	// on cible par classe et on câble chaque instance individuellement, plutôt
+	// que par id (Astro ne déduplique un <script> qu'une fois par page, donc un
+	// lookup par id fixe ne fonctionnerait que pour la première instance).
+	function setupSubscribeForm(form: HTMLFormElement) {
+		const status = form.nextElementSibling as HTMLElement | null;
+		const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
 
-	function showStatus(message: string, variant: "success" | "error") {
-		if (!status) return;
-		status.textContent = message;
-		status.classList.remove("hidden", "text-green-700", "text-red-700");
-		status.classList.add(variant === "success" ? "text-green-700" : "text-red-700");
-	}
+		function showStatus(message: string, variant: "success" | "error") {
+			if (!status) return;
+			status.textContent = message;
+			status.classList.remove("hidden", "text-green-700", "text-red-700");
+			status.classList.add(variant === "success" ? "text-green-700" : "text-red-700");
+		}
 
-	form?.addEventListener("submit", async (event) => {
-		event.preventDefault();
-		if (!form || !submitButton) return;
+		form.addEventListener("submit", async (event) => {
+			event.preventDefault();
+			if (!submitButton) return;
 
-		const email = (form.elements.namedItem("email") as HTMLInputElement).value.trim();
-		const website = (form.elements.namedItem("website") as HTMLInputElement).value;
+			const email = (form.elements.namedItem("email") as HTMLInputElement).value.trim();
+			const website = (form.elements.namedItem("website") as HTMLInputElement).value;
 
-		submitButton.disabled = true;
-		submitButton.textContent = "Inscription…";
+			submitButton.disabled = true;
+			submitButton.textContent = "Inscription…";
 
-		try {
-			const response = await fetch("/api/subscribe.php", {
-				method: "POST",
-				headers: { "Content-Type": "application/json", Accept: "application/json" },
-				body: JSON.stringify({ email, website }),
-			});
-
-			let data: { success?: boolean; error?: string } = {};
 			try {
-				data = await response.json();
-			} catch {
-				// réponse non-JSON, on retombe sur le statut HTTP
-			}
+				const response = await fetch("/api/subscribe.php", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Accept: "application/json" },
+					body: JSON.stringify({ email, website }),
+				});
 
-			if (response.ok && data.success) {
-				showStatus("✓ Inscription confirmée — vous serez alerté dès la prochaine news.", "success");
-				form.reset();
-			} else {
+				let data: { success?: boolean; error?: string } = {};
+				try {
+					data = await response.json();
+				} catch {
+					// réponse non-JSON, on retombe sur le statut HTTP
+				}
+
+				if (response.ok && data.success) {
+					showStatus("✓ Inscription confirmée — vous serez alerté dès la prochaine news.", "success");
+					form.reset();
+				} else {
+					showStatus(
+						data.error ?? "Une erreur est survenue lors de l'inscription. Merci de réessayer.",
+						"error",
+					);
+				}
+			} catch {
 				showStatus(
-					data.error ?? "Une erreur est survenue lors de l'inscription. Merci de réessayer.",
+					"Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.",
 					"error",
 				);
+			} finally {
+				submitButton.disabled = false;
+				submitButton.textContent = "M'inscrire";
 			}
-		} catch {
-			showStatus(
-				"Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.",
-				"error",
-			);
-		} finally {
-			submitButton.disabled = false;
-			submitButton.textContent = "M'inscrire";
-		}
-	});
+		});
+	}
+
+	document.querySelectorAll<HTMLFormElement>(".js-subscribe-form").forEach(setupSubscribeForm);
 </script>

@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
 import { SOCIAL_LINKS } from "../consts";
+import SubscribeForm from "../components/SubscribeForm.astro";
 
 const CONCEPT_POINTS = [
 	{
@@ -157,13 +158,13 @@ const GALLERY_IMAGES = [
 						vrai système de fixation à la remorque conçu pour être installé et retiré en moins de
 						10 minutes. Elle sera disponible en pré-commande à l'automne.
 					</p>
-					<a
-						href="/contact"
-						class="mt-6 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
-					>
-						Nous contacter
-						<Icon name="tabler:arrow-right" class="h-4 w-4" />
-					</a>
+					<div class="mt-6">
+						<p class="text-sm font-semibold text-brun-700">Restez informé</p>
+						<p class="mt-1 text-xs text-brun-400">Recevez un email dès que la V2 est disponible.</p>
+						<div class="mt-3">
+							<SubscribeForm />
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
