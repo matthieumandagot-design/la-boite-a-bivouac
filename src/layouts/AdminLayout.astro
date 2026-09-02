@@ -12,6 +12,32 @@ const NAV_ITEMS = [
 	{ href: "/admin/send-news", label: "Envoyer une news", icon: "📨" },
 	{ href: "/admin/faq.php", label: "FAQ", icon: "❓" },
 ];
+
+// Raccourcis vers les outils externes utilisés au quotidien : ouverts dans un
+// nouvel onglet, ils ne font pas partie de la navigation du site lui-même.
+const ADMIN_TOOL_LINKS = [
+	{ href: "https://cloud.umami.is/analytics/eu/websites", label: "Umami", icon: "📊" },
+	{ href: "https://app.brevo.com/", label: "Brevo", icon: "📧" },
+	{ href: "https://manager.eu.ovhcloud.com/", label: "OVH Manager", icon: "☁️" },
+	{
+		href: "https://app.notion.com/p/La-Bo-te-Bivouac-Pilotage-3ac440dc05e5811a891fe579c98c9c56",
+		label: "Notion",
+		icon: "📓",
+	},
+	{ href: "https://zimbra1.mail.ovh.net/modern/email/Inbox/conversation/-258", label: "Webmail OVH", icon: "✉️" },
+	{ href: "https://calendar.google.com/calendar/u/0/r?pli=1", label: "Google Agenda", icon: "📅" },
+	{ href: "https://mail.google.com/mail/u/0/#inbox", label: "Gmail", icon: "📬" },
+];
+
+const SOCIAL_TOOL_LINKS = [
+	{ href: "https://www.tiktok.com/@laboiteabivouac8", label: "TikTok", icon: "🎵" },
+	{ href: "https://www.youtube.com/@LaBo%C3%AEte%C3%A0Bivouac", label: "YouTube", icon: "▶️" },
+	{ href: "https://www.linkedin.com/company/136036436/admin/dashboard/", label: "LinkedIn", icon: "💼" },
+	{ href: "https://www.facebook.com/laboiteabivouac?checkpoint_src=any", label: "Facebook", icon: "👍" },
+	{ href: "https://www.instagram.com/laboiteabivouac/", label: "Instagram", icon: "📷" },
+	{ href: "https://www.threads.com/@laboiteabivouac", label: "Threads", icon: "🧵" },
+	{ href: "https://fr.pinterest.com/laboiteabivouac/", label: "Pinterest", icon: "📌" },
+];
 ---
 
 <!doctype html>
@@ -98,7 +124,7 @@ const NAV_ITEMS = [
 					</p>
 					<p style="font-weight:700;font-size:1rem;margin:0;">Administration</p>
 				</div>
-				<nav style="flex:1;padding:1rem 0.75rem;">
+				<nav style="flex:1;overflow-y:auto;padding:1rem 0.75rem;">
 					{
 						NAV_ITEMS.map((item) => {
 							const active = currentPath === item.href;
@@ -122,6 +148,40 @@ const NAV_ITEMS = [
 						<span aria-hidden="true">🌐</span>
 						Voir le site
 					</a>
+
+					<p style="text-transform:uppercase;letter-spacing:.1em;font-size:.65rem;font-weight:700;color:#7f8a77;margin:1.25rem 0 .35rem;padding:0 .75rem;">
+						Admin
+					</p>
+					{
+						ADMIN_TOOL_LINKS.map((link) => (
+							<a
+								href={link.href}
+								target="_blank"
+								rel="noopener"
+								style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;"
+							>
+								<span aria-hidden="true">{link.icon}</span>
+								{link.label}
+							</a>
+						))
+					}
+
+					<p style="text-transform:uppercase;letter-spacing:.1em;font-size:.65rem;font-weight:700;color:#7f8a77;margin:1.25rem 0 .35rem;padding:0 .75rem;">
+						Réseaux
+					</p>
+					{
+						SOCIAL_TOOL_LINKS.map((link) => (
+							<a
+								href={link.href}
+								target="_blank"
+								rel="noopener"
+								style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;"
+							>
+								<span aria-hidden="true">{link.icon}</span>
+								{link.label}
+							</a>
+						))
+					}
 				</nav>
 				<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);">
 					<button
