@@ -1,6 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
 import { SITE_TITLE, TAGLINE, NAV_LINKS, SOCIAL_LINKS } from "../consts";
+import SubscribeForm from "./SubscribeForm.astro";
 const year = new Date().getFullYear();
 ---
 
@@ -45,6 +46,15 @@ const year = new Date().getFullYear();
 				}
 			</ul>
 		</div>
+
+		<div class="mt-8 flex flex-col gap-3 border-t border-ardoise/30 pt-6 sm:flex-row sm:items-center sm:justify-between">
+			<div>
+				<p class="text-sm font-semibold text-brun-700">Restez informé</p>
+				<p class="text-xs text-ardoise">Recevez nos actus par email, sans spam.</p>
+			</div>
+			<SubscribeForm />
+		</div>
+
 		<p class="mt-6 text-brun-500">
 			&copy; {year} {SITE_TITLE} — Conçu et fabriqué en Occitanie.
 		</p>
