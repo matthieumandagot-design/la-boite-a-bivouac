@@ -265,7 +265,7 @@ $answeredQuestions = array_filter($allQuestions, static fn(array $q): bool => ($
 					</p>
 					<p style="font-weight:700;font-size:1rem;margin:0;">Administration</p>
 				</div>
-				<nav style="flex:1;padding:1rem 0.75rem;">
+				<nav style="flex:1;overflow-y:auto;padding:1rem 0.75rem;">
 					<a href="/admin" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
 						<span aria-hidden="true">🏠</span> Tableau de bord
 					</a>
@@ -280,6 +280,56 @@ $answeredQuestions = array_filter($allQuestions, static fn(array $q): bool => ($
 					</a>
 					<a href="/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-top:.75rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#babba8;border-top:1px solid rgba(232,224,200,0.12);padding-top:1rem;">
 						<span aria-hidden="true">🌐</span> Voir le site
+					</a>
+
+					<p style="text-transform:uppercase;letter-spacing:.1em;font-size:.65rem;font-weight:700;color:#7f8a77;margin:1.25rem 0 .35rem;padding:0 .75rem;">
+						Admin
+					</p>
+					<a href="https://cloud.umami.is/analytics/eu/websites" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">📊</span> Umami
+					</a>
+					<a href="https://app.brevo.com/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">📧</span> Brevo
+					</a>
+					<a href="https://manager.eu.ovhcloud.com/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">☁️</span> OVH Manager
+					</a>
+					<a href="https://app.notion.com/p/La-Bo-te-Bivouac-Pilotage-3ac440dc05e5811a891fe579c98c9c56" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">📓</span> Notion
+					</a>
+					<a href="https://zimbra1.mail.ovh.net/modern/email/Inbox/conversation/-258" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">✉️</span> Webmail OVH
+					</a>
+					<a href="https://calendar.google.com/calendar/u/0/r?pli=1" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">📅</span> Google Agenda
+					</a>
+					<a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">📬</span> Gmail
+					</a>
+
+					<p style="text-transform:uppercase;letter-spacing:.1em;font-size:.65rem;font-weight:700;color:#7f8a77;margin:1.25rem 0 .35rem;padding:0 .75rem;">
+						Réseaux
+					</p>
+					<a href="https://www.tiktok.com/@laboiteabivouac8" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">🎵</span> TikTok
+					</a>
+					<a href="https://www.youtube.com/@LaBo%C3%AEte%C3%A0Bivouac" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">▶️</span> YouTube
+					</a>
+					<a href="https://www.linkedin.com/company/136036436/admin/dashboard/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">💼</span> LinkedIn
+					</a>
+					<a href="https://www.facebook.com/laboiteabivouac?checkpoint_src=any" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">👍</span> Facebook
+					</a>
+					<a href="https://www.instagram.com/laboiteabivouac/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">📷</span> Instagram
+					</a>
+					<a href="https://www.threads.com/@laboiteabivouac" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">🧵</span> Threads
+					</a>
+					<a href="https://fr.pinterest.com/laboiteabivouac/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">📌</span> Pinterest
 					</a>
 				</nav>
 				<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);font-size:.75rem;color:#babba8;">
