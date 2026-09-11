@@ -1,0 +1,2 @@
+RewriteEngine On
+RewriteRule ^produit/?$ /la-boite [R=301,L]
