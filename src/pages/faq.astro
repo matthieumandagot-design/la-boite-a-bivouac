@@ -1,11 +1,36 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { toJsonLd } from "../utils/jsonld";
+// Import statique (build time) du même fichier que le fetch client utilise en
+// repli (voir loadFaq() plus bas) : garantit que le JSON-LD généré au build
+// reste identique au contenu par défaut réellement affiché aux visiteurs.
+// N'inclut pas les éventuelles modifications live via /admin/faq.php
+// (public/data/faq.json, non versionné) : penser à resynchroniser
+// public/data/faq.default.json après toute édition FAQ en production, pour
+// que ce schema conserve un contenu exact.
+import faqData from "../../public/data/faq.default.json";
+
+const faqSchema = {
+	"@context": "https://schema.org",
+	"@type": "FAQPage",
+	mainEntity: faqData.map((item: { question: string; answer: string }) => ({
+		"@type": "Question",
+		name: item.question,
+		acceptedAnswer: {
+			"@type": "Answer",
+			text: item.answer,
+		},
+	})),
+};
 ---
 
 <Layout
+	title="FAQ"
 	fullTitle="FAQ — La Boîte à Bivouac"
 	description="Compatibilité remorque, prix, installation, dimensions, garantie : 20 réponses aux questions les plus posées sur La Boîte à Bivouac."
 >
+	<script type="application/ld+json" set:html={toJsonLd(faqSchema)} />
+
 	<section class="bg-ecru-100 px-6 py-16">
 		<div class="mx-auto max-w-3xl">
 			<h1 class="font-display text-4xl font-semibold text-brun-600">Questions fréquentes</h1>

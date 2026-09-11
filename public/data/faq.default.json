@@ -5,19 +5,19 @@
 	},
 	{
 		"question": "Avec quelles remorques est-elle compatible ?",
-		"answer": "La V1 a été conçue pour la remorque ERDE 193. La V2, attendue en septembre 2026, sera compatible avec un plus grand nombre de modèles standard du marché. Contactez-nous pour vérifier la compatibilité avec votre remorque."
+		"answer": "Elle est conçue pour s’adapter à des remorques utilitaires standards, mais peut aussi être fabriquée pour des remorques artisanales, sous réserve que leurs dimensions et leur structure permettent une installation sûre.\r\n\r\nAvant fabrication ou commande, quelques dimensions et caractéristiques de la remorque permettront de valider la compatibilité."
 	},
 	{
 		"question": "Combien de temps faut-il pour installer ou retirer la caisse ?",
-		"answer": "L'objectif de la V2 est une installation et un retrait complets en moins de 10 minutes, seul et sans outillage spécifique."
+		"answer": "L’installation et le retrait sont pensés pour être simples et rapides, sans modification permanente de la remorque.\r\n\r\nLe temps dépendra du système de fixation retenu et de la configuration de la remorque, mais l’objectif est de pouvoir installer ou retirer la caisse en quelques dizaines de minutes avec un minimum d’outillage."
 	},
 	{
 		"question": "Quel poids les barres de toit peuvent-elles supporter ?",
-		"answer": "Les barres de toit intégrées sont conçues pour supporter une tente de toit, un canoë, une planche à voile ou tout autre équipement outdoor encombrant. La charge maximale recommandée sera précisée à la livraison de la V2."
+		"answer": "Les barres de toit sont prévues pour supporter jusqu’à 100 kg en roulant et 400 kg à l’arrêt."
 	},
 	{
 		"question": "La caisse est-elle verrouillable ?",
-		"answer": "Oui. La caisse est équipée d'un système de fermeture avec crémone centrale. L'intérieur est fermé et sécurisé pour protéger votre matériel pendant le transport et sur le camping."
+		"answer": "Oui. La caisse est équipée d'un système de fermeture. L'intérieur est fermé et sécurisé pour protéger votre matériel pendant le transport et sur le camping."
 	},
 	{
 		"question": "Quelles sont les dimensions de la caisse ?",
@@ -25,23 +25,23 @@
 	},
 	{
 		"question": "Quel est le poids de La Boîte à Bivouac ?",
-		"answer": "La V1 est un prototype en acier et OSB. La V2 sera optimisée pour être plus légère. Le poids définitif sera communiqué à la sortie de la version commerciale."
+		"answer": "La V1 est un prototype en acier et OSB. La V2 sera optimisée pour être plus légère. Le poids définitif sera communiqué à la sortie de la version commerciale.\r\n\r\nL’objectif est de rester sous les 90 kg pour la caisse seule,"
 	},
 	{
 		"question": "N'importe quelle tente de toit peut-elle s'installer ?",
-		"answer": "Oui, les barres de toit sont standard et compatibles avec la majorité des tentes de toit du marché. Nous avons testé avec une tente SwissKings. Vérifiez l'écartement des barres avec les spécifications de votre tente."
+		"answer": "Oui, les barres de toit sont standard et compatibles avec la majorité des tentes de toit du marché."
 	},
 	{
 		"question": "Peut-on transporter des vélos à l'intérieur ?",
-		"answer": "Oui. La caisse accueille 2 VTT complets debout, avec de la place pour le reste du matériel de camping."
+		"answer": "Oui. La V1 permet de transporter facilement jusqu’à 4 vélos à l’intérieur, à l’abri des intempéries et des regards.\r\n\r\nPour augmenter encore la capacité, il est également possible d’ajouter un porte-vélos sur le timon de la remorque, pour transporter 2 vélos supplémentaires."
 	},
 	{
 		"question": "Combien de personnes peut-on loger ?",
-		"answer": "Jusqu'à 5 personnes. Une tente de toit 3 places se pose sur les barres. Le véhicule tracteur, libéré de tout le matériel, peut accueillir 2 personnes supplémentaires."
+		"answer": "La capacité de couchage dépend principalement de la tente de toit choisie, généralement de 2 à 4 personnes.\r\n\r\nEt comme les vélos, bagages et équipements sont transportés dans La Boîte à Bivouac plutôt que dans le coffre, il devient aussi possible d’aménager la voiture pour y faire dormir 1 à 2 personnes supplémentaires."
 	},
 	{
 		"question": "Peut-on rouler avec la caisse installée ?",
-		"answer": "Oui, c'est l'usage normal. La caisse est conçue pour être transportée chargée sur route et autoroute. Le système de fixation V2 est validé pour rouler sans jeu ni vibration."
+		"answer": "Oui, c'est l'usage normal. La caisse est conçue pour être transportée chargée sur route et autoroute."
 	},
 	{
 		"question": "Faut-il modifier la remorque ?",
@@ -49,23 +49,23 @@
 	},
 	{
 		"question": "Où est fabriquée La Boîte à Bivouac ?",
-		"answer": "En Occitanie, en France. Le châssis est soudé à la main, les panneaux sont en OSB. C'est un produit artisanal, fait localement."
+		"answer": "La Boîte à Bivouac est conçue et développée près de Toulouse, en Occitanie.\r\n\r\nLe premier prototype a été fabriqué localement, et l’objectif est de conserver une fabrication française, au plus près du projet, avec des partenaires capables d’assurer la production en petite série."
 	},
 	{
 		"question": "De quels matériaux est-elle faite ?",
-		"answer": "Châssis en tubes acier carrés soudés, traités contre la corrosion. Panneaux en OSB robuste et léger. Fixations en acier inox."
+		"answer": "La V1 est principalement composée d’une structure en acier soudé et de panneaux en bois, avec des barres de toit en acier.\r\nCe choix apporte un bon compromis entre résistance, simplicité de fabrication et coût.\r\n\r\nPour la V2, certains matériaux et sections pourront évoluer afin de réduire le poids et améliorer l’aérodynamisme, tout en conservant la robustesse nécessaire."
 	},
 	{
 		"question": "Peut-on personnaliser la caisse ?",
-		"answer": "Des options de personnalisation sont à l'étude pour la V2 : finition des panneaux, couleur du cadre, accessoires intérieurs. Contactez-nous pour discuter de vos besoins."
+		"answer": "Oui. La Boîte à Bivouac est pensée pour être personnalisable selon les usages et les envies.\r\nLes possibilités pourront notamment concerner les aménagements intérieurs, les rangements, les systèmes de fixation, certains équipements extérieurs ou encore les finitions.\r\n\r\nL’objectif est de proposer une base commune robuste, puis des options adaptées à chaque type d’aventure."
 	},
 	{
 		"question": "Quelle est la différence entre la V1 et la V2 ?",
-		"answer": "La V1 est le prototype qui a validé le concept après plusieurs semaines de test terrain. La V2, prévue en septembre 2026, sera plus légère, plus aérodynamique, avec un système de fixation rapide et une compatibilité élargie."
+		"answer": "La V1 est le prototype qui a validé le concept après plusieurs semaines de test terrain. \r\nLa V2, prévue en septembre 2026, sera plus légère, plus aérodynamique, avec un système de fixation rapide et une compatibilité élargie."
 	},
 	{
 		"question": "Quel est le prix ?",
-		"answer": "Le prix de vente indicatif est inférieur à 2 000 €, soit l'équivalent de deux semaines de location en van aménagé. Le tarif définitif sera communiqué à l'ouverture des pré-commandes."
+		"answer": "Le prix cible de La Boîte à Bivouac est d’environ 2 000 €, hors tente de toit et selon les options choisies.\r\n\r\nL’objectif est de proposer une solution simple, robuste et polyvalente, bien plus accessible qu’un van aménagé, une caravane ou une remorque dédiée au camping."
 	},
 	{
 		"question": "Comment s'inscrire à la liste d'attente ?",
@@ -73,7 +73,7 @@
 	},
 	{
 		"question": "Livrez-vous partout en France ?",
-		"answer": "Oui. La livraison en France métropolitaine sera assurée pour la V2. Les modalités et frais seront précisés lors de l'ouverture des commandes."
+		"answer": "Oui. La Boîte à Bivouac pourra être livrée partout en France métropolitaine.\r\n\r\nLes modalités et le coût de livraison dépendront de la distance, du format de la caisse et du transporteur choisi.\r\n\r\nPour les clients proches de Toulouse, un retrait sur place pourra également être proposé afin de réduire les frais."
 	},
 	{
 		"question": "Y a-t-il une garantie ?",

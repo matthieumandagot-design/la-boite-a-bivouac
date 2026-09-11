@@ -1,7 +1,8 @@
 ---
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
-import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
+import { SITE_TITLE, SITE_DESCRIPTION, HOME_DESCRIPTION, SOCIAL_LINKS } from "../consts";
+import { toJsonLd } from "../utils/jsonld";
 import "../styles/global.css";
 import "../styles/brand.css";
 
@@ -13,6 +14,38 @@ interface Props {
 
 const { title, fullTitle, description = SITE_DESCRIPTION } = Astro.props;
 const pageTitle = fullTitle ?? (title ? `${title} · ${SITE_TITLE}` : SITE_TITLE);
+
+// Organization : présent sur toutes les pages passant par ce layout (donc pas
+// sur /admin/*, qui utilise AdminLayout.astro, un layout entièrement séparé).
+const organizationSchema = {
+	"@context": "https://schema.org",
+	"@type": "Organization",
+	name: SITE_TITLE,
+	url: "https://laboiteabivouac.fr",
+	logo: "https://laboiteabivouac.fr/images/logo-badge.png",
+	description: HOME_DESCRIPTION,
+	sameAs: SOCIAL_LINKS.map((social) => social.href),
+};
+
+// BreadcrumbList : sur toutes les pages sauf l'accueil. Repose sur le prop
+// `title` (déjà fourni par chaque page, y compris faq.astro qui l'ajoute
+// uniquement pour ce fil d'Ariane sans changer son <title> via fullTitle).
+const isHome = Astro.url.pathname === "/";
+const breadcrumbSchema = !isHome && title
+	? {
+			"@context": "https://schema.org",
+			"@type": "BreadcrumbList",
+			itemListElement: [
+				{ "@type": "ListItem", position: 1, name: "Accueil", item: new URL("/", Astro.site).href },
+				{
+					"@type": "ListItem",
+					position: 2,
+					name: title,
+					item: new URL(Astro.url.pathname, Astro.site).href,
+				},
+			],
+		}
+	: null;
 ---
 
 <!doctype html>
@@ -37,6 +70,8 @@ const pageTitle = fullTitle ?? (title ? `${title} · ${SITE_TITLE}` : SITE_TITLE
 			rel="stylesheet"
 		/>
 		<script defer src="https://cloud.umami.is/script.js" data-website-id="8227a354-fbc6-479d-b598-e96292924631"></script>
+		<script type="application/ld+json" set:html={toJsonLd(organizationSchema)} />
+		{breadcrumbSchema && <script type="application/ld+json" set:html={toJsonLd(breadcrumbSchema)} />}
 	</head>
 	<body class="flex min-h-screen flex-col font-sans">
 		<Header />

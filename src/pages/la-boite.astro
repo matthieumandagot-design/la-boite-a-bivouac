@@ -1,8 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
-import { SOCIAL_LINKS } from "../consts";
+import { SITE_TITLE, SOCIAL_LINKS } from "../consts";
 import SubscribeForm from "../components/SubscribeForm.astro";
+import { toJsonLd } from "../utils/jsonld";
+
+const PAGE_DESCRIPTION =
+	"La Boîte à Bivouac : caisse modulaire en acier et OSB qui s'installe dans votre remorque standard. Tente de toit, vélos, matériel. V2 en septembre 2026.";
 
 const CONCEPT_POINTS = [
 	{
@@ -33,12 +37,43 @@ const GALLERY_IMAGES = [
 	{ src: "/images/galerie-remorque-4.jpeg", alt: "La Boîte à Bivouac en situation, à l'arrêt" },
 	{ src: "/images/galerie-tente-2.jpeg", alt: "La Boîte à Bivouac, tente de toit déployée avec l'échelle" },
 ];
+
+// Images produit réellement présentes sur cette page (hors logo/illustrations
+// de marque) : hero, photos de fabrication, prototype V1, galerie.
+const PRODUCT_IMAGE_PATHS = [
+	"/images/produit-remorque.jpeg",
+	"/images/fabrication-chassis.jpeg",
+	"/images/fabrication-garage.jpeg",
+	"/images/produit-tente.jpeg",
+	...GALLERY_IMAGES.map((img) => img.src),
+];
+
+const productSchema = {
+	"@context": "https://schema.org",
+	"@type": "Product",
+	name: SITE_TITLE,
+	description: PAGE_DESCRIPTION,
+	image: PRODUCT_IMAGE_PATHS.map((path) => new URL(path, Astro.site).href),
+	brand: {
+		"@type": "Organization",
+		name: SITE_TITLE,
+	},
+	offers: {
+		"@type": "Offer",
+		// Prix indicatif, cf. l'astérisque "Prix de vente indicatif, susceptible
+		// de varier selon la configuration et les options choisies." affiché sur
+		// la section prix du site (voir src/pages/index.astro).
+		price: "2000",
+		priceCurrency: "EUR",
+		availability: "https://schema.org/PreOrder",
+		url: "https://laboiteabivouac.fr/la-boite",
+	},
+};
 ---
 
-<Layout
-	title="La Boîte"
-	description="La Boîte à Bivouac : caisse modulaire en acier et OSB qui s'installe dans votre remorque standard. Tente de toit, vélos, matériel. V2 en septembre 2026."
->
+<Layout title="La Boîte" description={PAGE_DESCRIPTION}>
+	<script type="application/ld+json" set:html={toJsonLd(productSchema)} />
+
 	<h1 class="sr-only">La Boîte à Bivouac — Votre base, partout</h1>
 
 	<section class="relative flex min-h-[560px] items-center overflow-hidden bg-graphite text-ecru-50">
