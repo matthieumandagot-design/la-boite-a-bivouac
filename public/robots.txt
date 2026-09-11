@@ -1,2 +1,6 @@
 User-agent: *
-Disallow: /admin/
+Allow: /
+Disallow: /admin
+Disallow: /api
+
+Sitemap: https://laboiteabivouac.fr/sitemap-index.xml

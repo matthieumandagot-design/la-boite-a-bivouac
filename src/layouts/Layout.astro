@@ -26,6 +26,8 @@ const pageTitle = fullTitle ?? (title ? `${title} · ${SITE_TITLE}` : SITE_TITLE
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content={description} />
+		<meta name="robots" content="index, follow" />
+		<link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
 		<title>{pageTitle}</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
