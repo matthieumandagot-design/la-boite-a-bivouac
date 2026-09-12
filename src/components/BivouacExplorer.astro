@@ -1,0 +1,118 @@
+---
+const stages = [
+  { number: '01', label: 'En place', title: 'Ajustée à votre remorque.', text: 'La boîte s’emboîte sur un tiers de sa hauteur dans la remorque. À l’avant, la tablette se déplie côté timon. La tente reste fermée au-dessus.' },
+  { number: '02', label: 'Vue éclatée', title: 'Trois éléments indépendants.', text: 'La tente de toit, la boîte sur mesure et la remorque se séparent. La tablette est à l’avant ; les deux portes d’accès sont à l’arrière.' },
+];
+---
+
+<section id="bivouac-explorer" class="bivouac-explorer" aria-labelledby="bivouac-explorer-title" data-bivouac-explorer>
+  <div class="explorer-pin">
+    <div class="explorer-topline"><span>LA BOÎTE, SOUS TOUS SES ANGLES</span><span class="explorer-scroll-hint">Faites défiler pour découvrir <span aria-hidden="true">↓</span></span></div>
+    <div class="explorer-layout">
+      <div class="explorer-copy">
+        <p class="explorer-eyebrow">Un module. Toutes vos aventures.</p>
+        <h2 id="bivouac-explorer-title">Tout trouve<br /> sa place.</h2>
+        <div class="explorer-stories">
+          {stages.map((stage, index) => <div class="explorer-story" data-story={index} hidden={index !== 0}>
+            <span class="explorer-stage-number" aria-hidden="true">{stage.number} / 02</span>
+            <h3>{stage.title}</h3><p>{stage.text}</p>
+          </div>)}
+        </div>
+        <a class="explorer-skip" href="#apres-exploration">Continuer la découverte <span aria-hidden="true">↘</span></a>
+      </div>
+      <figure class="explorer-figure">
+        <div class="explorer-stage">
+          <img class="explorer-fallback" src="/images/galerie-remorque-3.jpeg" alt="La Boîte à Bivouac emboîtée dans sa remorque, avec la tente de toit fermée et la tablette avant rabattue." loading="lazy" width="1100" height="1467" />
+          <canvas class="explorer-canvas" width="1100" height="960" role="img" aria-label="La tente fermée, la boîte emboîtée sur un tiers de sa hauteur avec sa tablette avant déployée, et la remorque se séparent verticalement au défilement." hidden></canvas>
+          <div class="explorer-labels" aria-hidden="true"><span>Tente de toit</span><span>Boîte amovible</span><span>Votre remorque</span></div>
+        </div>
+        <figcaption>Illustration du principe modulaire, d’après notre prototype.</figcaption>
+      </figure>
+    </div>
+    <div class="explorer-bottomline">
+      <div class="explorer-controls" role="group" aria-label="Étapes de l’illustration" hidden>
+        {stages.map((stage, index) => <button type="button" data-step={index} aria-pressed={index === 0}><span class="explorer-control-number">{stage.number}</span><span>{stage.label}</span></button>)}
+      </div>
+      <div class="explorer-progress" aria-hidden="true"><span></span></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .bivouac-explorer { --gold: #e8b428; --cream: #f5ecd8; --header-offset: 81px; color: var(--cream); background: #122218; position: relative; scroll-margin-top: var(--header-offset); overflow-anchor: none; }
+  .explorer-pin { padding: 26px clamp(24px, 4vw, 72px) 22px; width: 100%; display: flex; flex-direction: column; }
+  .explorer-topline { display: flex; justify-content: space-between; gap: 20px; border-bottom: 1px solid #e8e0c82b; padding-bottom: 20px; font-size: .75rem; letter-spacing: .12em; }
+  .explorer-topline > span:first-child { color: var(--gold); }
+  .explorer-scroll-hint { letter-spacing: 0; color: #c5caba; }
+  .explorer-scroll-hint span { margin-left: 14px; }
+  .explorer-layout { display: grid; grid-template-columns: minmax(230px, .8fr) minmax(0, 1.7fr); gap: 24px; flex: 1; min-height: 0; align-items: center; }
+  .explorer-copy { max-width: 390px; padding: 32px 0; }
+  .explorer-eyebrow { color: #c5caba; font-size: .875rem; margin: 0 0 18px; }
+  h2 { font-family: var(--font-display, 'Space Grotesk', sans-serif); font-size: clamp(2.4rem, 4.1vw, 4.7rem); line-height: 1.04; letter-spacing: -.055em; font-weight: 600; margin: 0; }
+  .explorer-stories { margin-top: 38px; min-height: 175px; }
+  .explorer-stage-number { color: var(--gold); font-size: .75rem; font-variant-numeric: tabular-nums; letter-spacing: .1em; }
+  h3 { font-family: var(--font-display, 'Space Grotesk', sans-serif); font-size: clamp(1.2rem, 1.8vw, 1.7rem); line-height: 1.25; font-weight: 500; margin: 14px 0 12px; }
+  .explorer-story p { font-size: 1rem; line-height: 1.7; color: #c5caba; margin: 0; max-width: 35ch; }
+  .explorer-skip { display: inline-flex; gap: 22px; align-items: center; color: var(--cream); font-size: .875rem; margin-top: 22px; text-underline-offset: 5px; text-decoration: underline; text-decoration-color: #e8e0c860; }
+  .explorer-skip:hover { color: var(--gold); }
+  .explorer-figure { margin: 0; min-width: 0; width: 100%; }
+  .explorer-stage { position: relative; width: 100%; aspect-ratio: 1100 / 960; max-height: 690px; background: radial-gradient(ellipse at 48% 49%, #36513b66, transparent 68%); }
+  .explorer-fallback { width: 100%; height: 100%; max-height: 620px; object-fit: contain; border-radius: 8px; }
+  .explorer-canvas { width: 100%; height: 100%; object-fit: contain; }
+  .explorer-labels { position: absolute; inset: 0; pointer-events: none; opacity: var(--label-opacity, 0); }
+  .explorer-labels span { position: absolute; right: 0; font-size: .75rem; color: #e8e0c8; border-bottom: 1px solid #e8e0c85c; padding-bottom: 6px; }
+  .explorer-labels span:nth-child(1) { top: 24%; }
+  .explorer-labels span:nth-child(2) { top: 50%; }
+  .explorer-labels span:nth-child(3) { top: 83%; }
+  figcaption { font-size: .75rem; color: #aeb9a8; text-align: center; margin-top: -4px; }
+  .explorer-bottomline { border-top: 1px solid #e8e0c82b; padding-top: 18px; display: flex; align-items: center; gap: 40px; }
+  .explorer-controls { display: flex; gap: 28px; flex: 1; }
+  .explorer-controls button { display: flex; align-items: center; gap: 10px; color: #bac3b4; cursor: pointer; font-size: .875rem; background: transparent; border: 0; padding: 5px 0; min-height: 40px; text-align: left; }
+  .explorer-control-number { font-size: .75rem; color: #a5b19f; font-variant-numeric: tabular-nums; }
+  .explorer-controls button[aria-pressed='true'], .explorer-controls button[aria-pressed='true'] .explorer-control-number { color: var(--gold); }
+  .explorer-controls button:hover { color: var(--cream); }
+  .explorer-controls button:focus-visible, .explorer-skip:focus-visible { outline: 2px solid var(--gold); outline-offset: 5px; border-radius: 3px; }
+  .explorer-progress { height: 2px; width: 150px; background: #e8e0c833; }
+  .explorer-progress span { display: block; height: 100%; background: var(--gold); transform-origin: left; transform: scaleX(var(--explorer-progress, 0)); }
+  .bivouac-explorer[data-ready='true']:not([data-reduced='true']) { height: 260svh; }
+  .bivouac-explorer[data-ready='true']:not([data-reduced='true']) .explorer-pin { position: sticky; top: var(--header-offset); height: calc(100svh - var(--header-offset)); min-height: 580px; }
+  .bivouac-explorer[data-ready='true'] .explorer-stage { max-height: min(66svh, 690px); }
+  [hidden] { display: none !important; }
+  @media (max-width: 760px) {
+    .explorer-pin { padding: 18px 20px; }
+    .explorer-topline { padding-bottom: 13px; font-size: .75rem; }
+    .explorer-scroll-hint { display: none; }
+    .explorer-layout { grid-template-columns: 1fr; gap: 0; align-content: center; }
+    .explorer-copy { max-width: none; padding: 22px 0 0; }
+    .explorer-eyebrow { margin-bottom: 10px; font-size: .875rem; }
+    h2 { font-size: clamp(1.7rem, 7vw, 2.5rem); }
+    h2 br { display: none; }
+    .explorer-stories { min-height: 100px; margin-top: 16px; }
+    .explorer-stage-number { display: none; }
+    h3 { font-size: 1.05rem; margin: 0 0 6px; }
+    .explorer-story p { max-width: 54ch; font-size: .875rem; line-height: 1.5; }
+    .explorer-skip { display: none; }
+    .explorer-stage { max-height: 43svh !important; }
+    .explorer-labels { display: none; }
+    figcaption { font-size: .75rem; margin: 0 0 10px; }
+    .explorer-bottomline { padding-top: 8px; gap: 12px; }
+    .explorer-controls { gap: 12px; justify-content: space-between; }
+    .explorer-controls button { flex-direction: column; align-items: flex-start; gap: 4px; font-size: .75rem; }
+    .explorer-control-number { font-size: .75rem; }
+    .explorer-progress { width: 40px; }
+    .bivouac-explorer[data-ready='true']:not([data-reduced='true']) .explorer-pin { min-height: 570px; }
+  }
+  @media (max-height: 680px) and (min-width: 761px) {
+    .explorer-pin { padding-top: 16px; padding-bottom: 12px; }
+    .explorer-copy { padding: 16px 0; }
+    h2 { font-size: 2.7rem; }
+    .explorer-stories { margin-top: 20px; min-height: 155px; }
+    .explorer-skip { margin-top: 8px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .explorer-scroll-hint { display: none; } }
+</style>
+
+<script>
+  import { mountBivouacExplorers } from '../scripts/bivouac-explorer';
+  mountBivouacExplorers();
+</script>

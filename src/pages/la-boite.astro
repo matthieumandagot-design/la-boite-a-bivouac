@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
 import { SITE_TITLE, SOCIAL_LINKS } from "../consts";
 import SubscribeForm from "../components/SubscribeForm.astro";
+import BivouacExplorer from "../components/BivouacExplorer.astro";
 import { toJsonLd } from "../utils/jsonld";
 
 const PAGE_DESCRIPTION =
@@ -118,7 +119,9 @@ const productSchema = {
 		</div>
 	</section>
 
-	<section class="bg-ecru-100 px-6 py-20">
+	<BivouacExplorer />
+
+	<section id="apres-exploration" class="scroll-mt-24 bg-ecru-100 px-6 py-20">
 		<div class="mx-auto max-w-5xl">
 			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
 				Fabriquée à la main, en Occitanie.
