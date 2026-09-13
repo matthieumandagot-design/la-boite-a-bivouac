@@ -4,6 +4,7 @@ import { Icon } from "astro-icon/components";
 import { SITE_TITLE, SOCIAL_LINKS } from "../consts";
 import SubscribeForm from "../components/SubscribeForm.astro";
 import BivouacExplorer from "../components/BivouacExplorer.astro";
+import ScrollReveal from "../components/ScrollReveal.astro";
 import { toJsonLd } from "../utils/jsonld";
 
 const PAGE_DESCRIPTION =
@@ -76,6 +77,7 @@ const productSchema = {
 	<script type="application/ld+json" set:html={toJsonLd(productSchema)} />
 
 	<h1 class="sr-only">La Boîte à Bivouac — Votre base, partout</h1>
+	<ScrollReveal />
 
 	<section class="relative flex min-h-[560px] items-center overflow-hidden bg-graphite text-ecru-50">
 		<img
@@ -123,10 +125,10 @@ const productSchema = {
 
 	<section id="apres-exploration" class="scroll-mt-24 bg-ecru-100 px-6 py-20">
 		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl" data-reveal>
 				Fabriquée à la main, en Occitanie.
 			</h2>
-			<p class="mt-4 max-w-2xl text-brun-500">
+			<p class="mt-4 max-w-2xl text-brun-500" data-reveal style="--reveal-delay: 90ms">
 				Le châssis est entièrement soudé à la main. Tubes acier, panneaux OSB, charnières robustes.
 				Un produit conçu pour durer et pour être réparable.
 			</p>
@@ -136,12 +138,16 @@ const productSchema = {
 					alt="Châssis acier soudé"
 					loading="lazy"
 					class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+					data-reveal
+					style="--reveal-delay: 180ms"
 				/>
 				<img
 					src="/images/fabrication-garage.jpeg"
 					alt="Caisse finalisée"
 					loading="lazy"
 					class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+					data-reveal
+					style="--reveal-delay: 240ms"
 				/>
 			</div>
 		</div>
@@ -154,8 +160,9 @@ const productSchema = {
 				alt="La Boîte à Bivouac, prototype V1"
 				loading="lazy"
 				class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+				data-reveal="left"
 			/>
-			<div>
+			<div data-reveal="right" style="--reveal-delay: 120ms">
 				<span class="inline-block rounded-full bg-mousse px-4 py-1 text-xs font-medium uppercase tracking-widest text-brun-700">
 					Testée · En conditions réelles
 				</span>
@@ -174,7 +181,7 @@ const productSchema = {
 	<section class="border-t border-ardoise/30 bg-sable/50 px-6 py-20">
 		<div class="mx-auto max-w-5xl">
 			<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
-				<div class="lg:order-2">
+				<div class="lg:order-2" data-reveal="right">
 					<div class="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-graphite p-12 shadow-sm">
 						<img
 							src="/images/logo-badge.png"
@@ -184,7 +191,7 @@ const productSchema = {
 						/>
 					</div>
 				</div>
-				<div class="lg:order-1">
+				<div class="lg:order-1" data-reveal="left" style="--reveal-delay: 120ms">
 					<span class="inline-block rounded-full bg-rouille-500 px-4 py-1 text-xs font-medium uppercase tracking-widest text-ecru-50">
 						Septembre 2026
 					</span>
@@ -210,15 +217,17 @@ const productSchema = {
 
 	<section class="border-t border-ardoise/30 px-6 py-16">
 		<div class="mx-auto max-w-4xl">
-			<h2 class="font-display text-2xl font-semibold text-brun-700">En images</h2>
+			<h2 class="font-display text-2xl font-semibold text-brun-700" data-reveal>En images</h2>
 			<div class="mt-8 grid grid-cols-3 gap-4">
 				{
-					GALLERY_IMAGES.map((img) => (
+					GALLERY_IMAGES.map((img, index) => (
 						<img
 							src={img.src}
 							alt={img.alt}
 							loading="lazy"
 							class="aspect-square w-full rounded-xl object-cover shadow-sm"
+							data-reveal
+							style={`--reveal-delay: ${index * 60}ms`}
 						/>
 					))
 				}
@@ -228,11 +237,13 @@ const productSchema = {
 
 	<section class="bg-graphite px-6 py-20">
 		<div class="mx-auto max-w-4xl">
-			<h2 class="font-display text-2xl font-semibold text-ecru-50 sm:text-3xl">Nous suivre</h2>
+			<h2 class="font-display text-2xl font-semibold text-ecru-50 sm:text-3xl" data-reveal>
+				Nous suivre
+			</h2>
 			<ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{
-					SOCIAL_LINKS.map((social) => (
-						<li>
+					SOCIAL_LINKS.map((social, index) => (
+						<li data-reveal style={`--reveal-delay: ${index * 80}ms`}>
 							<a
 								href={social.href}
 								target="_blank"
