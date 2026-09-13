@@ -1,104 +1,357 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import ScrollReveal from "../components/ScrollReveal.astro";
+import { Icon } from "astro-icon/components";
+import { SOCIAL_LINKS } from "../consts";
 
 const CONTACT_EMAIL = "contact@laboiteabivouac.fr";
+
+const REASSURANCES = [
+	{
+		icon: "tabler:message-2-check",
+		title: "Réponse personnelle",
+		text: "Chaque message est lu et reçoit une réponse, pas un accusé automatique.",
+	},
+	{
+		icon: "tabler:map-pin",
+		title: "Atelier en Occitanie",
+		text: "Conçu et fabriqué chez nous, pas assemblé à l'autre bout du monde.",
+	},
+	{
+		icon: "tabler:file-description",
+		title: "Devis sur mesure",
+		text: "Selon votre remorque, votre usage et les options souhaitées.",
+	},
+];
 ---
 
 <Layout
 	title="Contact"
 	description="Une question sur La Boîte à Bivouac ? Parlez-nous de votre projet et de votre usage. Nous répondons à chaque message personnellement."
 >
+	<ScrollReveal />
+
 	<section class="border-b border-ardoise/30 bg-sable/50 px-6 py-16">
 		<div class="mx-auto max-w-4xl">
-			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500">Contact</p>
-			<h1 class="mt-3 font-display text-4xl font-semibold text-brun-700">Parlons de votre projet</h1>
-			<p class="mt-6 max-w-2xl text-lg text-brun-500">
+			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>Contact</p>
+			<h1
+				class="mt-3 font-display text-4xl font-semibold text-brun-700"
+				data-reveal
+				style="--reveal-delay: 60ms"
+			>
+				Parlons de votre projet
+			</h1>
+			<p
+				class="mt-6 max-w-2xl text-lg text-brun-500"
+				data-reveal
+				style="--reveal-delay: 120ms"
+			>
 				Vous avez une question sur la compatibilité avec votre remorque&nbsp;? Vous souhaitez acquérir
 				une boîte à bivouac et obtenir un devis personnalisé&nbsp;? Contactez-nous&nbsp;: nous vous
 				répondrons rapidement&nbsp;!
 			</p>
+
+			<ul class="mt-10 grid gap-4 sm:grid-cols-3">
+				{
+					REASSURANCES.map((point, index) => (
+						<li
+							class="rounded-2xl border border-ardoise/30 bg-ecru-50 p-5"
+							data-reveal
+							style={`--reveal-delay: ${180 + index * 70}ms`}
+						>
+							<span class="flex h-10 w-10 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
+								<Icon name={point.icon} class="h-5 w-5" />
+							</span>
+							<p class="mt-4 font-display text-base font-semibold text-brun-700">{point.title}</p>
+							<p class="mt-1 text-sm text-brun-500">{point.text}</p>
+						</li>
+					))
+				}
+			</ul>
 		</div>
 	</section>
 
-	<section class="mx-auto grid max-w-4xl gap-12 px-6 py-16 lg:grid-cols-5">
-		<div class="lg:col-span-2">
-			<h2 class="font-display text-xl font-semibold text-brun-700">Coordonnées</h2>
-			<dl class="mt-6 space-y-4 text-brun-500">
-				<div>
-					<dt class="text-sm font-medium text-brun-600">Email</dt>
-					<dd>
-						<a href={`mailto:${CONTACT_EMAIL}`} class="text-rouille-500 hover:underline">
-							{CONTACT_EMAIL}
-						</a>
-					</dd>
+	<section class="mx-auto grid max-w-4xl gap-10 px-6 py-16 lg:grid-cols-5">
+		<aside class="lg:col-span-2" data-reveal="left">
+			<div class="rounded-2xl border border-ardoise/30 bg-ecru-50 p-6">
+				<h2 class="font-display text-xl font-semibold text-brun-700">Coordonnées</h2>
+				<dl class="mt-6 space-y-5 text-brun-500">
+					<div>
+						<dt class="text-sm font-medium text-brun-600">Email</dt>
+						<dd class="mt-1">
+							<a
+								href={`mailto:${CONTACT_EMAIL}`}
+								class="inline-flex items-center gap-2 text-rouille-500 transition-colors hover:text-rouille-400"
+							>
+								<Icon name="tabler:mail" class="h-4 w-4" />
+								{CONTACT_EMAIL}
+							</a>
+						</dd>
+					</div>
+					<div>
+						<dt class="text-sm font-medium text-brun-600">Zone</dt>
+						<dd class="mt-1">France — expéditions et rendez-vous sur devis</dd>
+					</div>
+					<div>
+						<dt class="text-sm font-medium text-brun-600">Atelier</dt>
+						<dd class="mt-1">Occitanie</dd>
+					</div>
+				</dl>
+
+				<p class="mt-6 text-sm font-medium text-brun-600">Nous suivre</p>
+				<ul class="mt-3 flex gap-2">
+					{
+						SOCIAL_LINKS.map((social) => (
+							<li>
+								<a
+									href={social.href}
+									target="_blank"
+									rel="noopener noreferrer"
+									aria-label={social.label}
+									class="flex h-10 w-10 items-center justify-center rounded-full border border-ardoise/40 text-brun-600 transition-colors hover:border-rouille-400 hover:bg-rouille-500 hover:text-ecru-50"
+								>
+									<Icon name={social.icon} class="h-5 w-5" />
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</div>
+		</aside>
+
+		<div class="lg:col-span-3" data-reveal="right" style="--reveal-delay: 120ms">
+			<div class="rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm sm:p-8">
+				<form id="contact-form" class="space-y-5" method="post" novalidate>
+					<div class="contact-field">
+						<label for="name" class="block text-sm font-medium text-brun-600">Nom</label>
+						<input
+							id="name"
+							name="name"
+							type="text"
+							autocomplete="name"
+							required
+							class="contact-input"
+							aria-describedby="name-error"
+						/>
+						<p id="name-error" class="contact-error" data-error-for="name" hidden></p>
+					</div>
+
+					<div class="contact-field">
+						<label for="email" class="block text-sm font-medium text-brun-600">Email</label>
+						<input
+							id="email"
+							name="email"
+							type="email"
+							autocomplete="email"
+							required
+							class="contact-input"
+							aria-describedby="email-error"
+						/>
+						<p id="email-error" class="contact-error" data-error-for="email" hidden></p>
+					</div>
+
+					<div class="contact-field">
+						<div class="flex items-baseline justify-between gap-4">
+							<label for="message" class="block text-sm font-medium text-brun-600">Message</label>
+							<span id="message-counter" class="text-xs tabular-nums text-brun-400">0 / 2000</span>
+						</div>
+						<textarea
+							id="message"
+							name="message"
+							rows="6"
+							required
+							maxlength="2000"
+							class="contact-input"
+							aria-describedby="message-error"
+						></textarea>
+						<p id="message-error" class="contact-error" data-error-for="message" hidden></p>
+					</div>
+
+					<!-- Honeypot : caché visuellement (hors écran, pas display:none) pour piéger les bots sans gêner les lecteurs d'écran, qui l'ignorent grâce à aria-hidden/tabindex. -->
+					<div class="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+						<label for="website">Laissez ce champ vide</label>
+						<input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+					</div>
+
+					<div id="form-status" role="status" aria-live="polite" class="hidden text-sm"></div>
+
+					<button
+						type="submit"
+						class="inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-60"
+					>
+						<span data-submit-label>Envoyer le message</span>
+						<Icon name="tabler:send" class="h-4 w-4" />
+					</button>
+				</form>
+
+				<div id="contact-success" class="contact-success py-6 text-center" hidden>
+					<span class="contact-check" aria-hidden="true">
+						<svg viewBox="0 0 52 52">
+							<circle class="contact-check-circle" cx="26" cy="26" r="23" />
+							<path class="contact-check-mark" d="M15 27l8 8 15-16" />
+						</svg>
+					</span>
+					<h2 class="mt-5 font-display text-xl font-semibold text-brun-700">Message envoyé&nbsp;!</h2>
+					<p class="mt-2 text-brun-500">
+						Merci, nous avons bien reçu votre message et nous vous répondrons rapidement.
+					</p>
+					<button
+						type="button"
+						id="contact-reset"
+						class="mt-6 inline-flex items-center gap-2 rounded-full border border-ardoise/50 px-5 py-2.5 text-sm font-semibold text-brun-600 transition-colors hover:border-rouille-400 hover:text-rouille-500"
+					>
+						Envoyer un autre message
+					</button>
 				</div>
-				<div>
-					<dt class="text-sm font-medium text-brun-600">Zone</dt>
-					<dd>France — expéditions et rendez-vous sur devis</dd>
-				</div>
-			</dl>
+			</div>
 		</div>
-
-		<form id="contact-form" class="space-y-6 lg:col-span-3" method="post" novalidate>
-			<div>
-				<label for="name" class="block text-sm font-medium text-brun-600">Nom</label>
-				<input
-					id="name"
-					name="name"
-					type="text"
-					autocomplete="name"
-					required
-					class="mt-2 w-full rounded-lg border border-ardoise/40 bg-ecru-50 px-4 py-2.5 text-brun-700 focus:border-rouille-400 focus:outline-none focus:ring-2 focus:ring-rouille-400/30"
-				/>
-			</div>
-			<div>
-				<label for="email" class="block text-sm font-medium text-brun-600">Email</label>
-				<input
-					id="email"
-					name="email"
-					type="email"
-					autocomplete="email"
-					required
-					class="mt-2 w-full rounded-lg border border-ardoise/40 bg-ecru-50 px-4 py-2.5 text-brun-700 focus:border-rouille-400 focus:outline-none focus:ring-2 focus:ring-rouille-400/30"
-				/>
-			</div>
-			<div>
-				<label for="message" class="block text-sm font-medium text-brun-600">Message</label>
-				<textarea
-					id="message"
-					name="message"
-					rows="5"
-					required
-					class="mt-2 w-full rounded-lg border border-ardoise/40 bg-ecru-50 px-4 py-2.5 text-brun-700 focus:border-rouille-400 focus:outline-none focus:ring-2 focus:ring-rouille-400/30"
-				></textarea>
-			</div>
-
-			<!-- Honeypot : caché visuellement (hors écran, pas display:none) pour piéger les bots sans gêner les lecteurs d'écran, qui l'ignorent grâce à aria-hidden/tabindex. -->
-			<div class="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
-				<label for="website">Laissez ce champ vide</label>
-				<input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
-			</div>
-
-			<div id="form-status" role="status" aria-live="polite" class="hidden text-sm"></div>
-
-			<button
-				type="submit"
-				class="rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-60"
-			>
-				Envoyer le message
-			</button>
-		</form>
 	</section>
 </Layout>
+
+<style>
+  .contact-input {
+    margin-top: 0.5rem;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--color-ardoise) 40%, transparent);
+    background: var(--color-ecru-50);
+    padding: 0.7rem 1rem;
+    color: var(--color-brun-700);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .contact-input:focus {
+    outline: none;
+    border-color: var(--color-rouille-400);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-rouille-400) 25%, transparent);
+  }
+
+  /* Champ en erreur : signalé dès la sortie du champ, pas seulement à l'envoi. */
+  .contact-field[data-invalid] .contact-input {
+    border-color: #b91c1c;
+  }
+
+  .contact-field[data-invalid] .contact-input:focus {
+    box-shadow: 0 0 0 3px rgb(185 28 28 / 0.2);
+  }
+
+  .contact-error {
+    margin-top: 0.4rem;
+    font-size: 0.8125rem;
+    color: #b91c1c;
+  }
+
+  /* ── Écran de confirmation ─────────────────────────────────── */
+  .contact-check svg {
+    height: 4rem;
+    width: 4rem;
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .contact-check-circle {
+    stroke: color-mix(in srgb, var(--color-rouille-500) 35%, transparent);
+    stroke-dasharray: 152;
+    stroke-dashoffset: 152;
+    animation: contact-trace 0.5s ease-out forwards;
+  }
+
+  .contact-check-mark {
+    stroke: var(--color-rouille-500);
+    stroke-dasharray: 40;
+    stroke-dashoffset: 40;
+    animation: contact-trace 0.35s 0.35s ease-out forwards;
+  }
+
+  @keyframes contact-trace {
+    to { stroke-dashoffset: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact-input { transition: none; }
+    .contact-check-circle,
+    .contact-check-mark {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
+  }
+</style>
 
 <script>
 	const form = document.getElementById("contact-form") as HTMLFormElement | null;
 	const status = document.getElementById("form-status");
 	const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+	/* Le libellé vit dans un <span> : remplacer le textContent du bouton
+	   effacerait l'icône qu'il contient. */
+	const submitLabel = submitButton?.querySelector<HTMLElement>("[data-submit-label]");
+	const success = document.getElementById("contact-success");
+	const resetButton = document.getElementById("contact-reset");
+	const message = document.getElementById("message") as HTMLTextAreaElement | null;
+	const counter = document.getElementById("message-counter");
 
-	function showStatus(message: string, variant: "success" | "error") {
+	type Field = HTMLInputElement | HTMLTextAreaElement;
+
+	/* Messages d'erreur affichés sous le champ concerné, dès sa sortie. */
+	const RULES: Record<string, (value: string, field: Field) => string | null> = {
+		name: (value) => (value.trim() === "" ? "Merci d'indiquer votre nom." : null),
+		email: (value, field) => {
+			if (value.trim() === "") return "Merci d'indiquer votre email.";
+			return field.validity.typeMismatch ? "Cet email ne semble pas valide." : null;
+		},
+		message: (value) => {
+			if (value.trim() === "") return "Merci d'écrire votre message.";
+			return value.trim().length < 10
+				? "Votre message est un peu court : donnez-nous quelques détails."
+				: null;
+		},
+	};
+
+	const fields = ["name", "email", "message"]
+		.map((id) => document.getElementById(id))
+		.filter((el): el is Field => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement);
+
+	function validateField(field: Field): boolean {
+		const error = RULES[field.name]?.(field.value, field) ?? null;
+		const wrapper = field.closest(".contact-field");
+		const hint = document.querySelector<HTMLElement>(`[data-error-for="${field.name}"]`);
+
+		if (error) {
+			wrapper?.setAttribute("data-invalid", "");
+			field.setAttribute("aria-invalid", "true");
+			if (hint) {
+				hint.textContent = error;
+				hint.hidden = false;
+			}
+			return false;
+		}
+
+		wrapper?.removeAttribute("data-invalid");
+		field.removeAttribute("aria-invalid");
+		if (hint) {
+			hint.textContent = "";
+			hint.hidden = true;
+		}
+		return true;
+	}
+
+	for (const field of fields) {
+		field.addEventListener("blur", () => validateField(field));
+		/* Pendant la frappe on ne corrige que ce qui est déjà signalé : pas de
+		   message d'erreur tant que l'utilisateur n'a pas quitté le champ. */
+		field.addEventListener("input", () => {
+			if (field.closest(".contact-field")?.hasAttribute("data-invalid")) validateField(field);
+		});
+	}
+
+	message?.addEventListener("input", () => {
+		if (counter) counter.textContent = `${message.value.length} / 2000`;
+	});
+
+	function showStatus(text: string, variant: "success" | "error") {
 		if (!status) return;
-		status.textContent = message;
+		status.textContent = text;
 		status.classList.remove("hidden", "text-green-700", "text-red-700");
 		status.classList.add(variant === "success" ? "text-green-700" : "text-red-700");
 	}
@@ -107,8 +360,14 @@ const CONTACT_EMAIL = "contact@laboiteabivouac.fr";
 		event.preventDefault();
 		if (!form || !submitButton) return;
 
+		const invalid = fields.filter((field) => !validateField(field));
+		if (invalid.length > 0) {
+			invalid[0].focus();
+			return;
+		}
+
 		submitButton.disabled = true;
-		submitButton.textContent = "Envoi en cours…";
+		if (submitLabel) submitLabel.textContent = "Envoi en cours…";
 
 		try {
 			const response = await fetch("/contact.php", {
@@ -125,8 +384,12 @@ const CONTACT_EMAIL = "contact@laboiteabivouac.fr";
 			}
 
 			if (response.ok && data.success) {
-				showStatus("Merci, votre message a bien été envoyé ! Nous vous répondons rapidement.", "success");
 				form.reset();
+				if (counter) counter.textContent = "0 / 2000";
+				status?.classList.add("hidden");
+				/* Le formulaire laisse la place à l'écran de confirmation. */
+				form.hidden = true;
+				if (success) success.hidden = false;
 			} else {
 				showStatus(
 					data.error ?? "Une erreur est survenue lors de l'envoi. Merci de réessayer.",
@@ -140,7 +403,15 @@ const CONTACT_EMAIL = "contact@laboiteabivouac.fr";
 			);
 		} finally {
 			submitButton.disabled = false;
-			submitButton.textContent = "Envoyer le message";
+			if (submitLabel) submitLabel.textContent = "Envoyer le message";
+		}
+	});
+
+	resetButton?.addEventListener("click", () => {
+		if (success) success.hidden = true;
+		if (form) {
+			form.hidden = false;
+			form.querySelector<HTMLInputElement>("#name")?.focus();
 		}
 	});
 </script>

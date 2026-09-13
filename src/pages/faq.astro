@@ -1,19 +1,23 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import ScrollReveal from "../components/ScrollReveal.astro";
+import { Icon } from "astro-icon/components";
 import { toJsonLd } from "../utils/jsonld";
 // Import statique (build time) du même fichier que le fetch client utilise en
-// repli (voir loadFaq() plus bas) : garantit que le JSON-LD généré au build
-// reste identique au contenu par défaut réellement affiché aux visiteurs.
-// N'inclut pas les éventuelles modifications live via /admin/faq.php
+// repli (voir syncFaq() plus bas) : les questions sont désormais rendues dans
+// le HTML dès le build — affichage immédiat, et la page reste lisible sans JS.
+// Le fetch ne sert plus qu'à refléter les éditions live faites via /admin/faq.php
 // (public/data/faq.json, non versionné) : penser à resynchroniser
-// public/data/faq.default.json après toute édition FAQ en production, pour
-// que ce schema conserve un contenu exact.
+// public/data/faq.default.json après toute édition FAQ en production, pour que
+// le contenu rendu au build et le JSON-LD restent exacts.
 import faqData from "../../public/data/faq.default.json";
+
+const faqItems = faqData as { question: string; answer: string }[];
 
 const faqSchema = {
 	"@context": "https://schema.org",
 	"@type": "FAQPage",
-	mainEntity: faqData.map((item: { question: string; answer: string }) => ({
+	mainEntity: faqItems.map((item) => ({
 		"@type": "Question",
 		name: item.question,
 		acceptedAnswer: {
@@ -30,20 +34,116 @@ const faqSchema = {
 	description="Compatibilité remorque, prix, installation, dimensions, garantie : 20 réponses aux questions les plus posées sur La Boîte à Bivouac."
 >
 	<script type="application/ld+json" set:html={toJsonLd(faqSchema)} />
+	<ScrollReveal />
 
-	<section class="bg-ecru-100 px-6 py-16">
+	<section class="bg-ecru-100 px-6 pt-16 pb-8">
 		<div class="mx-auto max-w-3xl">
-			<h1 class="font-display text-4xl font-semibold text-brun-600">Questions fréquentes</h1>
-			<p class="mt-6 max-w-2xl text-lg text-brun-500">
-				Tout ce que vous voulez savoir sur La Boîte à Bivouac.
+			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>FAQ</p>
+			<h1
+				class="mt-3 font-display text-4xl font-semibold text-brun-600"
+				data-reveal
+				style="--reveal-delay: 60ms"
+			>
+				Questions fréquentes
+			</h1>
+			<p
+				class="mt-6 max-w-2xl text-lg text-brun-500"
+				data-reveal
+				style="--reveal-delay: 120ms"
+			>
+				{faqItems.length} réponses sur la compatibilité, le prix, l'installation et l'entretien de
+				La Boîte à Bivouac.
+			</p>
+
+			<div class="relative mt-8" data-reveal style="--reveal-delay: 180ms">
+				<label for="faq-search" class="sr-only">Rechercher une question</label>
+				<Icon
+					name="tabler:search"
+					class="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-brun-300"
+				/>
+				<input
+					id="faq-search"
+					type="search"
+					autocomplete="off"
+					placeholder="Rechercher une question…"
+					class="w-full rounded-full border border-ardoise/40 bg-ecru-50 py-3.5 pl-13 pr-5 text-brun-700 shadow-sm transition-colors focus:border-rouille-400 focus:outline-none focus:ring-2 focus:ring-rouille-400/30"
+				/>
+			</div>
+		</div>
+	</section>
+
+	<section class="bg-ecru-100 px-6 pb-16">
+		<div class="mx-auto max-w-3xl">
+			<p id="faq-count" class="text-sm text-brun-400" aria-live="polite">
+				{faqItems.length} questions
+			</p>
+
+			<div id="faq-list" class="mt-4 space-y-3">
+				{
+					faqItems.map((item, index) => (
+						<article
+							class="faq-item"
+							data-faq-item
+							data-search={`${item.question} ${item.answer}`}
+							data-reveal
+							style={`--reveal-delay: ${Math.min(index, 6) * 50}ms`}
+						>
+							<h2>
+								<button
+									type="button"
+									class="faq-trigger"
+									id={`faq-question-${index}`}
+									aria-expanded="false"
+									aria-controls={`faq-answer-${index}`}
+								>
+									<span class="faq-label">{item.question}</span>
+									<span class="faq-icon" aria-hidden="true">
+										<svg viewBox="0 0 24 24">
+											<path d="M5 12h14" />
+											<path class="faq-icon-bar" d="M12 5v14" />
+										</svg>
+									</span>
+								</button>
+							</h2>
+							<div
+								id={`faq-answer-${index}`}
+								class="faq-answer"
+								role="region"
+								aria-labelledby={`faq-question-${index}`}
+							>
+								<div class="faq-answer-inner">
+									<p>{item.answer}</p>
+								</div>
+							</div>
+						</article>
+					))
+				}
+			</div>
+
+			<p
+				id="faq-empty"
+				class="mt-6 rounded-2xl border border-dashed border-ardoise/60 px-6 py-10 text-center text-brun-500"
+				hidden
+			>
+				Aucune question ne correspond à votre recherche.
+				<a href="#poser-une-question" class="font-semibold text-rouille-500 hover:underline">
+					Posez-la nous directement
+				</a>.
 			</p>
 		</div>
 	</section>
 
-	<section class="border-b border-ardoise/30 bg-ecru-50 px-6 py-12">
-		<div class="mx-auto max-w-3xl">
-			<h2 class="font-display text-xl font-semibold text-brun-600">Vous ne trouvez pas votre réponse ?</h2>
-			<p class="mt-2 text-brun-500">Posez votre question ici, nous y répondrons prochainement.</p>
+	<section id="poser-une-question" class="scroll-mt-24 bg-ecru-100 px-6 pb-20">
+		<div
+			class="mx-auto max-w-3xl rounded-3xl bg-graphite px-6 py-10 text-ecru-50 shadow-sm sm:px-10"
+			data-reveal
+		>
+			<h2 class="font-display text-xl font-semibold sm:text-2xl">
+				Vous ne trouvez pas votre réponse&nbsp;?
+			</h2>
+			<p class="mt-2 text-ecru-100/80">
+				Posez votre question ici, nous y répondrons prochainement.
+			</p>
 
 			<form id="ask-question-form" class="relative mt-6" method="post" novalidate>
 				<label for="visitor-question" class="sr-only">Votre question</label>
@@ -54,7 +154,7 @@ const faqSchema = {
 					required
 					maxlength="1000"
 					placeholder="Écrivez votre question ici…"
-					class="w-full rounded-lg border border-ardoise/40 bg-ecru-50 px-4 py-2.5 text-brun-700 focus:border-rouille-400 focus:outline-none focus:ring-2 focus:ring-rouille-400/30"
+					class="w-full rounded-xl border border-ecru-50/20 bg-ecru-50/10 px-4 py-3 text-ecru-50 placeholder:text-ecru-100/45 focus:border-mousse focus:outline-none focus:ring-2 focus:ring-mousse/30"
 				></textarea>
 
 				<!-- Honeypot : caché visuellement (hors écran, pas display:none) pour piéger les bots sans gêner les lecteurs d'écran, qui l'ignorent grâce à aria-hidden/tabindex. -->
@@ -67,21 +167,110 @@ const faqSchema = {
 
 				<button
 					type="submit"
-					class="mt-4 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-60"
+					class="mt-4 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-60"
 				>
-					Envoyer ma question
+					<span data-submit-label>Envoyer ma question</span>
+					<Icon name="tabler:arrow-right" class="h-4 w-4" />
 				</button>
 			</form>
 		</div>
 	</section>
-
-	<section class="bg-ecru-100 px-6 pb-20">
-		<div class="mx-auto max-w-3xl">
-			<p id="faq-status" class="text-brun-500">Chargement des questions…</p>
-			<div id="faq-list" class="hidden divide-y divide-ardoise/30 border-t border-b border-ardoise/30"></div>
-		</div>
-	</section>
 </Layout>
+
+<style is:global>
+  /* Les items peuvent être reconstruits en JS (synchronisation avec /admin) :
+     ces règles sont globales pour s'appliquer aussi aux éléments recréés. */
+  .faq-item {
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--color-ardoise) 30%, transparent);
+    border-radius: 1rem;
+    background: var(--color-ecru-50);
+    box-shadow: 0 1px 2px rgb(10 22 16 / 0.05);
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .faq-item:hover {
+    border-color: color-mix(in srgb, var(--color-rouille-400) 45%, transparent);
+    box-shadow: 0 8px 20px rgb(10 22 16 / 0.07);
+  }
+
+  .faq-trigger {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem 1.35rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .faq-trigger:focus-visible {
+    outline: 2px solid var(--color-rouille-500);
+    outline-offset: -2px;
+  }
+
+  .faq-label {
+    font-weight: 600;
+    color: var(--color-brun-600);
+  }
+
+  .faq-icon {
+    flex-shrink: 0;
+    color: var(--color-rouille-500);
+  }
+
+  .faq-icon svg {
+    height: 1.35rem;
+    width: 1.35rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .faq-icon-bar {
+    transform-origin: center;
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
+  }
+
+  /* Ouverture fluide quelle que soit la hauteur de la réponse : on anime la
+     rangée de grille de 0fr à 1fr, sans hauteur calculée en JS. */
+  .faq-answer {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .faq-answer-inner {
+    overflow: hidden;
+  }
+
+  .faq-answer-inner p {
+    margin: 0;
+    padding: 0 1.35rem 1.25rem;
+    color: var(--color-brun-500);
+  }
+
+  .faq-item[data-open] { border-color: color-mix(in srgb, var(--color-rouille-400) 55%, transparent); }
+  .faq-item[data-open] .faq-answer { grid-template-rows: 1fr; }
+  .faq-item[data-open] .faq-icon svg { transform: rotate(90deg); }
+  .faq-item[data-open] .faq-icon-bar { transform: scaleY(0); opacity: 0; }
+
+  @media (min-width: 640px) {
+    .faq-trigger { padding: 1.35rem 1.6rem; }
+    .faq-label { font-size: 1.125rem; }
+    .faq-answer-inner p { padding: 0 1.6rem 1.5rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq-item,
+    .faq-answer,
+    .faq-icon svg,
+    .faq-icon-bar { transition: none; }
+  }
+</style>
 
 <script>
 	interface FaqItem {
@@ -89,102 +278,147 @@ const faqSchema = {
 		answer: string;
 	}
 
-	async function fetchJson(url: string): Promise<unknown> {
-		const response = await fetch(url, { cache: "no-store" });
-		if (!response.ok) throw new Error(`${url} → ${response.status}`);
-		return response.json();
+	const list = document.getElementById("faq-list");
+	const search = document.getElementById("faq-search") as HTMLInputElement | null;
+	const count = document.getElementById("faq-count");
+	const empty = document.getElementById("faq-empty");
+
+	/* Recherche insensible à la casse ET aux accents : « remorque » trouve
+	   « Remorque », « éclatée » trouve « eclatee ». */
+	const normalize = (value: string) =>
+		value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+	const items = () => [...(list?.querySelectorAll<HTMLElement>("[data-faq-item]") ?? [])];
+
+	/* Délégation : le comportement survit au remplacement des items par sync(). */
+	list?.addEventListener("click", (event) => {
+		const trigger = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>(".faq-trigger");
+		const item = trigger?.closest<HTMLElement>("[data-faq-item]");
+		if (!trigger || !item) return;
+
+		const isOpen = item.hasAttribute("data-open");
+		item.toggleAttribute("data-open", !isOpen);
+		trigger.setAttribute("aria-expanded", String(!isOpen));
+	});
+
+	function applySearch() {
+		const query = normalize(search?.value.trim() ?? "");
+		const all = items();
+		let visible = 0;
+
+		for (const item of all) {
+			const match = query === "" || normalize(item.dataset.search ?? "").includes(query);
+			item.hidden = !match;
+			if (match) visible += 1;
+		}
+
+		if (count) {
+			const plural = (n: number) => (n > 1 ? "s" : "");
+			count.textContent =
+				query === ""
+					? `${all.length} question${plural(all.length)}`
+					: `${visible} question${plural(visible)} sur ${all.length}`;
+		}
+
+		if (empty) empty.hidden = visible !== 0;
 	}
 
-	function buildFaqItem(item: FaqItem, index: number): HTMLDivElement {
-		const wrapper = document.createElement("div");
-		wrapper.className = "faq-item";
+	search?.addEventListener("input", applySearch);
+</script>
+
+<script>
+	/* Synchronisation avec les éditions faites depuis /admin/faq.php : les
+	   questions sont déjà rendues au build, ce fetch ne remplace la liste que
+	   si le contenu live en diffère. En cas d'échec, le contenu du build reste. */
+	interface FaqEntry {
+		question: string;
+		answer: string;
+	}
+
+	const faqList = document.getElementById("faq-list");
+	const faqSearch = document.getElementById("faq-search");
+
+	function buildFaqItem(entry: FaqEntry, index: number): HTMLElement {
+		const article = document.createElement("article");
+		article.className = "faq-item";
+		article.setAttribute("data-faq-item", "");
+		article.dataset.search = `${entry.question} ${entry.answer}`;
 
 		const heading = document.createElement("h2");
-		const button = document.createElement("button");
-		button.type = "button";
-		button.className = "faq-question flex w-full items-center justify-between gap-4 py-5 text-left";
-		button.setAttribute("aria-expanded", "false");
-		button.setAttribute("aria-controls", `faq-answer-${index}`);
-		button.id = `faq-question-${index}`;
+		const trigger = document.createElement("button");
+		trigger.type = "button";
+		trigger.className = "faq-trigger";
+		trigger.id = `faq-question-${index}`;
+		trigger.setAttribute("aria-expanded", "false");
+		trigger.setAttribute("aria-controls", `faq-answer-${index}`);
 
-		const questionSpan = document.createElement("span");
-		questionSpan.className = "font-sans text-base font-semibold text-brun-600 sm:text-lg";
-		questionSpan.textContent = item.question;
+		const label = document.createElement("span");
+		label.className = "faq-label";
+		label.textContent = entry.question;
 
-		const chevron = document.createElement("span");
-		chevron.className =
-			"faq-chevron shrink-0 text-lg text-brun-600 transition-transform duration-300 ease-in-out";
-		chevron.setAttribute("aria-hidden", "true");
-		chevron.textContent = "▾";
+		const icon = document.createElement("span");
+		icon.className = "faq-icon";
+		icon.setAttribute("aria-hidden", "true");
+		icon.innerHTML =
+			'<svg viewBox="0 0 24 24"><path d="M5 12h14" /><path class="faq-icon-bar" d="M12 5v14" /></svg>';
 
-		button.append(questionSpan, chevron);
-		heading.append(button);
+		trigger.append(label, icon);
+		heading.append(trigger);
 
 		const answer = document.createElement("div");
 		answer.id = `faq-answer-${index}`;
+		answer.className = "faq-answer";
 		answer.setAttribute("role", "region");
 		answer.setAttribute("aria-labelledby", `faq-question-${index}`);
-		answer.className = "faq-answer max-h-0 overflow-hidden transition-[max-height] duration-300 ease-in-out";
 
-		const answerText = document.createElement("p");
-		answerText.className = "pb-5 font-sans text-brun-500";
-		answerText.textContent = item.answer;
-		answer.append(answerText);
+		const inner = document.createElement("div");
+		inner.className = "faq-answer-inner";
+		const text = document.createElement("p");
+		text.textContent = entry.answer;
+		inner.append(text);
+		answer.append(inner);
 
-		wrapper.append(heading, answer);
-
-		button.addEventListener("click", () => {
-			const isOpen = button.getAttribute("aria-expanded") === "true";
-			const nextOpen = !isOpen;
-
-			button.setAttribute("aria-expanded", String(nextOpen));
-			chevron.classList.toggle("rotate-180", nextOpen);
-			answer.style.maxHeight = nextOpen ? `${answer.scrollHeight}px` : "0px";
-		});
-
-		return wrapper;
+		article.append(heading, answer);
+		return article;
 	}
 
-	async function loadFaq() {
-		const status = document.getElementById("faq-status");
-		const list = document.getElementById("faq-list");
-		if (!(status instanceof HTMLElement) || !(list instanceof HTMLElement)) return;
+	async function syncFaq() {
+		if (!faqList) return;
 
-		let items: unknown;
+		let live: unknown;
 		try {
-			items = await fetchJson("/data/faq.json");
+			const response = await fetch("/data/faq.json", { cache: "no-store" });
+			if (!response.ok) return;
+			live = await response.json();
 		} catch {
-			items = null;
-		}
-
-		if (!Array.isArray(items)) {
-			try {
-				items = await fetchJson("/data/faq.default.json");
-			} catch {
-				items = [];
-			}
-		}
-
-		if (!Array.isArray(items) || items.length === 0) {
-			status.textContent = "Aucune question disponible pour le moment.";
 			return;
 		}
 
-		items.forEach((item: FaqItem, index: number) => {
-			list.append(buildFaqItem(item, index));
-		});
+		if (!Array.isArray(live) || live.length === 0) return;
 
-		status.classList.add("hidden");
-		list.classList.remove("hidden");
+		const rendered = [...faqList.querySelectorAll<HTMLElement>("[data-faq-item]")].map(
+			(item) => item.dataset.search ?? "",
+		);
+		const incoming = (live as FaqEntry[]).map((entry) => `${entry.question} ${entry.answer}`);
+		const identical =
+			rendered.length === incoming.length && rendered.every((value, i) => value === incoming[i]);
+		if (identical) return;
+
+		faqList.replaceChildren(...(live as FaqEntry[]).map(buildFaqItem));
+		/* Relance le filtre et le compteur, gérés par l'autre script. */
+		faqSearch?.dispatchEvent(new Event("input", { bubbles: true }));
 	}
 
-	loadFaq();
+	syncFaq();
 </script>
 
 <script>
 	const askForm = document.getElementById("ask-question-form") as HTMLFormElement | null;
 	const askStatus = document.getElementById("ask-question-status");
 	const askSubmitButton = askForm?.querySelector<HTMLButtonElement>('button[type="submit"]');
+	/* Le libellé vit dans un <span> : remplacer le textContent du bouton
+	   effacerait l'icône qu'il contient. */
+	const askSubmitLabel = askSubmitButton?.querySelector<HTMLElement>("[data-submit-label]");
 
 	function showAskStatus(message: string, variant: "success" | "error") {
 		if (!askStatus) return;
@@ -198,7 +432,7 @@ const faqSchema = {
 		if (!askForm || !askSubmitButton) return;
 
 		askSubmitButton.disabled = true;
-		askSubmitButton.textContent = "Envoi en cours…";
+		if (askSubmitLabel) askSubmitLabel.textContent = "Envoi en cours…";
 
 		try {
 			const response = await fetch("/ask-question.php", {
@@ -230,7 +464,7 @@ const faqSchema = {
 			);
 		} finally {
 			askSubmitButton.disabled = false;
-			askSubmitButton.textContent = "Envoyer ma question";
+			if (askSubmitLabel) askSubmitLabel.textContent = "Envoyer ma question";
 		}
 	});
 </script>
