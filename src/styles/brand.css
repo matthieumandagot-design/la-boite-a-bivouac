@@ -155,28 +155,10 @@
   box-shadow: var(--shadow-lg);
 }
 
-/* ── Hero ── */
-.hero {
-  background-color: var(--color-forest);
-  color: var(--color-white);
-  padding: 5rem 2rem;
-  position: relative;
-  overflow: hidden;
-}
-.hero::before {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
-}
-.hero h1 { color: var(--color-white); }
-.hero-subtitle {
-  font-family: var(--font-accent);
-  font-size: 1.25rem;
-  color: var(--color-gold-lt);
-  margin-top: 0.75rem;
-}
+/* Le bloc « Hero » de l'ancien système de design (.hero, .hero::before,
+   .hero h1, .hero-subtitle) a été retiré : aucune page ne l'utilisait, et sa
+   règle .hero s'appliquait par accident au <section class="hero"> de
+   HeroVideo.astro, qui héritait ainsi d'un padding de 5rem non voulu. */
 
 /* ── Carte ── */
 .card {
