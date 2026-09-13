@@ -288,6 +288,9 @@ $answeredQuestions = array_filter($allQuestions, static fn(array $q): bool => ($
 					<a href="https://cloud.umami.is/analytics/eu/websites" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
 						<span aria-hidden="true">📊</span> Umami
 					</a>
+					<a href="https://search.google.com/search-console?hl=fr&amp;resource_id=https://laboiteabivouac.fr/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">🔍</span> Search Console
+					</a>
 					<a href="https://app.brevo.com/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
 						<span aria-hidden="true">📧</span> Brevo
 					</a>
