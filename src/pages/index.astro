@@ -4,6 +4,7 @@ import { Icon } from "astro-icon/components";
 import { HOME_DESCRIPTION } from "../consts";
 import HeroVideo from "../components/HeroVideo.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
+import Lightbox from "../components/Lightbox.astro";
 import pine from "../components/icons/pine.svg?raw";
 import bike from "../components/icons/bike.svg?raw";
 import canoe from "../components/icons/canoe.svg?raw";
@@ -48,6 +49,7 @@ const PLAY_TERRAINS = [
 <Layout description={HOME_DESCRIPTION}>
 	<HeroVideo />
 	<ScrollReveal />
+	<Lightbox />
 
 	<section class="bg-ecru-100 px-6 py-20">
 		<div class="mx-auto max-w-5xl">
@@ -103,13 +105,19 @@ const PLAY_TERRAINS = [
 
 	<section class="border-y border-ardoise/30 bg-sable/50 px-6 py-20">
 		<div class="mx-auto grid max-w-5xl gap-10 lg:grid-cols-2 lg:items-center">
-			<img
-				src="/images/produit-cote.jpeg"
-				alt="La Boîte à Bivouac en situation"
-				loading="lazy"
-				class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+			<button
+				type="button"
+				class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm"
+				data-lightbox="produit"
 				data-reveal="left"
-			/>
+			>
+				<img
+					src="/images/produit-cote.jpeg"
+					alt="La Boîte à Bivouac en situation"
+					loading="lazy"
+					class="h-full w-full object-cover"
+				/>
+			</button>
 			<div data-reveal="right" style="--reveal-delay: 120ms">
 				<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
 					Déjà testée en conditions réelles.

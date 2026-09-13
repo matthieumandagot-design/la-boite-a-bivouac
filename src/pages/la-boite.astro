@@ -5,6 +5,7 @@ import { SITE_TITLE, SOCIAL_LINKS } from "../consts";
 import SubscribeForm from "../components/SubscribeForm.astro";
 import BivouacExplorer from "../components/BivouacExplorer.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
+import Lightbox from "../components/Lightbox.astro";
 import { toJsonLd } from "../utils/jsonld";
 
 const PAGE_DESCRIPTION =
@@ -75,6 +76,7 @@ const productSchema = {
 
 	<h1 class="sr-only">La Boîte à Bivouac — Votre base, partout</h1>
 	<ScrollReveal />
+	<Lightbox />
 
 	<section class="relative flex min-h-[560px] items-center overflow-hidden bg-graphite text-ecru-50">
 		<img
@@ -130,35 +132,53 @@ const productSchema = {
 				Un produit conçu pour durer et pour être réparable.
 			</p>
 			<div class="mt-10 grid gap-6 sm:grid-cols-2">
-				<img
-					src="/images/fabrication-chassis.jpeg"
-					alt="Châssis acier soudé"
-					loading="lazy"
-					class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+				<button
+					type="button"
+					class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm"
+					data-lightbox="fabrication"
 					data-reveal
 					style="--reveal-delay: 180ms"
-				/>
-				<img
-					src="/images/fabrication-garage.jpeg"
-					alt="Caisse finalisée"
-					loading="lazy"
-					class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+				>
+					<img
+						src="/images/fabrication-chassis.jpeg"
+						alt="Châssis acier soudé"
+						loading="lazy"
+						class="h-full w-full object-cover"
+					/>
+				</button>
+				<button
+					type="button"
+					class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm"
+					data-lightbox="fabrication"
 					data-reveal
 					style="--reveal-delay: 240ms"
-				/>
+				>
+					<img
+						src="/images/fabrication-garage.jpeg"
+						alt="Caisse finalisée"
+						loading="lazy"
+						class="h-full w-full object-cover"
+					/>
+				</button>
 			</div>
 		</div>
 	</section>
 
 	<section class="mx-auto max-w-5xl px-6 py-20">
 		<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
-			<img
-				src="/images/produit-tente.jpeg"
-				alt="La Boîte à Bivouac, prototype V1"
-				loading="lazy"
-				class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+			<button
+				type="button"
+				class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm"
+				data-lightbox="prototype"
 				data-reveal="left"
-			/>
+			>
+				<img
+					src="/images/produit-tente.jpeg"
+					alt="La Boîte à Bivouac, prototype V1"
+					loading="lazy"
+					class="h-full w-full object-cover"
+				/>
+			</button>
 			<div data-reveal="right" style="--reveal-delay: 120ms">
 				<span class="inline-block rounded-full bg-mousse px-4 py-1 text-xs font-medium uppercase tracking-widest text-brun-700">
 					Testée · En conditions réelles
@@ -218,14 +238,15 @@ const productSchema = {
 			<div class="mt-8 grid grid-cols-3 gap-4">
 				{
 					GALLERY_IMAGES.map((img, index) => (
-						<img
-							src={img.src}
-							alt={img.alt}
-							loading="lazy"
-							class="aspect-square w-full rounded-xl object-cover shadow-sm"
+						<button
+							type="button"
+							class="lightbox-trigger aspect-square w-full overflow-hidden rounded-xl shadow-sm"
+							data-lightbox="galerie"
 							data-reveal
 							style={`--reveal-delay: ${index * 60}ms`}
-						/>
+						>
+							<img src={img.src} alt={img.alt} loading="lazy" class="h-full w-full object-cover" />
+						</button>
 					))
 				}
 			</div>
