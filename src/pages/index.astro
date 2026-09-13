@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
 import { HOME_DESCRIPTION } from "../consts";
 import HeroVideo from "../components/HeroVideo.astro";
+import ScrollReveal from "../components/ScrollReveal.astro";
 import pine from "../components/icons/pine.svg?raw";
 import bike from "../components/icons/bike.svg?raw";
 import canoe from "../components/icons/canoe.svg?raw";
@@ -46,16 +47,21 @@ const PLAY_TERRAINS = [
 
 <Layout description={HOME_DESCRIPTION}>
 	<HeroVideo />
+	<ScrollReveal />
 
 	<section class="bg-ecru-100 px-6 py-20">
 		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl" data-reveal>
 				Un principe simple.
 			</h2>
 			<div class="mt-10 grid gap-8 sm:grid-cols-3">
 				{
-					PRINCIPLES.map((item) => (
-						<article class="rounded-xl border border-ardoise/30 bg-ecru-50 p-6">
+					PRINCIPLES.map((item, index) => (
+						<article
+							class="rounded-xl border border-ardoise/30 bg-ecru-50 p-6"
+							data-reveal
+							style={`--reveal-delay: ${index * 90}ms`}
+						>
 							<span class="flex h-12 w-12 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
 								<Icon name={item.icon} class="h-6 w-6" />
 							</span>
@@ -70,11 +76,17 @@ const PLAY_TERRAINS = [
 
 	<section class="bg-graphite px-6 py-20 text-ecru-50">
 		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold sm:text-3xl">Un module, des terrains</h2>
+			<h2 class="font-display text-2xl font-semibold sm:text-3xl" data-reveal>
+				Un module, des terrains
+			</h2>
 			<div class="mt-10 grid gap-8 sm:grid-cols-3">
 				{
-					PLAY_TERRAINS.map((terrain) => (
-						<div class="flex items-start gap-4">
+					PLAY_TERRAINS.map((terrain, index) => (
+						<div
+							class="flex items-start gap-4"
+							data-reveal
+							style={`--reveal-delay: ${index * 90}ms`}
+						>
 							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
 								<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
 							</span>
@@ -96,8 +108,9 @@ const PLAY_TERRAINS = [
 				alt="La Boîte à Bivouac en situation"
 				loading="lazy"
 				class="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm"
+				data-reveal="left"
 			/>
-			<div>
+			<div data-reveal="right" style="--reveal-delay: 120ms">
 				<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
 					Déjà testée en conditions réelles.
 				</h2>
@@ -118,15 +131,24 @@ const PLAY_TERRAINS = [
 
 	<section class="bg-ecru-100 px-6 py-20 text-center">
 		<div class="mx-auto max-w-2xl">
-			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500">LE PRIX</p>
-			<p class="mt-4 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+			<p
+				class="text-xs font-medium uppercase tracking-widest text-rouille-500"
+				data-reveal
+			>
+				LE PRIX
+			</p>
+			<p
+				class="mt-4 font-display text-2xl font-semibold text-brun-700 sm:text-3xl"
+				data-reveal
+				style="--reveal-delay: 90ms"
+			>
 				2&nbsp;000&nbsp;€.
 			</p>
-			<p class="mt-4 text-brun-500">
+			<p class="mt-4 text-brun-500" data-reveal style="--reveal-delay: 180ms">
 				C'est le prix de deux semaines de location en van aménagé. C'est aussi le prix d'une
 				Boîte à Bivouac qui vous accompagne pendant des années.
 			</p>
-			<p class="mt-6 text-sm text-brun-400">
+			<p class="mt-6 text-sm text-brun-400" data-reveal style="--reveal-delay: 240ms">
 				*Prix de vente indicatif, susceptible de varier selon la configuration et les options
 				choisies.
 			</p>
@@ -135,16 +157,18 @@ const PLAY_TERRAINS = [
 
 	<section class="bg-graphite px-6 py-20 text-center text-ecru-50">
 		<div class="mx-auto max-w-2xl">
-			<h2 class="font-display text-2xl font-semibold sm:text-3xl">
+			<h2 class="font-display text-2xl font-semibold sm:text-3xl" data-reveal>
 				Vous avez une remorque. On a une boîte.
 			</h2>
-			<p class="mt-4 text-ecru-100/80">
+			<p class="mt-4 text-ecru-100/80" data-reveal style="--reveal-delay: 90ms">
 				Parlez-nous de votre projet, de votre usage, de ce que vous transportez. On construira
 				la suite ensemble.
 			</p>
 			<a
 				href="/contact"
 				class="bg-gold text-forest mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-sm transition-opacity hover:opacity-90"
+				data-reveal
+				style="--reveal-delay: 180ms"
 			>
 				Prendre contact
 				<Icon name="tabler:arrow-right" class="h-4 w-4" />
