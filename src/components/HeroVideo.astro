@@ -117,10 +117,18 @@ const {
 
   position:   relative;
   overflow:   hidden;
-  /* Hauteur proportionnelle à la largeur de la fenêtre (ratio ~16:9),
-     avec un plancher et un plafond. min-height (pas height) : la section
-     grandit si le contenu a besoin de plus de place, jamais de recadrage. */
-  min-height: clamp(480px, 56.25vw, 900px);
+  /* Neutralise le padding de la règle .hero héritée de brand.css (ancien
+     système de design, plus utilisé ailleurs) : elle ajoutait 5rem en haut
+     et en bas, en plus du rembourrage de .hero__inner. */
+  padding:    0;
+  /* Centre le contenu : l'espace restant se répartit également au lieu de
+     s'accumuler sous les boutons. */
+  display:       grid;
+  align-content: center;
+  /* Hauteur proportionnelle à la largeur de la fenêtre, avec un plancher et
+     un plafond. min-height (pas height) : la section grandit si le contenu a
+     besoin de plus de place, jamais de recadrage. */
+  min-height: clamp(440px, 38vw, 640px);
 }
 
 /* ────────────────────────────────────────────────────────────────
@@ -164,7 +172,7 @@ const {
   align-items:     center;
   max-width:       1200px;
   margin:          0 auto;
-  padding:         5rem 2rem;
+  padding:         3rem 2rem;
 }
 
 /* ────────────────────────────────────────────────────────────────
