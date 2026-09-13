@@ -76,7 +76,10 @@ const stages = [
   .explorer-progress span { display: block; height: 100%; background: var(--gold); transform-origin: left; transform: scaleX(var(--explorer-progress, 0)); }
   .bivouac-explorer[data-ready='true']:not([data-reduced='true']) { height: 260svh; }
   .bivouac-explorer[data-ready='true']:not([data-reduced='true']) .explorer-pin { position: sticky; top: var(--header-offset); height: calc(100svh - var(--header-offset)); min-height: 580px; }
-  .bivouac-explorer[data-ready='true'] .explorer-stage { max-height: min(66svh, 690px); }
+  /* Le visuel prend la hauteur réellement disponible dans le bloc épinglé
+     (écran moins l'en-tête, les filets haut/bas, les marges et la légende).
+     Un plafond fixe laissait de larges bandes vides au-dessus et en dessous. */
+  .bivouac-explorer[data-ready='true'] .explorer-stage { max-height: min(calc(100svh - var(--header-offset) - 138px), 880px); }
   [hidden] { display: none !important; }
   @media (max-width: 760px) {
     .explorer-pin { padding: 18px 20px; }
