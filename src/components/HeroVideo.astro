@@ -97,6 +97,11 @@ const {
         </ul>
 
       </div>
+
+      <p class="hero__note">
+        *Prix indicatif pour la Boîte seule, susceptible de varier selon la
+        configuration et les options choisies.
+      </p>
     </div>
 
   </div>
@@ -267,6 +272,17 @@ const {
   border:        1px solid rgba(26, 26, 24, 0.08);
   border-radius: 16px;
   padding:       2rem 2rem 2.25rem;
+}
+
+/* Mention rattachée au « Moins de 2 000 € » annoncé dans la carte. */
+.hero__note {
+  margin:      0.75rem 0 0;
+  padding:     0 0.25rem;
+  font-size:   0.72rem;
+  line-height: 1.5;
+  /* Posee sur la video et non sur la carte : on garde un contraste suffisant
+     quelle que soit l'image derriere. */
+  color:       rgba(26, 26, 24, 0.75);
 }
 
 .hero__card-eyebrow {
