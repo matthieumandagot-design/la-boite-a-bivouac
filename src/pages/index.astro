@@ -5,43 +5,52 @@ import { HOME_DESCRIPTION } from "../consts";
 import HeroVideo from "../components/HeroVideo.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
 import Lightbox from "../components/Lightbox.astro";
-import pine from "../components/icons/pine.svg?raw";
-import bike from "../components/icons/bike.svg?raw";
-import canoe from "../components/icons/canoe.svg?raw";
 
-const PRINCIPLES = [
+// Deux passerelles seulement : l'accueil oriente, il n'explique pas le produit
+// (c'est le rôle de /la-boite) ni le détail des équipements (/equipements).
+const PASSERELLES = [
 	{
-		icon: "tabler:tent",
-		title: "Sur le dessus",
-		text: "Des barres de toit intégrées, conçues pour supporter une tente de toit, un canoë, une planche à voile ou tout autre équipement encombrant.",
-	},
-	{
+		href: "/la-boite",
 		icon: "tabler:box",
-		title: "À l'intérieur",
-		text: "Un espace fermé et verrouillé pour transporter vélos, matériel de camping et équipement outdoor en toute sécurité.",
+		titre: "La Boîte à Bivouac",
+		texte:
+			"Une caisse amovible qui s'installe dans votre remorque standard et la transforme en base de bivouac. Quand l'aventure est finie, elle se retire et la remorque redevient une remorque.",
+		lien: "Découvrir la Boîte",
 	},
 	{
-		icon: "tabler:puzzle",
-		title: "Amovible",
-		text: "La boîte se retire. La remorque redevient une remorque.",
+		href: "/equipements",
+		icon: "tabler:tent",
+		titre: "Les équipements",
+		texte:
+			"Tente de toit, porte-vélos, rangements : le matériel qui se monte sur la remorque, dans la Boîte ou sur ses barres de toit.",
+		lien: "Voir les équipements",
 	},
 ];
 
-const PLAY_TERRAINS = [
+const ENGAGEMENTS = [
 	{
-		icon: pine,
-		title: "Bivouac",
-		text: "Forêt, montagne, bord de lac. Installez la tente de toit, ouvrez les portes, posez le camp. La Boîte à Bivouac fait de n'importe quel endroit votre base.",
+		icon: "tabler:arrow-loop-left",
+		titre: "Équiper plutôt qu'acheter",
+		texte:
+			"Vous avez déjà une remorque ? Elle suffit. Pas besoin d'un van, d'une caravane ou d'une remorque aménagée de plus : nous équipons ce que vous possédez.",
 	},
 	{
-		icon: bike,
-		title: "Partez à 5.",
-		text: "La tente de toit sur la Boîte accueille 3 personnes ou plus. Le véhicule, libéré du matériel, en loge 2 supplémentaires. L'aventure n'est plus réservée aux duos.",
+		icon: "tabler:map-pin",
+		titre: "Fabriqué en Occitanie",
+		texte:
+			"Conception, soudure et assemblage se font dans notre atelier. Rien qui arrive par conteneur de l'autre bout du monde.",
 	},
 	{
-		icon: canoe,
-		title: "Côte & campings",
-		text: "Base fixe, exploration mobile. La Boîte à Bivouac devient votre quartier général — vous repartez visiter la région avec un véhicule agile, sans compromis.",
+		icon: "tabler:tool",
+		titre: "Réparable, donc durable",
+		texte:
+			"Acier soudé, panneaux vissés, pièces remplaçables. Un choc ou une usure se réparent : rien n'oblige à tout remplacer.",
+	},
+	{
+		icon: "tabler:tag",
+		titre: "Un budget raisonnable",
+		texte:
+			"Le prix d'un équipement, pas celui d'un véhicule aménagé. Ce que vous payez part dans la matière et dans le travail, pas dans un réseau de distribution.",
 	},
 ];
 ---
@@ -53,23 +62,39 @@ const PLAY_TERRAINS = [
 
 	<section class="bg-ecru-100 px-6 py-20">
 		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl" data-reveal>
-				Un principe simple.
+			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>
+				Ce que nous proposons
+			</p>
+			<h2
+				class="mt-3 font-display text-2xl font-semibold text-brun-700 sm:text-3xl"
+				data-reveal
+				style="--reveal-delay: 60ms"
+			>
+				Deux façons de préparer votre bivouac.
 			</h2>
-			<div class="mt-10 grid gap-8 sm:grid-cols-3">
+
+			<div class="mt-10 grid gap-6 sm:grid-cols-2">
 				{
-					PRINCIPLES.map((item, index) => (
-						<article
-							class="rounded-xl border border-ardoise/30 bg-ecru-50 p-6"
+					PASSERELLES.map((item, index) => (
+						<a
+							href={item.href}
+							class="group flex flex-col rounded-2xl border border-ardoise/30 bg-ecru-50 p-8 transition-all hover:-translate-y-1 hover:border-rouille-400 hover:shadow-lg"
 							data-reveal
 							style={`--reveal-delay: ${index * 90}ms`}
 						>
 							<span class="flex h-12 w-12 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
 								<Icon name={item.icon} class="h-6 w-6" />
 							</span>
-							<h3 class="mt-5 font-display text-lg font-semibold text-brun-700">{item.title}</h3>
-							<p class="mt-2 text-brun-500">{item.text}</p>
-						</article>
+							<h3 class="mt-5 font-display text-xl font-semibold text-brun-700">{item.titre}</h3>
+							<p class="mt-3 flex-1 text-brun-500">{item.texte}</p>
+							<span class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-rouille-500">
+								{item.lien}
+								<Icon
+									name="tabler:arrow-right"
+									class="h-4 w-4 transition-transform group-hover:translate-x-1"
+								/>
+							</span>
+						</a>
 					))
 				}
 			</div>
@@ -78,23 +103,27 @@ const PLAY_TERRAINS = [
 
 	<section class="bg-graphite px-6 py-20 text-ecru-50">
 		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold sm:text-3xl" data-reveal>
-				Un module, des terrains
+			<p class="text-xs font-medium uppercase tracking-widest text-mousse" data-reveal>
+				Notre façon de faire
+			</p>
+			<h2
+				class="mt-3 max-w-2xl font-display text-2xl font-semibold sm:text-3xl"
+				data-reveal
+				style="--reveal-delay: 60ms"
+			>
+				Du matériel fabriqué ici, fait pour durer et pour se réparer.
 			</h2>
-			<div class="mt-10 grid gap-8 sm:grid-cols-3">
+
+			<div class="mt-12 grid gap-10 sm:grid-cols-2">
 				{
-					PLAY_TERRAINS.map((terrain, index) => (
-						<div
-							class="flex items-start gap-4"
-							data-reveal
-							style={`--reveal-delay: ${index * 90}ms`}
-						>
+					ENGAGEMENTS.map((item, index) => (
+						<div class="flex items-start gap-4" data-reveal style={`--reveal-delay: ${index * 80}ms`}>
 							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
-								<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
+								<Icon name={item.icon} class="h-6 w-6" />
 							</span>
 							<div>
-								<h3 class="font-display text-lg font-semibold">{terrain.title}</h3>
-								<p class="mt-1 text-ecru-100/80">{terrain.text}</p>
+								<h3 class="font-display text-lg font-semibold">{item.titre}</h3>
+								<p class="mt-1 text-ecru-100/80">{item.texte}</p>
 							</div>
 						</div>
 					))
@@ -103,47 +132,10 @@ const PLAY_TERRAINS = [
 		</div>
 	</section>
 
-	<section class="border-y border-ardoise/30 bg-sable/50 px-6 py-20">
-		<div class="mx-auto grid max-w-5xl gap-10 lg:grid-cols-2 lg:items-center">
-			<button
-				type="button"
-				class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm"
-				data-lightbox="produit"
-				data-reveal="left"
-			>
-				<img
-					src="/images/produit-cote.jpeg"
-					alt="La Boîte à Bivouac en situation"
-					loading="lazy"
-					class="h-full w-full object-cover"
-				/>
-			</button>
-			<div data-reveal="right" style="--reveal-delay: 120ms">
-				<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
-					Déjà testée en conditions réelles.
-				</h2>
-				<p class="mt-4 text-brun-500">
-					La première version existe. Elle a roulé, bivouaqué et été testée pendant des semaines en
-					conditions réelles. Les résultats de ces essais guident directement ce qui arrive ensuite.
-				</p>
-				<a
-					href="/la-boite"
-					class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-rouille-500 transition-colors hover:text-rouille-400"
-				>
-					Voir la Boîte
-					<Icon name="tabler:arrow-right" class="h-4 w-4" />
-				</a>
-			</div>
-		</div>
-	</section>
-
 	<section class="bg-ecru-100 px-6 py-20 text-center">
 		<div class="mx-auto max-w-2xl">
-			<p
-				class="text-xs font-medium uppercase tracking-widest text-rouille-500"
-				data-reveal
-			>
-				LE PRIX
+			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>
+				Le juste prix
 			</p>
 			<p
 				class="mt-4 font-display text-2xl font-semibold text-brun-700 sm:text-3xl"
@@ -154,7 +146,8 @@ const PLAY_TERRAINS = [
 			</p>
 			<p class="mt-4 text-brun-500" data-reveal style="--reveal-delay: 180ms">
 				C'est le prix de deux semaines de location en van aménagé. C'est aussi le prix d'une
-				Boîte à Bivouac qui vous accompagne pendant des années.
+				Boîte à Bivouac qui vous accompagne pendant des années, et que l'on répare plutôt que
+				de la remplacer.
 			</p>
 			<p class="mt-6 text-sm text-brun-400" data-reveal style="--reveal-delay: 240ms">
 				*Prix de vente indicatif, susceptible de varier selon la configuration et les options

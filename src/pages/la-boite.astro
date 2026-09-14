@@ -6,6 +6,9 @@ import SubscribeForm from "../components/SubscribeForm.astro";
 import BivouacExplorer from "../components/BivouacExplorer.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
 import Lightbox from "../components/Lightbox.astro";
+import pine from "../components/icons/pine.svg?raw";
+import bike from "../components/icons/bike.svg?raw";
+import canoe from "../components/icons/canoe.svg?raw";
 import { toJsonLd } from "../utils/jsonld";
 
 const PAGE_DESCRIPTION =
@@ -26,6 +29,24 @@ const CONCEPT_POINTS = [
 		icon: "tabler:puzzle",
 		title: "Amovible",
 		text: "La boîte se retire, la remorque redevient une remorque.",
+	},
+];
+
+const PLAY_TERRAINS = [
+	{
+		icon: pine,
+		title: "Bivouac",
+		text: "Forêt, montagne, bord de lac. Installez la tente de toit, ouvrez les portes, posez le camp. La Boîte à Bivouac fait de n'importe quel endroit votre base.",
+	},
+	{
+		icon: bike,
+		title: "Partez à 5.",
+		text: "La tente de toit sur la Boîte accueille 3 personnes ou plus. Le véhicule, libéré du matériel, en loge 2 supplémentaires. L'aventure n'est plus réservée aux duos.",
+	},
+	{
+		icon: canoe,
+		title: "Côte & campings",
+		text: "Base fixe, exploration mobile. La Boîte à Bivouac devient votre quartier général — vous repartez visiter la région avec un véhicule agile, sans compromis.",
 	},
 ];
 
@@ -160,6 +181,33 @@ const productSchema = {
 						class="h-full w-full object-cover"
 					/>
 				</button>
+			</div>
+		</div>
+	</section>
+
+	<section class="bg-graphite px-6 py-20 text-ecru-50">
+		<div class="mx-auto max-w-5xl">
+			<h2 class="font-display text-2xl font-semibold sm:text-3xl" data-reveal>
+				Un module, des terrains
+			</h2>
+			<div class="mt-10 grid gap-8 sm:grid-cols-3">
+				{
+					PLAY_TERRAINS.map((terrain, index) => (
+						<div
+							class="flex items-start gap-4"
+							data-reveal
+							style={`--reveal-delay: ${index * 90}ms`}
+						>
+							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
+								<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
+							</span>
+							<div>
+								<h3 class="font-display text-lg font-semibold">{terrain.title}</h3>
+								<p class="mt-1 text-ecru-100/80">{terrain.text}</p>
+							</div>
+						</div>
+					))
+				}
 			</div>
 		</div>
 	</section>

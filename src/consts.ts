@@ -3,7 +3,7 @@ export const TAGLINE = "L'aventure tient dans une boîte";
 export const SITE_DESCRIPTION =
 	"La Boîte à Bivouac conçoit un box modulaire à installer sur une remorque que vous possédez déjà. Le même module s'adapte au bivouac, à la montagne et à la mer, avec une structure renforcée capable d'accueillir une tente de toit et un VTT XXL. Conçu et fabriqué en Occitanie.";
 export const HOME_DESCRIPTION =
-	"Transformez votre remorque en base de bivouac. Caisse amovible acier et bois, jusqu'à 5 personnes, moins de 2 000 €. Fabriquée en Occitanie.";
+	"Nous concevons et fabriquons en Occitanie des modules de bivouac et leurs équipements, à installer sur la remorque que vous avez déjà. Du matériel réparable, à moins de 2 000 €.";
 
 export const NAV_LINKS = [
 	{ href: "/", label: "Accueil" },
