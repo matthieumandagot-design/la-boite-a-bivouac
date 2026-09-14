@@ -47,3 +47,11 @@ public/api/config.php
 
 # jetbrains setting folder
 .idea/
+
+# Equipements edites depuis /admin/equipements.php en production.
+# Le contenu par defaut reste dans public/data/equipements.default.json.
+public/data/equipements.json
+
+# Photos d'equipements televersees depuis l'admin.
+public/uploads/equipements/*
+!public/uploads/equipements/.gitkeep

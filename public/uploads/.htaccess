@@ -1,0 +1,9 @@
+# Les fichiers de ce dossier sont televerses depuis /admin/equipements.php.
+# Defense en profondeur : meme si un fichier au mauvais format y arrivait, il
+# ne doit jamais etre execute comme du code.
+php_flag engine off
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .pht .phar
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .pht .phar
+<IfModule mod_headers.c>
+	Header set X-Content-Type-Options "nosniff"
+</IfModule>

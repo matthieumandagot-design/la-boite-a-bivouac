@@ -275,6 +275,9 @@ $answeredQuestions = array_filter($allQuestions, static fn(array $q): bool => ($
 					<a href="/admin/send-news" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
 						<span aria-hidden="true">📨</span> Envoyer une news
 					</a>
+					<a href="/admin/equipements.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
+						<span aria-hidden="true">🧰</span> Équipements
+					</a>
 					<a href="/admin/faq.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#0a1610;background:#e8b428;">
 						<span aria-hidden="true">❓</span> FAQ
 					</a>

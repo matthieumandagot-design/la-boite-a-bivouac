@@ -1,0 +1,606 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ScrollReveal from "../components/ScrollReveal.astro";
+import Lightbox from "../components/Lightbox.astro";
+import { Icon } from "astro-icon/components";
+// Import statique (build time) du contenu par défaut : les équipements sont
+// rendus dans le HTML dès le build — affichage immédiat et page lisible sans
+// JS. Le fetch de /data/equipements.json (voir plus bas) ne sert qu'à refléter
+// ce qui a été saisi depuis /admin/equipements.php, fichier non versionné.
+// Penser à resynchroniser public/data/equipements.default.json après une
+// campagne d'ajouts, pour que le HTML servi aux moteurs reste exact.
+import equipementsData from "../../public/data/equipements.default.json";
+
+interface Equipement {
+	id: string;
+	domaine: string;
+	titre: string;
+	prix: string;
+	description: string;
+	image: string;
+}
+
+const equipements = equipementsData as Equipement[];
+
+const DOMAINES = [
+	{
+		id: "remorque",
+		label: "La remorque",
+		icon: "tabler:caravan",
+		accroche: "Ce qui s'ajoute à votre remorque elle-même.",
+	},
+	{
+		id: "boite",
+		label: "La Boîte à Bivouac",
+		icon: "tabler:box",
+		accroche: "Ce qui s'installe dans la boîte ou sur ses parois.",
+	},
+	{
+		id: "toit",
+		label: "Les barres de toit",
+		icon: "tabler:tent",
+		accroche: "Tente de toit, porte-vélos, porte-canoë…",
+	},
+];
+
+const parDomaine = Object.fromEntries(
+	DOMAINES.map((domaine) => [domaine.id, equipements.filter((item) => item.domaine === domaine.id)]),
+);
+---
+
+<Layout
+	title="Équipements"
+	description="Tente de toit, porte-vélos, rangements : les équipements compatibles avec votre remorque, avec La Boîte à Bivouac et avec ses barres de toit."
+>
+	<ScrollReveal />
+	<Lightbox />
+
+	<section class="bg-ecru-100 px-6 pt-16 pb-10">
+		<div class="mx-auto max-w-5xl">
+			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>Équipements</p>
+			<h1
+				class="mt-3 font-display text-4xl font-semibold text-brun-600"
+				data-reveal
+				style="--reveal-delay: 60ms"
+			>
+				Équipez votre base
+			</h1>
+			<p class="mt-6 max-w-2xl text-lg text-brun-500" data-reveal style="--reveal-delay: 120ms">
+				La Boîte à Bivouac n'est qu'un point de départ. Choisissez d'abord où vous voulez ajouter
+				du matériel&nbsp;: nous vous montrons ensuite ce qui s'y monte.
+			</p>
+		</div>
+	</section>
+
+	<section class="eq-section bg-ecru-100 px-6 pb-20" data-eq-section>
+		<div class="mx-auto max-w-5xl">
+			<p class="eq-etape" data-reveal>
+				<span class="eq-etape-num">1</span>
+				Où voulez-vous l'installer&nbsp;?
+			</p>
+
+			<div class="eq-choix" role="tablist" aria-label="Champ d'application">
+				{
+					DOMAINES.map((domaine, index) => {
+						const nombre = parDomaine[domaine.id].length;
+						return (
+							<button
+								type="button"
+								class="eq-choix-carte"
+								role="tab"
+								id={`eq-onglet-${domaine.id}`}
+								aria-controls={`eq-panneau-${domaine.id}`}
+								aria-selected="false"
+								tabindex={index === 0 ? 0 : -1}
+								data-eq-choix={domaine.id}
+								data-reveal
+								style={`--reveal-delay: ${index * 80}ms`}
+							>
+								<span class="eq-choix-icone" aria-hidden="true">
+									<Icon name={domaine.icon} />
+								</span>
+								<span class="eq-choix-titre">{domaine.label}</span>
+								<span class="eq-choix-accroche">{domaine.accroche}</span>
+								<span class="eq-choix-compteur" data-eq-compteur={domaine.id}>
+									{nombre === 0 ? "Bientôt" : `${nombre} équipement${nombre > 1 ? "s" : ""}`}
+								</span>
+							</button>
+						);
+					})
+				}
+			</div>
+
+			<p class="eq-invite" data-eq-invite>
+				Sélectionnez un champ d'application pour découvrir les équipements disponibles.
+			</p>
+
+			{
+				DOMAINES.map((domaine) => (
+					<div
+						class="eq-panneau"
+						id={`eq-panneau-${domaine.id}`}
+						role="tabpanel"
+						aria-labelledby={`eq-onglet-${domaine.id}`}
+						data-eq-panneau={domaine.id}
+						inert
+					>
+						<div class="eq-panneau-inner">
+							<p class="eq-etape eq-etape--2">
+								<span class="eq-etape-num">2</span>
+								{domaine.label}
+							</p>
+
+							<div class="eq-grille" data-eq-grille={domaine.id}>
+								{parDomaine[domaine.id].map((item, index) => (
+									<article class="eq-carte" style={`--eq-delay: ${index * 70}ms`}>
+										{item.image ? (
+											<button
+												type="button"
+												class="lightbox-trigger eq-carte-photo"
+												data-lightbox={`equipements-${domaine.id}`}
+											>
+												<img src={item.image} alt={item.titre} loading="lazy" />
+											</button>
+										) : (
+											<div class="eq-carte-photo eq-carte-photo--vide" aria-hidden="true">
+												<Icon name={domaine.icon} />
+											</div>
+										)}
+										<div class="eq-carte-corps">
+											<h2 class="eq-carte-titre">{item.titre}</h2>
+											{item.prix && <p class="eq-carte-prix">{item.prix}</p>}
+											<p class="eq-carte-texte">{item.description}</p>
+										</div>
+									</article>
+								))}
+							</div>
+
+							<p class="eq-vide" data-eq-vide={domaine.id} hidden={parDomaine[domaine.id].length > 0}>
+								<span class="eq-vide-titre">Ça arrive prochainement.</span>
+								Les équipements pour {domaine.label.toLowerCase()} sont en cours de sélection.
+								<a href="/contact">Dites-nous ce qu'il vous faudrait</a>, nous en tiendrons compte.
+							</p>
+						</div>
+					</div>
+				))
+			}
+		</div>
+	</section>
+</Layout>
+
+<style is:global>
+  /* Styles globaux : la grille d'équipements est reconstruite en JS lors de la
+     synchronisation avec /data/equipements.json, donc sur des éléments créés
+     après coup, que les styles scopés d'Astro n'atteindraient pas. */
+
+  /* ── Étapes ────────────────────────────────────────────────── */
+  .eq-etape {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 2.5rem 0 1.25rem;
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-brun-600);
+  }
+
+  .eq-etape--2 { margin-top: 2.5rem; }
+
+  .eq-etape-num {
+    display: flex;
+    height: 1.75rem;
+    width: 1.75rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: var(--color-rouille-500);
+    font-size: 0.8125rem;
+    color: var(--color-ecru-50);
+  }
+
+  /* ── Choix du champ d'application ──────────────────────────── */
+  .eq-choix {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 720px) {
+    .eq-choix { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .eq-choix-carte {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    padding: 1.5rem;
+    text-align: left;
+    border: 1px solid color-mix(in srgb, var(--color-ardoise) 35%, transparent);
+    border-radius: 1rem;
+    background: var(--color-ecru-50);
+    cursor: pointer;
+    transition:
+      transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.3s,
+      box-shadow 0.3s;
+  }
+
+  .eq-choix-carte:hover { border-color: color-mix(in srgb, var(--color-rouille-400) 55%, transparent); }
+
+  .eq-choix-carte:focus-visible {
+    outline: 2px solid var(--color-rouille-500);
+    outline-offset: 3px;
+  }
+
+  .eq-choix-icone {
+    display: flex;
+    height: 3rem;
+    width: 3rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    margin-bottom: 0.75rem;
+    background: color-mix(in srgb, var(--color-rouille-500) 12%, transparent);
+    color: var(--color-rouille-500);
+    transition: background-color 0.3s, color 0.3s, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .eq-choix-icone svg { height: 1.5rem; width: 1.5rem; }
+
+  .eq-choix-titre {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-brun-700);
+  }
+
+  .eq-choix-accroche {
+    font-size: 0.875rem;
+    color: var(--color-brun-500);
+  }
+
+  .eq-choix-compteur {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-brun-300);
+  }
+
+  /* Une carte est choisie : elle se détache, les deux autres s'effacent.
+     Le sélecteur inclut [data-reveal] pour passer devant la règle
+     .is-revealed de ScrollReveal, qui pilote aussi opacity et transform. */
+  .eq-section[data-eq-actif] .eq-choix-carte[data-reveal]:not([aria-selected="true"]) {
+    opacity: 0.55;
+    transform: scale(0.97);
+  }
+
+  .eq-choix-carte[data-reveal][aria-selected="true"] {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+
+  .eq-choix-carte[aria-selected="true"] {
+    border-color: var(--color-rouille-500);
+    box-shadow: 0 12px 28px rgb(10 22 16 / 0.1);
+  }
+
+  .eq-choix-carte[aria-selected="true"] .eq-choix-icone {
+    background: var(--color-rouille-500);
+    color: var(--color-ecru-50);
+    transform: scale(1.06);
+  }
+
+  .eq-choix-carte[aria-selected="true"] .eq-choix-compteur { color: var(--color-rouille-500); }
+</style>
+
+<style is:global>
+  /* ── Invite et panneaux ────────────────────────────────────── */
+  .eq-invite {
+    margin: 1.5rem 0 0;
+    font-size: 0.9375rem;
+    color: var(--color-brun-400);
+    transition: opacity 0.3s;
+  }
+
+  .eq-section[data-eq-actif] .eq-invite {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  /* Ouverture fluide quelle que soit la hauteur du panneau : on anime la
+     rangée de grille de 0fr à 1fr, sans hauteur calculée en JS. */
+  .eq-panneau {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .eq-panneau[data-ouvert] { grid-template-rows: 1fr; }
+  .eq-panneau-inner { overflow: hidden; }
+
+  /* ── Cartes d'équipement ───────────────────────────────────── */
+  .eq-grille {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 640px) { .eq-grille { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .eq-grille { grid-template-columns: repeat(3, 1fr); } }
+
+  .eq-carte {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--color-ardoise) 30%, transparent);
+    border-radius: 1rem;
+    background: var(--color-ecru-50);
+    box-shadow: 0 1px 2px rgb(10 22 16 / 0.05);
+    /* État de départ de l'apparition en cascade, jouée à l'ouverture. */
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  .eq-panneau[data-ouvert] .eq-carte {
+    animation: eq-apparition 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: var(--eq-delay, 0ms);
+  }
+
+  @keyframes eq-apparition {
+    to { opacity: 1; transform: none; }
+  }
+
+  .eq-carte-photo {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border: 0;
+    padding: 0;
+    background: var(--color-sable);
+  }
+
+  .eq-carte-photo img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+  }
+
+  .eq-carte-photo--vide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: color-mix(in srgb, var(--color-brun-300) 70%, transparent);
+  }
+
+  .eq-carte-photo--vide svg { height: 2.5rem; width: 2.5rem; }
+
+  .eq-carte-corps { padding: 1.25rem; }
+
+  .eq-carte-titre {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-brun-700);
+  }
+
+  .eq-carte-prix {
+    display: inline-block;
+    margin: 0.6rem 0 0;
+    padding: 0.15rem 0.65rem;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--color-rouille-500) 12%, transparent);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-rouille-500);
+  }
+
+  .eq-carte-texte {
+    margin: 0.75rem 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--color-brun-500);
+  }
+
+  /* ── Message d'attente ─────────────────────────────────────── */
+  .eq-vide {
+    margin: 0;
+    padding: 2.5rem 1.5rem;
+    border: 1px dashed color-mix(in srgb, var(--color-ardoise) 60%, transparent);
+    border-radius: 1rem;
+    text-align: center;
+    color: var(--color-brun-500);
+  }
+
+  .eq-vide-titre {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-brun-700);
+  }
+
+  .eq-vide a {
+    color: var(--color-rouille-500);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .eq-choix-carte,
+    .eq-choix-icone,
+    .eq-panneau,
+    .eq-invite { transition: none; }
+    .eq-carte { opacity: 1; transform: none; }
+    .eq-panneau[data-ouvert] .eq-carte { animation: none; }
+  }
+</style>
+
+<script>
+	/* ── Choix du champ d'application ──────────────────────────── */
+	const section = document.querySelector<HTMLElement>("[data-eq-section]");
+	const onglets = [...document.querySelectorAll<HTMLButtonElement>("[data-eq-choix]")];
+	const panneaux = [...document.querySelectorAll<HTMLElement>("[data-eq-panneau]")];
+
+	function choisir(id: string, options: { focus?: boolean } = {}) {
+		if (!section || !onglets.some((onglet) => onglet.dataset.eqChoix === id)) return;
+
+		section.dataset.eqActif = id;
+
+		for (const onglet of onglets) {
+			const actif = onglet.dataset.eqChoix === id;
+			onglet.setAttribute("aria-selected", String(actif));
+			onglet.tabIndex = actif ? 0 : -1;
+			if (actif && options.focus) onglet.focus();
+		}
+
+		for (const panneau of panneaux) {
+			const actif = panneau.dataset.eqPanneau === id;
+			panneau.toggleAttribute("data-ouvert", actif);
+			/* inert retire le panneau fermé du parcours clavier et des lecteurs
+			   d'écran, tout en le laissant animable. */
+			panneau.toggleAttribute("inert", !actif);
+		}
+
+		if (location.hash.slice(1) !== id) {
+			history.replaceState(null, "", `#${id}`);
+		}
+	}
+
+	onglets.forEach((onglet, index) => {
+		onglet.addEventListener("click", () => choisir(onglet.dataset.eqChoix ?? ""));
+
+		onglet.addEventListener("keydown", (event) => {
+			const deplacements: Record<string, number> = {
+				ArrowRight: 1,
+				ArrowLeft: -1,
+				Home: -index,
+				End: onglets.length - 1 - index,
+			};
+			const pas = deplacements[event.key];
+			if (pas === undefined) return;
+
+			event.preventDefault();
+			const cible = onglets[(index + pas + onglets.length) % onglets.length];
+			choisir(cible.dataset.eqChoix ?? "", { focus: true });
+		});
+	});
+
+	/* Lien profond : /equipements#toit ouvre directement le bon panneau. */
+	const depuisLUrl = location.hash.slice(1);
+	if (depuisLUrl) choisir(depuisLUrl);
+</script>
+
+<script>
+	/* ── Synchronisation avec les équipements saisis depuis l'admin ──
+	   Les cartes sont déjà rendues au build ; ce fetch les remplace par le
+	   contenu live de /data/equipements.json. En cas d'échec (fichier absent
+	   en local, réseau coupé), le contenu du build reste affiché. */
+	interface Equipement {
+		id: string;
+		domaine: string;
+		titre: string;
+		prix: string;
+		description: string;
+		image: string;
+	}
+
+	const DOMAINES = ["remorque", "boite", "toit"] as const;
+
+	function construireCarte(item: Equipement, domaine: string, index: number): HTMLElement {
+		const carte = document.createElement("article");
+		carte.className = "eq-carte";
+		carte.style.setProperty("--eq-delay", `${index * 70}ms`);
+
+		if (item.image) {
+			const bouton = document.createElement("button");
+			bouton.type = "button";
+			bouton.className = "lightbox-trigger eq-carte-photo";
+			bouton.dataset.lightbox = `equipements-${domaine}`;
+
+			const photo = document.createElement("img");
+			photo.src = item.image;
+			photo.alt = item.titre;
+			photo.loading = "lazy";
+
+			bouton.append(photo);
+			carte.append(bouton);
+		} else {
+			const vide = document.createElement("div");
+			vide.className = "eq-carte-photo eq-carte-photo--vide";
+			vide.setAttribute("aria-hidden", "true");
+			/* Reprend l'icône du champ d'application, déjà présente dans la page. */
+			const icone = document.querySelector(`[data-eq-choix="${domaine}"] .eq-choix-icone svg`);
+			if (icone) vide.append(icone.cloneNode(true));
+			carte.append(vide);
+		}
+
+		const corps = document.createElement("div");
+		corps.className = "eq-carte-corps";
+
+		const titre = document.createElement("h2");
+		titre.className = "eq-carte-titre";
+		titre.textContent = item.titre;
+		corps.append(titre);
+
+		if (item.prix) {
+			const prix = document.createElement("p");
+			prix.className = "eq-carte-prix";
+			prix.textContent = item.prix;
+			corps.append(prix);
+		}
+
+		const texte = document.createElement("p");
+		texte.className = "eq-carte-texte";
+		texte.textContent = item.description;
+		corps.append(texte);
+
+		carte.append(corps);
+		return carte;
+	}
+
+	async function synchroniser() {
+		let live: unknown;
+		try {
+			const reponse = await fetch("/data/equipements.json", { cache: "no-store" });
+			if (!reponse.ok) return;
+			live = await reponse.json();
+		} catch {
+			return;
+		}
+
+		if (!Array.isArray(live)) return;
+		const items = live as Equipement[];
+
+		for (const domaine of DOMAINES) {
+			const grille = document.querySelector<HTMLElement>(`[data-eq-grille="${domaine}"]`);
+			const compteur = document.querySelector<HTMLElement>(`[data-eq-compteur="${domaine}"]`);
+			const vide = document.querySelector<HTMLElement>(`[data-eq-vide="${domaine}"]`);
+			if (!grille) continue;
+
+			const duDomaine = items.filter((item) => item?.domaine === domaine && item?.titre);
+			grille.replaceChildren(...duDomaine.map((item, index) => construireCarte(item, domaine, index)));
+
+			if (compteur) {
+				compteur.textContent =
+					duDomaine.length === 0
+						? "Bientôt"
+						: `${duDomaine.length} équipement${duDomaine.length > 1 ? "s" : ""}`;
+			}
+			if (vide) vide.hidden = duDomaine.length > 0;
+		}
+	}
+
+	synchroniser();
+</script>

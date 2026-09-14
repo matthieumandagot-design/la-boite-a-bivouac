@@ -209,9 +209,13 @@
 
 <script>
   const dialog = document.querySelector<HTMLDialogElement>('.lightbox');
-  const triggers = [...document.querySelectorAll<HTMLElement>('[data-lightbox]')];
 
-  if (dialog && triggers.length > 0) {
+  /* Interrogé à chaque ouverture, et non mémorisé au chargement : les photos
+     ajoutées ensuite par un script (page Équipements) sont ainsi prises en
+     compte. */
+  const triggers = () => [...document.querySelectorAll<HTMLElement>('[data-lightbox]')];
+
+  if (dialog) {
     const image = dialog.querySelector<HTMLImageElement>('.lightbox__image')!;
     const caption = dialog.querySelector<HTMLElement>('[data-lightbox-caption]')!;
     const counter = dialog.querySelector<HTMLElement>('[data-lightbox-counter]')!;
@@ -239,7 +243,7 @@
 
     const open = (trigger: HTMLElement) => {
       const name = trigger.dataset.lightbox;
-      group = triggers.filter((item) => item.dataset.lightbox === name);
+      group = triggers().filter((item) => item.dataset.lightbox === name);
       show(group.indexOf(trigger));
       dialog.showModal();
     };
