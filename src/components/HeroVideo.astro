@@ -52,7 +52,7 @@ const {
       <span class="hero__badge">Conçu et fabriqué en Occitanie</span>
 
       <h1 class="hero__title">
-        Nous fabriquons de quoi partir loin.
+        L'aventure commence dans votre garage.
       </h1>
 
       <p class="hero__desc">
@@ -92,7 +92,7 @@ const {
             <span class="terrain__icon" aria-hidden="true">
               <Icon name="tabler:tag" width={22} height={22} />
             </span>
-            <span class="terrain__label">Le prix d'un équipement</span>
+            <span class="terrain__label">Moins de 2&nbsp;000&nbsp;€</span>
           </li>
         </ul>
 
@@ -200,6 +200,10 @@ const {
   color:         var(--dark);
   margin:        0 0 1.25rem;
   letter-spacing: -0.02em;
+  /* Repartit le titre en lignes de longueurs proches, plutot que de laisser
+     un mot seul sur la derniere. Ignore par les navigateurs qui ne le
+     connaissent pas : le titre revient alors au retour a la ligne normal. */
+  text-wrap: balance;
 }
 
 .hero__desc {
