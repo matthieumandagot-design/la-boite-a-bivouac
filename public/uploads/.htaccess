@@ -1,9 +1,38 @@
 # Les fichiers de ce dossier sont televerses depuis /admin/equipements.php.
 # Defense en profondeur : meme si un fichier au mauvais format y arrivait, il
 # ne doit jamais etre execute comme du code.
-php_flag engine off
-RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .pht .phar
-RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .pht .phar
+#
+# ATTENTION : chez OVH, PHP tourne en CGI/FastCGI, pas en module Apache.
+# La directive php_flag n'existe alors pas et provoque une erreur 500 sur tout
+# le dossier (images comprises). Elle doit donc rester enfermee dans un
+# <IfModule>, qui ne s'applique que si mod_php est reellement charge.
+<IfModule mod_php.c>
+	php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+	php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+	php_flag engine off
+</IfModule>
+
+# Cas FastCGI : on retire toute association entre les extensions PHP et un
+# interpreteur, puis on interdit purement et simplement leur lecture.
+<IfModule mod_mime.c>
+	RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .pht .phar
+	RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .pht .phar
+</IfModule>
+
+<FilesMatch "(?i)\.(php|phtml|php3|php4|php5|php7|php8|pht|phar|cgi|pl|py|sh)$">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order allow,deny
+		Deny from all
+	</IfModule>
+</FilesMatch>
+
 <IfModule mod_headers.c>
 	Header set X-Content-Type-Options "nosniff"
 </IfModule>
