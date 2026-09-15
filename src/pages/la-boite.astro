@@ -4,6 +4,7 @@ import { Icon } from "astro-icon/components";
 import { SITE_TITLE, SOCIAL_LINKS } from "../consts";
 import SubscribeForm from "../components/SubscribeForm.astro";
 import BivouacExplorer from "../components/BivouacExplorer.astro";
+import VideoYouTube from "../components/VideoYouTube.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
 import Lightbox from "../components/Lightbox.astro";
 import pine from "../components/icons/pine.svg?raw";
@@ -137,6 +138,30 @@ const productSchema = {
 						))
 					}
 				</ul>
+			</div>
+		</div>
+	</section>
+
+	<section class="bg-graphite px-6 py-20 text-ecru-50">
+		<div class="mx-auto max-w-4xl">
+			<p class="text-xs font-medium uppercase tracking-widest text-mousse" data-reveal>En vidéo</p>
+			<h2
+				class="mt-3 font-display text-2xl font-semibold sm:text-3xl"
+				data-reveal
+				style="--reveal-delay: 60ms"
+			>
+				Le camp installé en quelques minutes.
+			</h2>
+			<p class="mt-4 max-w-2xl text-ecru-100/80" data-reveal style="--reveal-delay: 120ms">
+				Déplier la tente, ouvrir les panneaux, sortir le matériel&nbsp;: voilà ce que donne une
+				installation complète, sans montage compliqué ni outil à sortir.
+			</p>
+			<div class="mt-10" data-reveal style="--reveal-delay: 180ms">
+				<VideoYouTube
+					id="KX_vy58MSrA"
+					titre="La Boîte à Bivouac : installation complète du camp en quelques minutes"
+					poster="/images/video-presentation.jpg"
+				/>
 			</div>
 		</div>
 	</section>

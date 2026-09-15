@@ -1,0 +1,156 @@
+---
+/**
+ * Lecteur YouTube en deux temps : tant que l'on n'a pas cliqué, la page
+ * n'affiche qu'une image et ne contacte pas YouTube. Le lecteur — environ un
+ * mégaoctet de scripts — n'est chargé qu'à la demande, et depuis le domaine
+ * sans cookie.
+ */
+interface Props {
+	id: string;
+	titre: string;
+	poster: string;
+}
+
+const { id, titre, poster } = Astro.props;
+---
+
+<div class="video-yt" data-video-yt data-video-id={id} data-video-titre={titre}>
+	<button type="button" class="video-yt__declencheur" aria-label={`Lire la vidéo : ${titre}`}>
+		<img
+			class="video-yt__poster"
+			src={poster}
+			alt=""
+			width="640"
+			height="480"
+			loading="lazy"
+			decoding="async"
+		/>
+		<span class="video-yt__play" aria-hidden="true">
+			<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z"></path></svg>
+		</span>
+	</button>
+
+	<noscript>
+		<iframe
+			src={`https://www.youtube-nocookie.com/embed/${id}?rel=0`}
+			title={titre}
+			loading="lazy"
+			allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+			allowfullscreen></iframe>
+	</noscript>
+</div>
+
+<style>
+	.video-yt {
+		position: relative;
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+		border-radius: 1rem;
+		background: var(--color-graphite);
+		box-shadow: 0 14px 34px rgb(18 34 24 / 0.2);
+	}
+
+	.video-yt__declencheur,
+	.video-yt :global(iframe) {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		border: 0;
+	}
+
+	.video-yt__declencheur {
+		display: block;
+		padding: 0;
+		background: none;
+		cursor: pointer;
+	}
+
+	/* L'image de YouTube est en 4/3, avec des bandes noires : le cadrage 16/9
+	   les fait disparaître. */
+	.video-yt__poster {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+		transition: transform 0.4s ease;
+	}
+
+	.video-yt__play {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		translate: -50% -50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: clamp(56px, 8vw, 78px);
+		aspect-ratio: 1;
+		border-radius: 9999px;
+		background: var(--color-rouille-500);
+		color: var(--color-ecru-50);
+		box-shadow: 0 6px 20px rgb(10 22 16 / 0.35);
+		transition:
+			background-color 0.25s ease,
+			scale 0.25s ease;
+	}
+
+	.video-yt__play svg {
+		width: 45%;
+		height: 45%;
+		fill: currentColor;
+		margin-left: 6%;
+	}
+
+	.video-yt__declencheur:hover .video-yt__poster,
+	.video-yt__declencheur:focus-visible .video-yt__poster {
+		transform: scale(1.03);
+	}
+
+	.video-yt__declencheur:hover .video-yt__play,
+	.video-yt__declencheur:focus-visible .video-yt__play {
+		background: var(--color-rouille-400);
+		scale: 1.08;
+	}
+
+	.video-yt__declencheur:focus-visible {
+		outline: 3px solid var(--color-rouille-400);
+		outline-offset: 3px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.video-yt__poster,
+		.video-yt__play {
+			transition: none;
+		}
+
+		.video-yt__declencheur:hover .video-yt__poster,
+		.video-yt__declencheur:focus-visible .video-yt__poster {
+			transform: none;
+		}
+	}
+</style>
+
+<script>
+	for (const conteneur of document.querySelectorAll<HTMLElement>("[data-video-yt]")) {
+		const bouton = conteneur.querySelector<HTMLButtonElement>(".video-yt__declencheur");
+		const id = conteneur.dataset.videoId;
+		if (!bouton || !id) continue;
+
+		bouton.addEventListener(
+			"click",
+			() => {
+				const cadre = document.createElement("iframe");
+				cadre.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&rel=0&hl=fr`;
+				cadre.title = conteneur.dataset.videoTitre ?? "Vidéo";
+				cadre.allow =
+					"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+				cadre.allowFullscreen = true;
+				bouton.replaceWith(cadre);
+				cadre.focus();
+			},
+			{ once: true },
+		);
+	}
+</script>
