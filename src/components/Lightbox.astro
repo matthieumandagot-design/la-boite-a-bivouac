@@ -29,6 +29,7 @@
   </button>
 
   <img class="lightbox__image" src="" alt="" />
+  <video class="lightbox__video" controls playsinline preload="metadata" hidden></video>
 
   <button type="button" class="lightbox__nav lightbox__nav--next" data-lightbox-next aria-label="Photo suivante">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
@@ -102,7 +103,8 @@
     backdrop-filter: blur(3px);
   }
 
-  .lightbox__image {
+  .lightbox__image,
+  .lightbox__video {
     grid-column: 2;
     grid-row: 1;
     max-width: 100%;
@@ -192,7 +194,8 @@
       grid-template-rows: minmax(0, 1fr) auto auto auto;
     }
 
-    .lightbox__image { grid-column: 1; }
+    .lightbox__image,
+    .lightbox__video { grid-column: 1; }
     .lightbox__caption,
     .lightbox__counter { grid-column: 1; }
     .lightbox__counter { grid-row: 3; }
@@ -223,17 +226,58 @@
     const next = dialog.querySelector<HTMLButtonElement>('[data-lightbox-next]')!;
     const close = dialog.querySelector<HTMLButtonElement>('[data-lightbox-close]')!;
 
-    let group: HTMLElement[] = [];
+    interface Media {
+      type: string;
+      url: string;
+      alt: string;
+    }
+
+    const video = dialog.querySelector<HTMLVideoElement>('.lightbox__video')!;
+
+    let group: Media[] = [];
     let index = 0;
+
+    /* Deux façons de décrire ce qui s'ouvre : soit le déclencheur porte sa
+       propre liste (un équipement et ses photos/vidéos), soit les déclencheurs
+       partageant la même valeur de data-lightbox forment le groupe. */
+    const mediasDuTrigger = (trigger: HTMLElement): Media[] | null => {
+      const brut = trigger.dataset.lightboxMedias;
+      if (!brut) return null;
+      try {
+        const liste = JSON.parse(brut);
+        return Array.isArray(liste) ? liste.filter((media) => media?.url) : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const mediaDepuisImage = (trigger: HTMLElement): Media | null => {
+      const source = trigger.querySelector('img');
+      if (!source) return null;
+      return { type: 'image', url: source.currentSrc || source.src, alt: source.alt };
+    };
 
     const show = (position: number) => {
       index = (position + group.length) % group.length;
-      const source = group[index].querySelector('img');
-      if (!source) return;
+      const media = group[index];
+      if (!media) return;
 
-      image.src = source.currentSrc || source.src;
-      image.alt = source.alt;
-      caption.textContent = source.alt;
+      const estVideo = media.type === 'video';
+
+      video.pause();
+      image.hidden = estVideo;
+      video.hidden = !estVideo;
+
+      if (estVideo) {
+        video.src = media.url;
+        video.setAttribute('aria-label', media.alt ?? '');
+      } else {
+        video.removeAttribute('src');
+        image.src = media.url;
+        image.alt = media.alt ?? '';
+      }
+
+      caption.textContent = media.alt ?? '';
 
       const multiple = group.length > 1;
       counter.textContent = multiple ? `${index + 1} / ${group.length}` : '';
@@ -242,9 +286,19 @@
     };
 
     const open = (trigger: HTMLElement) => {
-      const name = trigger.dataset.lightbox;
-      group = triggers().filter((item) => item.dataset.lightbox === name);
-      show(group.indexOf(trigger));
+      const propres = mediasDuTrigger(trigger);
+
+      if (propres && propres.length > 0) {
+        group = propres;
+        show(0);
+      } else {
+        const name = trigger.dataset.lightbox;
+        const voisins = triggers().filter((item) => item.dataset.lightbox === name);
+        group = voisins.map(mediaDepuisImage).filter((media): media is Media => media !== null);
+        show(voisins.indexOf(trigger));
+      }
+
+      if (group.length === 0) return;
       dialog.showModal();
     };
 
@@ -253,14 +307,30 @@
       if (trigger) open(trigger);
     });
 
+    /* Une vidéo ne doit pas continuer à jouer une fois la fenêtre fermée.
+       Le ménage est fait tout de suite sur les fermetures que l'on déclenche
+       soi-même, et l'événement close couvre la touche Échap, qui ferme le
+       dialogue sans passer par notre code. */
+    const nettoyer = () => {
+      video.pause();
+      video.removeAttribute('src');
+    };
+
+    const fermer = () => {
+      nettoyer();
+      dialog.close();
+    };
+
     prev.addEventListener('click', () => show(index - 1));
     next.addEventListener('click', () => show(index + 1));
-    close.addEventListener('click', () => dialog.close());
+    close.addEventListener('click', fermer);
 
     /* Clic sur le fond (hors image et boutons) : on ferme. */
     dialog.addEventListener('click', (event) => {
-      if (event.target === dialog) dialog.close();
+      if (event.target === dialog) fermer();
     });
+
+    dialog.addEventListener('close', nettoyer);
 
     dialog.addEventListener('keydown', (event) => {
       if (group.length < 2) return;

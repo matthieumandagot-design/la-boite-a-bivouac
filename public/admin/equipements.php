@@ -80,18 +80,53 @@ const DOMAINES = [
 	'toit' => 'Les barres de toit',
 ];
 
-// Formats acceptés pour les photos, avec l'extension réellement écrite sur le
-// disque : on ne fait jamais confiance au nom de fichier envoyé par le client.
+// Formats acceptés. Le type réel est déduit du contenu du fichier — jamais du
+// nom ni de l'en-tête envoyé par le navigateur.
 const IMAGE_TYPES = [
 	IMAGETYPE_JPEG => 'jpg',
 	IMAGETYPE_PNG => 'png',
 	IMAGETYPE_WEBP => 'webp',
 ];
 
-const IMAGE_MAX_OCTETS = 6 * 1024 * 1024;
+// Marques MP4 reconnues (octets 8 à 12, juste après « ftyp »). Les fichiers
+// QuickTime (« qt ») sont refusés : servis en .mp4 ils ne se lisent pas partout.
+const MP4_BRANDS = ['isom', 'iso2', 'iso4', 'iso5', 'iso6', 'mp41', 'mp42', 'avc1', 'M4V ', 'dash', 'mmp4'];
 
 /**
- * @return array<int, array{id: string, domaine: string, titre: string, prix: string, description: string, image: string}>
+ * Limite réellement applicable : la plus petite des deux directives PHP.
+ * Inutile d'annoncer 64 Mo si l'hébergeur en refuse 8.
+ */
+function limiteTelechargement(): int
+{
+	$vers_octets = static function (string $valeur): int {
+		$valeur = trim($valeur);
+		$unite = strtolower(substr($valeur, -1));
+		$nombre = (int) $valeur;
+		return match ($unite) {
+			'g' => $nombre * 1024 * 1024 * 1024,
+			'm' => $nombre * 1024 * 1024,
+			'k' => $nombre * 1024,
+			default => $nombre,
+		};
+	};
+
+	$limites = array_filter([
+		$vers_octets((string) ini_get('upload_max_filesize')),
+		$vers_octets((string) ini_get('post_max_size')),
+	]);
+
+	return $limites === [] ? 8 * 1024 * 1024 : min($limites);
+}
+
+function formaterOctets(int $octets): string
+{
+	return $octets >= 1024 * 1024
+		? round($octets / (1024 * 1024)) . ' Mo'
+		: round($octets / 1024) . ' Ko';
+}
+
+/**
+ * @return array<int, array<string, mixed>>
  */
 function loadEquipements(string $livePath, string $defaultPath): array
 {
@@ -101,7 +136,34 @@ function loadEquipements(string $livePath, string $defaultPath): array
 	}
 
 	$decoded = json_decode((string) file_get_contents($path), true);
-	return is_array($decoded) ? $decoded : [];
+	if (!is_array($decoded)) {
+		return [];
+	}
+
+	return array_map('normaliserMedias', $decoded);
+}
+
+/**
+ * Les premières versions ne stockaient qu'une photo, dans un champ « image ».
+ * On la convertit en liste de médias pour que l'ancien contenu reste lisible.
+ */
+function normaliserMedias(array $item): array
+{
+	if (isset($item['medias']) && is_array($item['medias'])) {
+		$item['medias'] = array_values(array_filter(
+			$item['medias'],
+			static fn($media): bool => is_array($media) && ($media['url'] ?? '') !== '',
+		));
+		unset($item['image']);
+		return $item;
+	}
+
+	$item['medias'] = ($item['image'] ?? '') !== ''
+		? [['type' => 'image', 'url' => (string) $item['image']]]
+		: [];
+	unset($item['image']);
+
+	return $item;
 }
 
 function saveJsonFile(string $dataDir, string $path, array $data): bool
@@ -128,72 +190,157 @@ function e(string $value): string
 }
 
 /**
- * Déplace la photo envoyée vers le dossier d'uploads et renvoie son URL
- * publique. Le type est déduit du contenu du fichier (getimagesize), jamais de
- * son nom ni de l'en-tête déclaré par le navigateur.
+ * Identifie un fichier d'après son contenu, jamais d'après son nom.
+ * L'extension fileinfo n'étant pas garantie chez l'hébergeur, les vidéos sont
+ * reconnues à leur signature binaire.
  *
- * @return array{0: ?string, 1: ?string} [url, erreur]
+ * @return array{0: string, 1: string}|null [type, extension]
  */
-function storeUploadedImage(array $file, string $uploadsDir, string $uploadsUrl): array
+function identifierMedia(string $chemin): ?array
 {
-	if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-		return [null, null];
+	$infos = @getimagesize($chemin);
+	if ($infos !== false && isset(IMAGE_TYPES[$infos[2]])) {
+		return ['image', IMAGE_TYPES[$infos[2]]];
 	}
 
-	if ($file['error'] !== UPLOAD_ERR_OK) {
-		return [null, "La photo n'a pas pu être reçue (code " . (int) $file['error'] . ').'];
+	$poignee = @fopen($chemin, 'rb');
+	if ($poignee === false) {
+		return null;
+	}
+	$entete = (string) fread($poignee, 16);
+	fclose($poignee);
+
+	if (strlen($entete) < 12) {
+		return null;
 	}
 
-	if (($file['size'] ?? 0) > IMAGE_MAX_OCTETS) {
-		return [null, 'La photo dépasse 6 Mo.'];
+	// WebM / Matroska : en-tête EBML.
+	if (str_starts_with($entete, "\x1A\x45\xDF\xA3")) {
+		return ['video', 'webm'];
 	}
 
-	if (!is_uploaded_file($file['tmp_name'])) {
-		return [null, 'Envoi de photo invalide.'];
+	// MP4 : « ftyp » en octets 4 à 8, puis la marque du format.
+	if (substr($entete, 4, 4) === 'ftyp' && in_array(substr($entete, 8, 4), MP4_BRANDS, true)) {
+		return ['video', 'mp4'];
 	}
 
-	$infos = @getimagesize($file['tmp_name']);
-	if ($infos === false || !isset(IMAGE_TYPES[$infos[2]])) {
-		return [null, 'Format non reconnu : utilisez un JPEG, un PNG ou un WebP.'];
-	}
-
-	if (!is_dir($uploadsDir) && !@mkdir($uploadsDir, 0755, true)) {
-		return [null, "Le dossier des photos n'a pas pu être créé."];
-	}
-
-	if (!is_writable($uploadsDir)) {
-		return [null, "Le dossier des photos n'est pas accessible en écriture."];
-	}
-
-	$nom = bin2hex(random_bytes(8)) . '.' . IMAGE_TYPES[$infos[2]];
-	if (!move_uploaded_file($file['tmp_name'], $uploadsDir . '/' . $nom)) {
-		return [null, "La photo n'a pas pu être enregistrée."];
-	}
-
-	return [$uploadsUrl . '/' . $nom, null];
+	return null;
 }
 
 /**
- * Supprime une photo devenue inutile. Verrouillé sur le dossier d'uploads pour
- * qu'une valeur trafiquée en base ne puisse pas viser un autre fichier.
+ * Range les fichiers reçus et renvoie les médias créés.
+ * PHP présente les envois multiples sous forme de tableaux parallèles : on les
+ * remet en lignes avant de les traiter.
+ *
+ * @return array{0: array<int, array{type: string, url: string}>, 1: array<int, string>} [médias, erreurs]
  */
-function deleteStoredImage(?string $url, string $uploadsDir, string $uploadsUrl): void
+function rangerMediasEnvoyes(array $champ, string $uploadsDir, string $uploadsUrl): array
+{
+	if (!isset($champ['name'])) {
+		return [[], []];
+	}
+
+	$noms = (array) $champ['name'];
+	$medias = [];
+	$erreurs = [];
+
+	foreach (array_keys($noms) as $i) {
+		$erreur = (int) (is_array($champ['error']) ? $champ['error'][$i] : $champ['error']);
+		if ($erreur === UPLOAD_ERR_NO_FILE) {
+			continue;
+		}
+
+		$nomOrigine = (string) (is_array($champ['name']) ? $champ['name'][$i] : $champ['name']);
+		$temporaire = (string) (is_array($champ['tmp_name']) ? $champ['tmp_name'][$i] : $champ['tmp_name']);
+		$taille = (int) (is_array($champ['size']) ? $champ['size'][$i] : $champ['size']);
+
+		if ($erreur === UPLOAD_ERR_INI_SIZE || $erreur === UPLOAD_ERR_FORM_SIZE) {
+			$erreurs[] = sprintf('« %s » dépasse la limite de %s.', $nomOrigine, formaterOctets(limiteTelechargement()));
+			continue;
+		}
+
+		if ($erreur !== UPLOAD_ERR_OK) {
+			$erreurs[] = sprintf('« %s » n\'a pas pu être reçu (code %d).', $nomOrigine, $erreur);
+			continue;
+		}
+
+		if (!is_uploaded_file($temporaire)) {
+			$erreurs[] = sprintf('Envoi invalide pour « %s ».', $nomOrigine);
+			continue;
+		}
+
+		if ($taille > limiteTelechargement()) {
+			$erreurs[] = sprintf('« %s » dépasse la limite de %s.', $nomOrigine, formaterOctets(limiteTelechargement()));
+			continue;
+		}
+
+		$identite = identifierMedia($temporaire);
+		if ($identite === null) {
+			$erreurs[] = sprintf('« %s » : format non reconnu. Utilisez JPEG, PNG, WebP, MP4 ou WebM.', $nomOrigine);
+			continue;
+		}
+
+		[$type, $extension] = $identite;
+
+		if (!is_dir($uploadsDir) && !@mkdir($uploadsDir, 0755, true)) {
+			$erreurs[] = "Le dossier des médias n'a pas pu être créé.";
+			break;
+		}
+
+		if (!is_writable($uploadsDir)) {
+			$erreurs[] = "Le dossier des médias n'est pas accessible en écriture.";
+			break;
+		}
+
+		$nomFichier = bin2hex(random_bytes(8)) . '.' . $extension;
+		if (!move_uploaded_file($temporaire, $uploadsDir . '/' . $nomFichier)) {
+			$erreurs[] = sprintf('« %s » n\'a pas pu être enregistré.', $nomOrigine);
+			continue;
+		}
+
+		$medias[] = ['type' => $type, 'url' => $uploadsUrl . '/' . $nomFichier];
+	}
+
+	return [$medias, $erreurs];
+}
+
+/**
+ * Supprime un fichier devenu inutile. Verrouillé sur le dossier des médias pour
+ * qu'une valeur trafiquée ne puisse pas viser un autre fichier du serveur.
+ */
+function supprimerFichierMedia(?string $url, string $uploadsDir, string $uploadsUrl): void
 {
 	if ($url === null || $url === '' || !str_starts_with($url, $uploadsUrl . '/')) {
 		return;
 	}
 
-	$nom = basename($url);
-	$chemin = $uploadsDir . '/' . $nom;
+	$chemin = $uploadsDir . '/' . basename($url);
 	if (is_file($chemin)) {
 		@unlink($chemin);
+	}
+}
+
+/**
+ * @param array<int, array{type: string, url: string}> $medias
+ */
+function supprimerTousLesFichiers(array $medias, string $uploadsDir, string $uploadsUrl): void
+{
+	foreach ($medias as $media) {
+		supprimerFichierMedia($media['url'] ?? null, $uploadsDir, $uploadsUrl);
 	}
 }
 
 $flashMessage = null;
 $flashError = null;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Un envoi dépassant post_max_size arrive avec $_POST vide : sans ce garde-fou,
+// l'échec se présenterait comme une session expirée, ce qui égare complètement.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+	$flashError = sprintf(
+		'Envoi trop volumineux : le serveur accepte %s au maximum par envoi. Ajoutez les médias en plusieurs fois, ou allégez la vidéo.',
+		formaterOctets(limiteTelechargement()),
+	);
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$action = (string) ($_POST['action'] ?? '');
 
 	if (!hash_equals($csrfToken, (string) ($_POST['csrf_token'] ?? ''))) {
@@ -207,36 +354,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if (!isset(DOMAINES[$domaine]) || $titre === '' || $description === '') {
 			$flashError = 'Le champ d\'application, le titre et la description sont obligatoires.';
 		} else {
-			[$imageUrl, $erreurImage] = storeUploadedImage($_FILES['photo'] ?? [], $uploadsDir, $uploadsUrl);
+			[$medias, $erreurs] = rangerMediasEnvoyes($_FILES['medias'] ?? [], $uploadsDir, $uploadsUrl);
 
-			if ($erreurImage !== null) {
-				$flashError = $erreurImage;
+			$equipements = loadEquipements($liveEquipementsPath, $defaultEquipementsPath);
+			$equipements[] = [
+				'id' => bin2hex(random_bytes(8)),
+				'domaine' => $domaine,
+				'titre' => $titre,
+				'prix' => $prix,
+				'description' => $description,
+				'medias' => $medias,
+			];
+
+			if (!saveJsonFile($dataDir, $liveEquipementsPath, $equipements)) {
+				supprimerTousLesFichiers($medias, $uploadsDir, $uploadsUrl);
+				$flashError = "Impossible d'enregistrer : le dossier data est introuvable ou non accessible en écriture.";
 			} else {
-				$equipements = loadEquipements($liveEquipementsPath, $defaultEquipementsPath);
-				$equipements[] = [
-					'id' => bin2hex(random_bytes(8)),
-					'domaine' => $domaine,
-					'titre' => $titre,
-					'prix' => $prix,
-					'description' => $description,
-					'image' => $imageUrl ?? '',
-				];
-
-				if (!saveJsonFile($dataDir, $liveEquipementsPath, $equipements)) {
-					deleteStoredImage($imageUrl, $uploadsDir, $uploadsUrl);
-					$flashError = "Impossible d'enregistrer : le dossier data est introuvable ou non accessible en écriture.";
-				} else {
-					header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?saved=1');
-					exit;
-				}
+				$suffixe = $erreurs === [] ? '' : '&partiel=' . rawurlencode(implode(' ', $erreurs));
+				header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?saved=1' . $suffixe);
+				exit;
 			}
 		}
-	} elseif ($action === 'modifier' || $action === 'supprimer') {
+	} elseif (in_array($action, ['modifier', 'supprimer', 'supprimer_media', 'couverture'], true)) {
 		$id = (string) ($_POST['id'] ?? '');
 		$equipements = loadEquipements($liveEquipementsPath, $defaultEquipementsPath);
 		$misAJour = [];
 		$trouve = false;
-		$imageAjoutee = null;
+		$mediasAjoutes = [];
+		$erreursMedias = [];
 
 		foreach ($equipements as $item) {
 			if (($item['id'] ?? '') !== $id) {
@@ -245,13 +390,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			}
 
 			$trouve = true;
+			$medias = $item['medias'] ?? [];
 
 			if ($action === 'supprimer') {
 				// Élément omis du tableau reconstruit : suppression définitive.
-				deleteStoredImage($item['image'] ?? '', $uploadsDir, $uploadsUrl);
+				supprimerTousLesFichiers($medias, $uploadsDir, $uploadsUrl);
 				continue;
 			}
 
+			if ($action === 'supprimer_media') {
+				$cible = (string) ($_POST['media_url'] ?? '');
+				$restants = array_values(array_filter(
+					$medias,
+					static fn(array $media): bool => ($media['url'] ?? '') !== $cible,
+				));
+				if (count($restants) !== count($medias)) {
+					supprimerFichierMedia($cible, $uploadsDir, $uploadsUrl);
+				}
+				$item['medias'] = $restants;
+				$misAJour[] = $item;
+				continue;
+			}
+
+			if ($action === 'couverture') {
+				$cible = (string) ($_POST['media_url'] ?? '');
+				usort($medias, static fn(array $a, array $b): int =>
+					(int) (($b['url'] ?? '') === $cible) <=> (int) (($a['url'] ?? '') === $cible));
+				$item['medias'] = array_values($medias);
+				$misAJour[] = $item;
+				continue;
+			}
+
+			// action « modifier »
 			$titre = trim((string) ($_POST['titre'] ?? ''));
 			$description = trim((string) ($_POST['description'] ?? ''));
 			$domaine = (string) ($_POST['domaine'] ?? $item['domaine'] ?? '');
@@ -262,23 +432,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				continue;
 			}
 
-			[$nouvelleImage, $erreurImage] = storeUploadedImage($_FILES['photo'] ?? [], $uploadsDir, $uploadsUrl);
-			if ($erreurImage !== null) {
-				$flashError = $erreurImage;
-				$misAJour[] = $item;
-				continue;
-			}
-
-			$image = (string) ($item['image'] ?? '');
-			if ($nouvelleImage !== null) {
-				// Nouvelle photo : l'ancienne n'est plus référencée nulle part.
-				deleteStoredImage($image, $uploadsDir, $uploadsUrl);
-				$image = $nouvelleImage;
-				$imageAjoutee = $nouvelleImage;
-			} elseif (isset($_POST['retirer_photo'])) {
-				deleteStoredImage($image, $uploadsDir, $uploadsUrl);
-				$image = '';
-			}
+			[$nouveaux, $erreursMedias] = rangerMediasEnvoyes($_FILES['medias'] ?? [], $uploadsDir, $uploadsUrl);
+			$mediasAjoutes = $nouveaux;
 
 			$misAJour[] = [
 				'id' => $id,
@@ -286,7 +441,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				'titre' => $titre,
 				'prix' => trim((string) ($_POST['prix'] ?? '')),
 				'description' => $description,
-				'image' => $image,
+				'medias' => array_merge($medias, $nouveaux),
 			];
 		}
 
@@ -294,10 +449,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$flashError = 'Équipement introuvable.';
 		} elseif ($flashError === null) {
 			if (!saveJsonFile($dataDir, $liveEquipementsPath, $misAJour)) {
-				deleteStoredImage($imageAjoutee, $uploadsDir, $uploadsUrl);
+				supprimerTousLesFichiers($mediasAjoutes, $uploadsDir, $uploadsUrl);
 				$flashError = "Impossible d'enregistrer : le dossier data est introuvable ou non accessible en écriture.";
 			} else {
-				header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?saved=1');
+				$suffixe = $erreursMedias === [] ? '' : '&partiel=' . rawurlencode(implode(' ', $erreursMedias));
+				header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?saved=1' . $suffixe);
 				exit;
 			}
 		}
@@ -306,6 +462,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if (($_GET['saved'] ?? '') === '1') {
 	$flashMessage = 'Enregistré.';
+}
+if (($_GET['partiel'] ?? '') !== '') {
+	$flashError = 'Enregistré, mais : ' . (string) $_GET['partiel'];
 }
 
 $equipements = loadEquipements($liveEquipementsPath, $defaultEquipementsPath);
@@ -480,9 +639,12 @@ foreach (array_keys(DOMAINES) as $cle) {
 						</label>
 
 						<label style="display:block;margin-bottom:1.25rem;">
-							<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Photo</span>
-							<input type="file" name="photo" accept="image/jpeg,image/png,image/webp" style="font-size:.9rem;" />
-							<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">JPEG, PNG ou WebP, 6 Mo maximum. Facultatif.</span>
+							<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Photos et vidéos</span>
+							<input type="file" name="medias[]" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" style="font-size:.9rem;" />
+							<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">
+								Plusieurs fichiers possibles. JPEG, PNG, WebP, MP4 ou WebM, <?= formaterOctets(limiteTelechargement()) ?> maximum par envoi.
+								La première photo ou vidéo sert de couverture.
+							</span>
 						</label>
 
 						<button type="submit" style="background:#b85438;color:#f9f4e8;border:none;border-radius:9999px;padding:.6rem 1.4rem;font-weight:600;font-size:.9rem;cursor:pointer;">
@@ -507,35 +669,71 @@ foreach (array_keys(DOMAINES) as $cle) {
 							</p>
 						<?php else: ?>
 							<?php foreach ($parDomaine[$cle] as $item): ?>
-								<?php $id = (string) ($item['id'] ?? ''); ?>
-								<form method="post" enctype="multipart/form-data"
-									style="background:#fff;border:1px solid #e4e0d8;border-radius:.75rem;padding:1.25rem;margin-bottom:1rem;display:grid;gap:1rem;grid-template-columns:160px 1fr;align-items:start;">
-									<input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
-									<input type="hidden" name="id" value="<?= e($id) ?>" />
+								<?php $id = (string) ($item['id'] ?? ''); $medias = $item['medias'] ?? []; ?>
+								<div style="background:#fff;border:1px solid #e4e0d8;border-radius:.75rem;padding:1.25rem;margin-bottom:1rem;">
 
-									<div>
-										<?php if (($item['image'] ?? '') !== ''): ?>
-											<img src="<?= e((string) $item['image']) ?>" alt=""
-												style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:.5rem;border:1px solid #e4e0d8;" />
-											<label style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:#8b1c1c;margin-top:.5rem;">
-												<input type="checkbox" name="retirer_photo" value="1" />
-												Retirer la photo
-											</label>
-										<?php else: ?>
-											<div style="width:100%;aspect-ratio:4/3;border:1px dashed #c0c8c8;border-radius:.5rem;display:flex;align-items:center;justify-content:center;color:#a8b0a8;font-size:.8rem;">
-												Sans photo
-											</div>
-										<?php endif; ?>
+									<!-- Médias : chacun a ses propres boutons, dans son propre formulaire.
+									     Les formulaires ne peuvent pas s'imbriquer, ils sont donc placés
+									     avant celui qui porte les champs texte. -->
+									<p style="font-size:.8rem;font-weight:600;margin:0 0 .5rem;">
+										Médias
+										<span style="font-weight:500;color:#7f8a77;">
+											— <?= count($medias) ?> fichier<?= count($medias) > 1 ? 's' : '' ?><?= $medias === [] ? '' : ', le premier sert de couverture' ?>
+										</span>
+									</p>
 
-										<label style="display:block;margin-top:.5rem;">
-											<span style="display:block;font-size:.75rem;font-weight:600;margin-bottom:.25rem;">
-												<?= ($item['image'] ?? '') !== '' ? 'Remplacer' : 'Ajouter une photo' ?>
-											</span>
-											<input type="file" name="photo" accept="image/jpeg,image/png,image/webp" style="font-size:.78rem;width:100%;" />
+									<?php if ($medias === []): ?>
+										<p style="border:1px dashed #c0c8c8;border-radius:.5rem;padding:.9rem;margin:0 0 1rem;color:#a8b0a8;font-size:.82rem;">
+											Aucun média. L'équipement s'affiche avec une simple icône.
+										</p>
+									<?php else: ?>
+										<div style="display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;">
+											<?php foreach ($medias as $rang => $media): ?>
+												<?php $url = (string) ($media['url'] ?? ''); $type = (string) ($media['type'] ?? 'image'); ?>
+												<form method="post" style="width:150px;border:1px solid <?= $rang === 0 ? '#b88a18' : '#e4e0d8' ?>;border-radius:.5rem;padding:.4rem;">
+													<input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+													<input type="hidden" name="id" value="<?= e($id) ?>" />
+													<input type="hidden" name="media_url" value="<?= e($url) ?>" />
+
+													<?php if ($type === 'video'): ?>
+														<video src="<?= e($url) ?>" preload="metadata" muted playsinline
+															style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:.35rem;background:#122218;"></video>
+													<?php else: ?>
+														<img src="<?= e($url) ?>" alt=""
+															style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:.35rem;" />
+													<?php endif; ?>
+
+													<p style="margin:.35rem 0 .4rem;font-size:.7rem;color:#7f8a77;">
+														<?= $type === 'video' ? 'Vidéo' : 'Photo' ?><?= $rang === 0 ? ' · couverture' : '' ?>
+													</p>
+
+													<div style="display:flex;gap:.3rem;">
+														<?php if ($rang !== 0): ?>
+															<button type="submit" name="action" value="couverture"
+																style="flex:1;background:#f4f2ee;border:1px solid #c0c8c8;border-radius:.35rem;padding:.25rem;font-size:.68rem;cursor:pointer;">
+																Couverture
+															</button>
+														<?php endif; ?>
+														<button type="submit" name="action" value="supprimer_media"
+															onclick="return confirm('Supprimer définitivement ce fichier ?');"
+															style="flex:1;background:transparent;border:1px solid #e6b8b8;color:#8b1c1c;border-radius:.35rem;padding:.25rem;font-size:.68rem;cursor:pointer;">
+															Supprimer
+														</button>
+													</div>
+												</form>
+											<?php endforeach; ?>
+										</div>
+									<?php endif; ?>
+
+									<form method="post" enctype="multipart/form-data">
+										<input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+										<input type="hidden" name="id" value="<?= e($id) ?>" />
+
+										<label style="display:block;margin-bottom:1rem;">
+											<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Ajouter des photos ou des vidéos</span>
+											<input type="file" name="medias[]" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" style="font-size:.82rem;" />
 										</label>
-									</div>
 
-									<div>
 										<div style="display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:.75rem;">
 											<label style="display:block;">
 												<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Titre</span>
@@ -573,13 +771,13 @@ foreach (array_keys(DOMAINES) as $cle) {
 												Enregistrer
 											</button>
 											<button type="submit" name="action" value="supprimer"
-												onclick="return confirm('Supprimer définitivement cet équipement et sa photo ?');"
+												onclick="return confirm('Supprimer définitivement cet équipement et tous ses médias ?');"
 												style="background:transparent;color:#8b1c1c;border:1px solid #e6b8b8;border-radius:9999px;padding:.5rem 1.2rem;font-weight:600;font-size:.85rem;cursor:pointer;">
-												Supprimer
+												Supprimer l'équipement
 											</button>
 										</div>
-									</div>
-								</form>
+									</form>
+								</div>
 							<?php endforeach; ?>
 						<?php endif; ?>
 					</section>

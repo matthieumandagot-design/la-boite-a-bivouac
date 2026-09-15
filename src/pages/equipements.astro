@@ -11,13 +11,26 @@ import { Icon } from "astro-icon/components";
 // campagne d'ajouts, pour que le HTML servi aux moteurs reste exact.
 import equipementsData from "../../public/data/equipements.default.json";
 
+interface Media {
+	type: "image" | "video";
+	url: string;
+}
+
 interface Equipement {
 	id: string;
 	domaine: string;
 	titre: string;
 	prix: string;
 	description: string;
-	image: string;
+	medias: Media[];
+	/** Ancien format : une seule photo. Conservé pour lire le contenu existant. */
+	image?: string;
+}
+
+/** Ramène l'ancien champ « image » vers la liste de médias. */
+function mediasDe(item: Equipement): Media[] {
+	if (Array.isArray(item.medias)) return item.medias.filter((media) => media?.url);
+	return item.image ? [{ type: "image", url: item.image }] : [];
 }
 
 const equipements = equipementsData as Equipement[];
@@ -131,15 +144,37 @@ const parDomaine = Object.fromEntries(
 							</p>
 
 							<div class="eq-grille" data-eq-grille={domaine.id}>
-								{parDomaine[domaine.id].map((item, index) => (
+								{parDomaine[domaine.id].map((item, index) => {
+									const medias = mediasDe(item);
+									const couverture = medias[0];
+									const videos = medias.filter((media) => media.type === "video").length;
+									return (
 									<article class="eq-carte" style={`--eq-delay: ${index * 70}ms`}>
-										{item.image ? (
+										{couverture ? (
 											<button
 												type="button"
 												class="lightbox-trigger eq-carte-photo"
-												data-lightbox={`equipements-${domaine.id}`}
+												data-lightbox={`equipement-${item.id}`}
+												data-lightbox-medias={JSON.stringify(
+													medias.map((media) => ({ ...media, alt: item.titre })),
+												)}
+												aria-label={`Agrandir les médias de ${item.titre}`}
 											>
-												<img src={item.image} alt={item.titre} loading="lazy" />
+												{couverture.type === "video" ? (
+													<video src={couverture.url} preload="metadata" muted playsinline />
+												) : (
+													<img src={couverture.url} alt={item.titre} loading="lazy" />
+												)}
+												{medias.length > 1 && (
+													<span class="eq-carte-compteur" aria-hidden="true">
+														{medias.length} médias
+													</span>
+												)}
+												{videos > 0 && (
+													<span class="eq-carte-lecture" aria-hidden="true">
+														<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+													</span>
+												)}
 											</button>
 										) : (
 											<div class="eq-carte-photo eq-carte-photo--vide" aria-hidden="true">
@@ -152,7 +187,8 @@ const parDomaine = Object.fromEntries(
 											<p class="eq-carte-texte">{item.description}</p>
 										</div>
 									</article>
-								))}
+									);
+								})}
 							</div>
 
 							<p class="eq-vide" data-eq-vide={domaine.id} hidden={parDomaine[domaine.id].length > 0}>
@@ -368,10 +404,44 @@ const parDomaine = Object.fromEntries(
     background: var(--color-sable);
   }
 
-  .eq-carte-photo img {
+  .eq-carte-photo {
+    position: relative;
+  }
+
+  .eq-carte-photo img,
+  .eq-carte-photo video {
     height: 100%;
     width: 100%;
     object-fit: cover;
+  }
+
+  /* Nombre de médias et pastille de lecture, posés sur la couverture. */
+  .eq-carte-compteur {
+    position: absolute;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    background: rgb(10 22 16 / 0.72);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-ecru-50);
+  }
+
+  .eq-carte-lecture {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .eq-carte-lecture svg {
+    height: 3rem;
+    width: 3rem;
+    fill: var(--color-ecru-50);
+    filter: drop-shadow(0 2px 8px rgb(10 22 16 / 0.55));
   }
 
   .eq-carte-photo--vide {
@@ -507,13 +577,26 @@ const parDomaine = Object.fromEntries(
 	   Les cartes sont déjà rendues au build ; ce fetch les remplace par le
 	   contenu live de /data/equipements.json. En cas d'échec (fichier absent
 	   en local, réseau coupé), le contenu du build reste affiché. */
+	interface Media {
+		type: "image" | "video";
+		url: string;
+	}
+
 	interface Equipement {
 		id: string;
 		domaine: string;
 		titre: string;
 		prix: string;
 		description: string;
-		image: string;
+		medias?: Media[];
+		/** Ancien format : une seule photo. */
+		image?: string;
+	}
+
+	/** Ramène l'ancien champ « image » vers la liste de médias. */
+	function mediasDe(item: Equipement): Media[] {
+		if (Array.isArray(item.medias)) return item.medias.filter((media) => media?.url);
+		return item.image ? [{ type: "image", url: item.image }] : [];
 	}
 
 	const DOMAINES = ["remorque", "boite", "toit"] as const;
@@ -523,18 +606,52 @@ const parDomaine = Object.fromEntries(
 		carte.className = "eq-carte";
 		carte.style.setProperty("--eq-delay", `${index * 70}ms`);
 
-		if (item.image) {
+		const medias = mediasDe(item);
+		const couverture = medias[0];
+
+		if (couverture) {
 			const bouton = document.createElement("button");
 			bouton.type = "button";
 			bouton.className = "lightbox-trigger eq-carte-photo";
-			bouton.dataset.lightbox = `equipements-${domaine}`;
+			bouton.dataset.lightbox = `equipement-${item.id}`;
+			/* La visionneuse lit cette liste : tous les médias de l'équipement
+			   défilent alors sous les flèches, sans quitter la carte. */
+			bouton.dataset.lightboxMedias = JSON.stringify(
+				medias.map((media) => ({ ...media, alt: item.titre })),
+			);
+			bouton.setAttribute("aria-label", `Agrandir les médias de ${item.titre}`);
 
-			const photo = document.createElement("img");
-			photo.src = item.image;
-			photo.alt = item.titre;
-			photo.loading = "lazy";
+			if (couverture.type === "video") {
+				const video = document.createElement("video");
+				video.src = couverture.url;
+				video.preload = "metadata";
+				video.muted = true;
+				video.playsInline = true;
+				bouton.append(video);
+			} else {
+				const photo = document.createElement("img");
+				photo.src = couverture.url;
+				photo.alt = item.titre;
+				photo.loading = "lazy";
+				bouton.append(photo);
+			}
 
-			bouton.append(photo);
+			if (medias.length > 1) {
+				const compteur = document.createElement("span");
+				compteur.className = "eq-carte-compteur";
+				compteur.setAttribute("aria-hidden", "true");
+				compteur.textContent = `${medias.length} médias`;
+				bouton.append(compteur);
+			}
+
+			if (medias.some((media) => media.type === "video")) {
+				const lecture = document.createElement("span");
+				lecture.className = "eq-carte-lecture";
+				lecture.setAttribute("aria-hidden", "true");
+				lecture.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>';
+				bouton.append(lecture);
+			}
+
 			carte.append(bouton);
 		} else {
 			const vide = document.createElement("div");
