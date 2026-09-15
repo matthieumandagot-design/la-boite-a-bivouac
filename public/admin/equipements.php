@@ -159,6 +159,23 @@ function memoireSuffisantePour(int $largeur, int $hauteur): bool
 }
 
 /**
+ * Une photo de 24 mégapixels demande une centaine de mégaoctets à GD. On tente
+ * de relever la limite le temps du traitement ; si l'hébergeur l'interdit,
+ * memoireSuffisantePour() prend le relais et l'original est conservé.
+ */
+function relacherMemoire(): void
+{
+	$actuelle = trim((string) ini_get('memory_limit'));
+	if ($actuelle === '-1') {
+		return;
+	}
+
+	if (valeurIniEnOctets($actuelle) < 512 * 1024 * 1024) {
+		@ini_set('memory_limit', '512M');
+	}
+}
+
+/**
  * @return \GdImage|null
  */
 function chargerImage(string $chemin, string $extension)
@@ -238,6 +255,8 @@ function optimiserImage(string $source, string $extension, string $uploadsDir): 
 	if (!compressionDisponible()) {
 		return null;
 	}
+
+	relacherMemoire();
 
 	$infos = @getimagesize($source);
 	if ($infos === false || (int) $infos[0] < 1 || (int) $infos[1] < 1) {
@@ -563,12 +582,15 @@ function supprimerFichierMedia(?string $url, string $uploadsDir, string $uploads
  * a échoué. Aucune photo ne disparaît en cas de problème d'écriture.
  *
  * @param array<int, array<string, mixed>> $equipements
- * @return array{0: array<int, array<string, mixed>>, 1: int, 2: int, 3: array<int, string>, 4: array<int, string>}
+ * @return array{0: array<int, array<string, mixed>>, 1: int, 2: int, 3: int, 4: array<int, string>, 5: array<int, string>}
  */
 function reoptimiserPhotos(array $equipements, string $uploadsDir, string $uploadsUrl): array
 {
+	relacherMemoire();
+
 	$traitees = 0;
 	$gain = 0;
+	$ignorees = 0;
 	$anciens = [];
 	$nouveaux = [];
 
@@ -593,6 +615,14 @@ function reoptimiserPhotos(array $equipements, string $uploadsDir, string $uploa
 				continue;
 			}
 
+			// Vérifié ici aussi, pour pouvoir distinguer « déjà au bon format »
+			// de « trop lourde pour la mémoire » dans le message de retour.
+			$infos = @getimagesize($chemin);
+			if ($infos !== false && !memoireSuffisantePour((int) $infos[0], (int) $infos[1])) {
+				$ignorees++;
+				continue;
+			}
+
 			$avant = (int) filesize($chemin);
 			$optimise = optimiserImage($chemin, $identite[1], $uploadsDir);
 			if ($optimise === null) {
@@ -609,7 +639,7 @@ function reoptimiserPhotos(array $equipements, string $uploadsDir, string $uploa
 		$equipements[$i]['medias'] = array_values($medias);
 	}
 
-	return [$equipements, $traitees, $gain, $anciens, $nouveaux];
+	return [$equipements, $traitees, $gain, $ignorees, $anciens, $nouveaux];
 }
 
 /**
@@ -671,11 +701,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['C
 		if (!compressionDisponible()) {
 			$flashError = "Ce serveur ne sait pas retailler les images : l'extension GD de PHP n'est pas disponible.";
 		} else {
-			$equipements = loadEquipements($liveEquipementsPath, $defaultEquipementsPath);
-			[$misAJour, $traitees, $gain, $anciens, $nouveaux] = reoptimiserPhotos($equipements, $uploadsDir, $uploadsUrl);
+			// Huit photos de 24 mégapixels prennent une quinzaine de secondes :
+			// au-delà du délai d'exécution par défaut de beaucoup d'hébergeurs.
+			@set_time_limit(300);
 
-			if ($traitees === 0) {
+			$equipements = loadEquipements($liveEquipementsPath, $defaultEquipementsPath);
+			[$misAJour, $traitees, $gain, $ignorees, $anciens, $nouveaux] = reoptimiserPhotos($equipements, $uploadsDir, $uploadsUrl);
+
+			if ($traitees === 0 && $ignorees === 0) {
 				$flashMessage = 'Rien à reprendre : les photos sont déjà au bon format.';
+			} elseif ($traitees === 0) {
+				$flashError = sprintf(
+					'%d photo%s trop lourde%s pour la mémoire de ce serveur (limite PHP : %s). Rien n\'a été modifié.',
+					$ignorees,
+					$ignorees > 1 ? 's' : '',
+					$ignorees > 1 ? 's' : '',
+					(string) ini_get('memory_limit'),
+				);
 			} elseif (!saveJsonFile($dataDir, $liveEquipementsPath, $misAJour)) {
 				foreach ($nouveaux as $fichier) {
 					@unlink($fichier);
@@ -685,7 +727,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['C
 				foreach ($anciens as $fichier) {
 					@unlink($fichier);
 				}
-				header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?optimise=' . $traitees . '&gain=' . max(0, $gain));
+				header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?optimise=' . $traitees . '&gain=' . max(0, $gain) . '&ignorees=' . $ignorees);
 				exit;
 			}
 		}
@@ -782,6 +824,7 @@ if (($_GET['partiel'] ?? '') !== '') {
 }
 if (($_GET['optimise'] ?? '') !== '') {
 	$nb = (int) $_GET['optimise'];
+	$ignorees = (int) ($_GET['ignorees'] ?? 0);
 	$flashMessage = sprintf(
 		'%d photo%s reprise%s — %s gagnés.',
 		$nb,
@@ -789,6 +832,16 @@ if (($_GET['optimise'] ?? '') !== '') {
 		$nb > 1 ? 's' : '',
 		formaterOctets(max(0, (int) ($_GET['gain'] ?? 0))),
 	);
+	if ($ignorees > 0) {
+		$flashError = sprintf(
+			'%d photo%s laissée%s de côté : trop lourde%s pour la mémoire de ce serveur (limite PHP : %s).',
+			$ignorees,
+			$ignorees > 1 ? 's' : '',
+			$ignorees > 1 ? 's' : '',
+			$ignorees > 1 ? 's' : '',
+			(string) ini_get('memory_limit'),
+		);
+	}
 }
 
 $equipements = loadEquipements($liveEquipementsPath, $defaultEquipementsPath);
