@@ -92,27 +92,243 @@ const IMAGE_TYPES = [
 // QuickTime (« qt ») sont refusés : servis en .mp4 ils ne se lisent pas partout.
 const MP4_BRANDS = ['isom', 'iso2', 'iso4', 'iso5', 'iso6', 'mp41', 'mp42', 'avc1', 'M4V ', 'dash', 'mmp4'];
 
+// Recompression des photos. Un cliché de téléphone pèse souvent 4 Mo pour une
+// largeur d'affichage de 800 px : on ramène le plus grand côté à IMAGE_COTE_MAX
+// et on réencode. Toute défaillance (GD absent, mémoire insuffisante, format
+// exotique) fait conserver l'original : une photo lourde vaut mieux qu'une
+// photo perdue.
+const IMAGE_COTE_MAX = 1600;
+const IMAGE_QUALITE = 82;
+
+/**
+ * Convertit une valeur de php.ini (« 8M », « 1G ») en octets.
+ */
+function valeurIniEnOctets(string $valeur): int
+{
+	$valeur = trim($valeur);
+	$unite = strtolower(substr($valeur, -1));
+	$nombre = (int) $valeur;
+
+	return match ($unite) {
+		'g' => $nombre * 1024 * 1024 * 1024,
+		'm' => $nombre * 1024 * 1024,
+		'k' => $nombre * 1024,
+		default => $nombre,
+	};
+}
+
+function compressionDisponible(): bool
+{
+	return extension_loaded('gd')
+		&& function_exists('imagecreatetruecolor')
+		&& (function_exists('imagewebp') || function_exists('imagejpeg'));
+}
+
+/**
+ * Format de sortie : WebP quand GD sait l'écrire (environ 30 % plus léger que
+ * le JPEG à qualité comparable, et il garde la transparence), JPEG sinon.
+ */
+function formatSortieImage(): string
+{
+	return function_exists('imagewebp') ? 'webp' : 'jpg';
+}
+
+/**
+ * Nom affichable du format de sortie.
+ */
+function libelleFormatSortie(): string
+{
+	return formatSortieImage() === 'webp' ? 'WebP' : 'JPEG';
+}
+
+/**
+ * GD décompresse l'image entière en mémoire, à raison de quatre octets par
+ * pixel, et il faut de la place pour la copie réduite. Au-delà du budget
+ * restant, mieux vaut renoncer que faire tomber la page.
+ */
+function memoireSuffisantePour(int $largeur, int $hauteur): bool
+{
+	$limite = valeurIniEnOctets((string) ini_get('memory_limit'));
+	if ($limite <= 0) {
+		return true; // -1 : pas de limite déclarée
+	}
+
+	$besoin = ($largeur * $hauteur + IMAGE_COTE_MAX * IMAGE_COTE_MAX) * 4;
+
+	return ($limite - memory_get_usage(true)) > (int) ($besoin * 1.4);
+}
+
+/**
+ * @return \GdImage|null
+ */
+function chargerImage(string $chemin, string $extension)
+{
+	$image = match ($extension) {
+		'jpg' => function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($chemin) : false,
+		'png' => function_exists('imagecreatefrompng') ? @imagecreatefrompng($chemin) : false,
+		'webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($chemin) : false,
+		default => false,
+	};
+
+	return $image === false ? null : $image;
+}
+
+/**
+ * Les photos de téléphone sont souvent enregistrées couchées, avec une consigne
+ * de rotation dans l'EXIF. GD ignore cette consigne et le réencodage efface la
+ * consigne : sans ce redressement, la photo apparaîtrait tournée sur le site.
+ *
+ * @param \GdImage $image
+ * @return \GdImage
+ */
+function redresserImage($image, string $chemin, string $extension)
+{
+	if ($extension !== 'jpg' || !function_exists('exif_read_data')) {
+		return $image;
+	}
+
+	$exif = @exif_read_data($chemin);
+	$orientation = (int) ($exif['Orientation'] ?? 1);
+
+	$pivoter = static function ($source, int $angle) {
+		$tourne = @imagerotate($source, $angle, 0);
+		if ($tourne === false) {
+			return $source;
+		}
+		imagedestroy($source);
+
+		return $tourne;
+	};
+
+	switch ($orientation) {
+		case 2:
+			imageflip($image, IMG_FLIP_HORIZONTAL);
+			break;
+		case 3:
+			$image = $pivoter($image, 180);
+			break;
+		case 4:
+			imageflip($image, IMG_FLIP_VERTICAL);
+			break;
+		case 5:
+			$image = $pivoter($image, -90);
+			imageflip($image, IMG_FLIP_HORIZONTAL);
+			break;
+		case 6:
+			$image = $pivoter($image, -90);
+			break;
+		case 7:
+			$image = $pivoter($image, 90);
+			imageflip($image, IMG_FLIP_HORIZONTAL);
+			break;
+		case 8:
+			$image = $pivoter($image, 90);
+			break;
+	}
+
+	return $image;
+}
+
+/**
+ * Recompresse une image et écrit le résultat dans le dossier des médias.
+ * Renvoie le nom du fichier créé, ou null s'il faut conserver l'original.
+ */
+function optimiserImage(string $source, string $extension, string $uploadsDir): ?string
+{
+	if (!compressionDisponible()) {
+		return null;
+	}
+
+	$infos = @getimagesize($source);
+	if ($infos === false || (int) $infos[0] < 1 || (int) $infos[1] < 1) {
+		return null;
+	}
+
+	if (!memoireSuffisantePour((int) $infos[0], (int) $infos[1])) {
+		return null;
+	}
+
+	$image = chargerImage($source, $extension);
+	if ($image === null) {
+		return null;
+	}
+
+	$image = redresserImage($image, $source, $extension);
+
+	$largeur = imagesx($image);
+	$hauteur = imagesy($image);
+	$facteur = min(1, IMAGE_COTE_MAX / max($largeur, $hauteur));
+
+	if ($facteur < 1) {
+		$cible = @imagecreatetruecolor(max(1, (int) round($largeur * $facteur)), max(1, (int) round($hauteur * $facteur)));
+		if ($cible === false) {
+			imagedestroy($image);
+
+			return null;
+		}
+		imagealphablending($cible, false);
+		imagesavealpha($cible, true);
+		imagecopyresampled($cible, $image, 0, 0, 0, 0, imagesx($cible), imagesy($cible), $largeur, $hauteur);
+		imagedestroy($image);
+		$image = $cible;
+	}
+
+	$sortie = formatSortieImage();
+
+	if ($sortie === 'jpg') {
+		// Le JPEG ne gère pas la transparence : on la pose sur du blanc, sans
+		// quoi GD la rendrait en noir.
+		$fond = @imagecreatetruecolor(imagesx($image), imagesy($image));
+		if ($fond === false) {
+			imagedestroy($image);
+
+			return null;
+		}
+		imagealphablending($fond, true);
+		imagefilledrectangle($fond, 0, 0, imagesx($fond) - 1, imagesy($fond) - 1, (int) imagecolorallocate($fond, 255, 255, 255));
+		imagecopy($fond, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
+		imagedestroy($image);
+		$image = $fond;
+	} else {
+		imagealphablending($image, false);
+		imagesavealpha($image, true);
+	}
+
+	$nomFichier = bin2hex(random_bytes(8)) . '.' . $sortie;
+	$destination = $uploadsDir . '/' . $nomFichier;
+
+	$ecrit = $sortie === 'webp'
+		? @imagewebp($image, $destination, IMAGE_QUALITE)
+		: @imagejpeg($image, $destination, IMAGE_QUALITE);
+	imagedestroy($image);
+
+	if ($ecrit !== true || !is_file($destination)) {
+		@unlink($destination);
+
+		return null;
+	}
+
+	// Une image déjà légère et déjà à la bonne taille n'a rien à gagner : si le
+	// réencodage l'alourdit, on garde l'original. C'est aussi ce qui rend la
+	// reprise des photos existantes idempotente.
+	if ($facteur >= 1 && (int) filesize($destination) >= (int) filesize($source)) {
+		@unlink($destination);
+
+		return null;
+	}
+
+	return $nomFichier;
+}
+
 /**
  * Limite réellement applicable : la plus petite des deux directives PHP.
  * Inutile d'annoncer 64 Mo si l'hébergeur en refuse 8.
  */
 function limiteTelechargement(): int
 {
-	$vers_octets = static function (string $valeur): int {
-		$valeur = trim($valeur);
-		$unite = strtolower(substr($valeur, -1));
-		$nombre = (int) $valeur;
-		return match ($unite) {
-			'g' => $nombre * 1024 * 1024 * 1024,
-			'm' => $nombre * 1024 * 1024,
-			'k' => $nombre * 1024,
-			default => $nombre,
-		};
-	};
-
 	$limites = array_filter([
-		$vers_octets((string) ini_get('upload_max_filesize')),
-		$vers_octets((string) ini_get('post_max_size')),
+		valeurIniEnOctets((string) ini_get('upload_max_filesize')),
+		valeurIniEnOctets((string) ini_get('post_max_size')),
 	]);
 
 	return $limites === [] ? 8 * 1024 * 1024 : min($limites);
@@ -292,6 +508,15 @@ function rangerMediasEnvoyes(array $champ, string $uploadsDir, string $uploadsUr
 			break;
 		}
 
+		// Les photos sont recompressées avant d'être rangées ; les vidéos, jamais.
+		if ($type === 'image') {
+			$optimise = optimiserImage($temporaire, $extension, $uploadsDir);
+			if ($optimise !== null) {
+				$medias[] = ['type' => 'image', 'url' => $uploadsUrl . '/' . $optimise];
+				continue;
+			}
+		}
+
 		$nomFichier = bin2hex(random_bytes(8)) . '.' . $extension;
 		if (!move_uploaded_file($temporaire, $uploadsDir . '/' . $nomFichier)) {
 			$erreurs[] = sprintf('« %s » n\'a pas pu être enregistré.', $nomOrigine);
@@ -305,19 +530,86 @@ function rangerMediasEnvoyes(array $champ, string $uploadsDir, string $uploadsUr
 }
 
 /**
- * Supprime un fichier devenu inutile. Verrouillé sur le dossier des médias pour
- * qu'une valeur trafiquée ne puisse pas viser un autre fichier du serveur.
+ * Résout l'URL publique d'un média en chemin sur le disque. Verrouillé sur le
+ * dossier des médias pour qu'une valeur trafiquée ne puisse pas viser un autre
+ * fichier du serveur.
+ */
+function cheminMedia(?string $url, string $uploadsDir, string $uploadsUrl): ?string
+{
+	if ($url === null || $url === '' || !str_starts_with($url, $uploadsUrl . '/')) {
+		return null;
+	}
+
+	return $uploadsDir . '/' . basename($url);
+}
+
+/**
+ * Supprime un fichier devenu inutile.
  */
 function supprimerFichierMedia(?string $url, string $uploadsDir, string $uploadsUrl): void
 {
-	if ($url === null || $url === '' || !str_starts_with($url, $uploadsUrl . '/')) {
-		return;
-	}
-
-	$chemin = $uploadsDir . '/' . basename($url);
-	if (is_file($chemin)) {
+	$chemin = cheminMedia($url, $uploadsDir, $uploadsUrl);
+	if ($chemin !== null && is_file($chemin)) {
 		@unlink($chemin);
 	}
+}
+
+/**
+ * Reprend les photos déjà en ligne. Celles téléversées avant la mise en place
+ * de la compression resteraient lourdes sans ce rattrapage.
+ *
+ * Les anciens et les nouveaux fichiers sont renvoyés séparément : l'appelant
+ * n'efface les anciens qu'une fois le JSON écrit, et les nouveaux si l'écriture
+ * a échoué. Aucune photo ne disparaît en cas de problème d'écriture.
+ *
+ * @param array<int, array<string, mixed>> $equipements
+ * @return array{0: array<int, array<string, mixed>>, 1: int, 2: int, 3: array<int, string>, 4: array<int, string>}
+ */
+function reoptimiserPhotos(array $equipements, string $uploadsDir, string $uploadsUrl): array
+{
+	$traitees = 0;
+	$gain = 0;
+	$anciens = [];
+	$nouveaux = [];
+
+	foreach ($equipements as $i => $item) {
+		$medias = $item['medias'] ?? [];
+		if (!is_array($medias)) {
+			continue;
+		}
+
+		foreach ($medias as $j => $media) {
+			if (!is_array($media) || ($media['type'] ?? '') !== 'image') {
+				continue;
+			}
+
+			$chemin = cheminMedia($media['url'] ?? null, $uploadsDir, $uploadsUrl);
+			if ($chemin === null || !is_file($chemin)) {
+				continue;
+			}
+
+			$identite = identifierMedia($chemin);
+			if ($identite === null || $identite[0] !== 'image') {
+				continue;
+			}
+
+			$avant = (int) filesize($chemin);
+			$optimise = optimiserImage($chemin, $identite[1], $uploadsDir);
+			if ($optimise === null) {
+				continue;
+			}
+
+			$medias[$j]['url'] = $uploadsUrl . '/' . $optimise;
+			$gain += $avant - (int) filesize($uploadsDir . '/' . $optimise);
+			$anciens[] = $chemin;
+			$nouveaux[] = $uploadsDir . '/' . $optimise;
+			$traitees++;
+		}
+
+		$equipements[$i]['medias'] = array_values($medias);
+	}
+
+	return [$equipements, $traitees, $gain, $anciens, $nouveaux];
 }
 
 /**
@@ -372,6 +664,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['C
 			} else {
 				$suffixe = $erreurs === [] ? '' : '&partiel=' . rawurlencode(implode(' ', $erreurs));
 				header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?saved=1' . $suffixe);
+				exit;
+			}
+		}
+	} elseif ($action === 'optimiser') {
+		if (!compressionDisponible()) {
+			$flashError = "Ce serveur ne sait pas retailler les images : l'extension GD de PHP n'est pas disponible.";
+		} else {
+			$equipements = loadEquipements($liveEquipementsPath, $defaultEquipementsPath);
+			[$misAJour, $traitees, $gain, $anciens, $nouveaux] = reoptimiserPhotos($equipements, $uploadsDir, $uploadsUrl);
+
+			if ($traitees === 0) {
+				$flashMessage = 'Rien à reprendre : les photos sont déjà au bon format.';
+			} elseif (!saveJsonFile($dataDir, $liveEquipementsPath, $misAJour)) {
+				foreach ($nouveaux as $fichier) {
+					@unlink($fichier);
+				}
+				$flashError = "Impossible d'enregistrer : le dossier data est introuvable ou non accessible en écriture.";
+			} else {
+				foreach ($anciens as $fichier) {
+					@unlink($fichier);
+				}
+				header('Location: ' . strtok((string) $_SERVER['REQUEST_URI'], '?') . '?optimise=' . $traitees . '&gain=' . max(0, $gain));
 				exit;
 			}
 		}
@@ -466,6 +780,16 @@ if (($_GET['saved'] ?? '') === '1') {
 if (($_GET['partiel'] ?? '') !== '') {
 	$flashError = 'Enregistré, mais : ' . (string) $_GET['partiel'];
 }
+if (($_GET['optimise'] ?? '') !== '') {
+	$nb = (int) $_GET['optimise'];
+	$flashMessage = sprintf(
+		'%d photo%s reprise%s — %s gagnés.',
+		$nb,
+		$nb > 1 ? 's' : '',
+		$nb > 1 ? 's' : '',
+		formaterOctets(max(0, (int) ($_GET['gain'] ?? 0))),
+	);
+}
 
 $equipements = loadEquipements($liveEquipementsPath, $defaultEquipementsPath);
 $parDomaine = [];
@@ -474,6 +798,17 @@ foreach (array_keys(DOMAINES) as $cle) {
 		$equipements,
 		static fn(array $item): bool => ($item['domaine'] ?? '') === $cle,
 	));
+}
+
+// Nombre de photos en ligne : sert à n'afficher le bouton de reprise que s'il
+// a quelque chose à traiter.
+$nbPhotos = 0;
+foreach ($equipements as $item) {
+	foreach ((array) ($item['medias'] ?? []) as $media) {
+		if (is_array($media) && ($media['type'] ?? '') === 'image') {
+			$nbPhotos++;
+		}
+	}
 }
 ?>
 <!doctype html>
@@ -644,6 +979,11 @@ foreach (array_keys(DOMAINES) as $cle) {
 							<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">
 								Plusieurs fichiers possibles. JPEG, PNG, WebP, MP4 ou WebM, <?= formaterOctets(limiteTelechargement()) ?> maximum par envoi.
 								La première photo ou vidéo sert de couverture.
+								<?php if (compressionDisponible()): ?>
+									Les photos sont redressées, réduites à <?= IMAGE_COTE_MAX ?> px sur leur plus grand côté et recompressées en <?= libelleFormatSortie() ?>.
+								<?php else: ?>
+									<strong style="color:#b85438;">Compression indisponible sur ce serveur (extension GD absente) : les photos sont enregistrées telles quelles.</strong>
+								<?php endif; ?>
 							</span>
 						</label>
 
@@ -652,6 +992,25 @@ foreach (array_keys(DOMAINES) as $cle) {
 						</button>
 					</form>
 				</section>
+
+				<?php if (compressionDisponible() && $nbPhotos > 0): ?>
+					<section style="background:#fff;border:1px solid #e2ded3;border-radius:.75rem;padding:1.25rem 1.5rem;margin-bottom:2rem;">
+						<h2 style="font-size:1.05rem;font-weight:700;margin:0 0 .4rem;">Photos déjà en ligne</h2>
+						<p style="margin:0 0 .9rem;font-size:.85rem;color:#5c6657;">
+							Les photos ajoutées avant la mise en place de la compression sont restées à leur
+							poids d'origine. Cette reprise les redresse, les réduit à <?= IMAGE_COTE_MAX ?> px
+							et les réencode en <?= libelleFormatSortie() ?>. Celles qui sont déjà au
+							bon format sont laissées telles quelles.
+						</p>
+						<form method="post">
+							<input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>" />
+							<input type="hidden" name="action" value="optimiser" />
+							<button type="submit" style="background:#fff;color:#2f3b2f;border:1px solid #2f3b2f;border-radius:9999px;padding:.5rem 1.2rem;font-weight:600;font-size:.85rem;cursor:pointer;">
+								Reprendre les <?= $nbPhotos ?> photo<?= $nbPhotos > 1 ? 's' : '' ?>
+							</button>
+						</form>
+					</section>
+				<?php endif; ?>
 
 				<!-- ── Équipements existants, groupés par champ d'application ── -->
 				<?php foreach (DOMAINES as $cle => $libelle): ?>
