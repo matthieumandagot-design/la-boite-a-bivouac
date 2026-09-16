@@ -15,7 +15,10 @@ import { toJsonLd } from "../utils/jsonld";
 const PAGE_DESCRIPTION =
 	"La Boîte à Bivouac : caisse modulaire en acier et OSB qui s'installe dans votre remorque standard. Tente de toit, vélos, matériel. V2 en septembre 2026.";
 
-const CONCEPT_POINTS = [
+// Les six points clés du produit, rendus en blocs identiques. Trois s'appuient
+// sur une icône Tabler (`icon`), trois sur nos pictogrammes maison inlinés
+// (`svg`) : le gabarit choisit le rendu selon le champ renseigné.
+const ESSENTIALS = [
 	{
 		icon: "tabler:tent",
 		title: "Sur le dessus",
@@ -31,21 +34,18 @@ const CONCEPT_POINTS = [
 		title: "Amovible",
 		text: "La boîte se retire, la remorque redevient une remorque.",
 	},
-];
-
-const PLAY_TERRAINS = [
 	{
-		icon: pine,
+		svg: pine,
 		title: "Bivouac",
 		text: "Forêt, montagne, bord de lac. Installez la tente de toit, ouvrez les portes, posez le camp. La Boîte à Bivouac fait de n'importe quel endroit votre base.",
 	},
 	{
-		icon: bike,
+		svg: bike,
 		title: "Partez à 5.",
 		text: "La tente de toit sur la Boîte accueille 3 personnes ou plus. Le véhicule, libéré du matériel, en loge 2 supplémentaires. L'aventure n'est plus réservée aux duos.",
 	},
 	{
-		icon: canoe,
+		svg: canoe,
 		title: "Côte & campings",
 		text: "Base fixe, exploration mobile. La Boîte à Bivouac devient votre quartier général — vous repartez visiter la région avec un véhicule agile, sans compromis.",
 	},
@@ -107,9 +107,11 @@ const productSchema = {
 			aria-hidden="true"
 			class="absolute inset-0 h-full w-full object-cover"
 		/>
-		<div class="absolute inset-0 bg-gradient-to-r from-graphite/90 via-graphite/70 to-graphite/40"></div>
-		<div class="relative mx-auto grid max-w-5xl gap-10 px-6 py-20 lg:grid-cols-2 lg:items-center">
-			<div>
+		<div class="absolute inset-0 bg-gradient-to-r from-graphite/95 via-graphite/80 to-graphite/65"></div>
+		<div
+			class="relative mx-auto grid w-full max-w-6xl gap-10 px-6 py-20 lg:grid-cols-2 lg:items-center lg:gap-14"
+		>
+			<div data-reveal="left">
 				<h2 class="font-display text-3xl font-semibold sm:text-4xl">Le concept</h2>
 				<p class="mt-4 text-ecru-100/90">
 					La Boîte à Bivouac, c'est une caisse modulaire en acier et bois qui vient s'installer dans
@@ -121,48 +123,54 @@ const productSchema = {
 					Le week-end, c'est une base.
 				</p>
 			</div>
-			<div class="rounded-2xl border border-ecru-50/15 bg-graphite/55 p-8 shadow-sm backdrop-blur-md">
-				<p class="text-xs font-medium uppercase tracking-widest text-mousse">L'essentiel</p>
-				<ul class="mt-6 space-y-5">
-					{
-						CONCEPT_POINTS.map((point) => (
-							<li class="flex items-center gap-4">
-								<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
-									<Icon name={point.icon} class="h-6 w-6" />
-								</span>
-								<div>
-									<p class="font-display text-base font-semibold">{point.title}</p>
-									<p class="text-sm text-ecru-100/75">{point.text}</p>
-								</div>
-							</li>
-						))
-					}
-				</ul>
-			</div>
-		</div>
-	</section>
-
-	<section class="bg-graphite px-6 py-20 text-ecru-50">
-		<div class="mx-auto max-w-4xl">
-			<p class="text-xs font-medium uppercase tracking-widest text-mousse" data-reveal>En vidéo</p>
-			<h2
-				class="mt-3 font-display text-2xl font-semibold sm:text-3xl"
-				data-reveal
-				style="--reveal-delay: 60ms"
-			>
-				Le camp installé en quelques minutes.
-			</h2>
-			<p class="mt-4 max-w-2xl text-ecru-100/80" data-reveal style="--reveal-delay: 120ms">
-				Déplier la tente, ouvrir les panneaux, sortir le matériel&nbsp;: voilà ce que donne une
-				installation complète, sans montage compliqué ni outil à sortir.
-			</p>
-			<div class="mt-10" data-reveal style="--reveal-delay: 180ms">
+			<figure class="m-0" data-reveal="right" style="--reveal-delay: 140ms">
 				<VideoYouTube
 					id="KX_vy58MSrA"
 					titre="La Boîte à Bivouac : installation complète du camp en quelques minutes"
 					poster="/images/video-presentation.jpg"
 				/>
-			</div>
+				<figcaption class="mt-4 text-sm text-ecru-100/75">
+					<span class="font-display font-semibold text-ecru-50">
+						Le camp installé en quelques minutes.
+					</span>{" "}
+					Déplier la tente, ouvrir les panneaux, sortir le matériel&nbsp;: une installation complète,
+					sans montage compliqué ni outil à sortir.
+				</figcaption>
+			</figure>
+		</div>
+	</section>
+
+	<section class="bg-ecru-100 px-6 py-20">
+		<div class="mx-auto max-w-5xl">
+			<h2 class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>
+				L'essentiel
+			</h2>
+			{/* auto-rows-fr : les six blocs gardent la même hauteur malgré des
+			    textes de longueurs très différentes. Seulement à partir de sm,
+			    car en colonne unique cela ne ferait qu'ajouter du vide. */}
+			<ul class="mt-8 grid gap-6 sm:auto-rows-fr sm:grid-cols-2 lg:grid-cols-3">
+				{
+					ESSENTIALS.map((item, index) => (
+						<li
+							class="flex flex-col rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm"
+							data-reveal
+							style={`--reveal-delay: ${index * 70}ms`}
+						>
+							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
+								{
+									item.svg ? (
+										<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={item.svg} />
+									) : (
+										<Icon name={item.icon} class="h-6 w-6" />
+									)
+								}
+							</span>
+							<h3 class="mt-5 font-display text-lg font-semibold text-brun-700">{item.title}</h3>
+							<p class="mt-2 text-sm text-brun-500">{item.text}</p>
+						</li>
+					))
+				}
+			</ul>
 		</div>
 	</section>
 
@@ -206,33 +214,6 @@ const productSchema = {
 						class="h-full w-full object-cover"
 					/>
 				</button>
-			</div>
-		</div>
-	</section>
-
-	<section class="bg-graphite px-6 py-20 text-ecru-50">
-		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold sm:text-3xl" data-reveal>
-				Un module, des terrains
-			</h2>
-			<div class="mt-10 grid gap-8 sm:grid-cols-3">
-				{
-					PLAY_TERRAINS.map((terrain, index) => (
-						<div
-							class="flex items-start gap-4"
-							data-reveal
-							style={`--reveal-delay: ${index * 90}ms`}
-						>
-							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
-								<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={terrain.icon} />
-							</span>
-							<div>
-								<h3 class="font-display text-lg font-semibold">{terrain.title}</h3>
-								<p class="mt-1 text-ecru-100/80">{terrain.text}</p>
-							</div>
-						</div>
-					))
-				}
 			</div>
 		</div>
 	</section>
