@@ -42,4 +42,13 @@ export const SOCIAL_LINKS = [
 		label: "LinkedIn",
 		icon: "tabler:brand-linkedin",
 	},
+	// URL par identifiant de chaîne plutôt que par pseudo : « @LaBoîteàBivouac »
+	// contient des accents, qui s'encodent mal selon les outils qui relisent le
+	// balisage. La fiche Google connaissait déjà cette chaîne alors que le site
+	// ne la déclarait nulle part — d'où un lien de moins entre les deux.
+	{
+		href: "https://www.youtube.com/channel/UCK0cwQp6uq7g12jbGNa_8wg",
+		label: "YouTube",
+		icon: "tabler:brand-youtube",
+	},
 ];

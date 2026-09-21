@@ -70,6 +70,50 @@ const PRODUCT_IMAGE_PATHS = [
 	...GALLERY_IMAGES.map((img) => img.src),
 ];
 
+/**
+ * Vidéo de présentation. Les métadonnées sont écrites une fois ici puis
+ * servent à la fois au composant et au balisage : le titre affiché et le
+ * titre déclaré ne peuvent plus diverger.
+ *
+ * La date et la durée proviennent de YouTube (relevées le 21/09/2026) ; ce
+ * sont des faits sur la vidéo, pas des estimations. Sans uploadDate ni
+ * duration, Google n'accorde pas de résultat enrichi vidéo.
+ */
+const VIDEO = {
+	id: "KX_vy58MSrA",
+	titre: "La Boîte à Bivouac : installation complète du camp en quelques minutes",
+	poster: "/images/video-presentation.jpg",
+	publiee: "2026-09-15T04:15:28-07:00",
+	duree: "PT3M13S",
+	description:
+		"Déplier la tente, ouvrir les panneaux, sortir le matériel : l'installation complète du camp depuis une remorque équipée de La Boîte à Bivouac, sans montage compliqué ni outil à sortir.",
+};
+
+const videoSchema = {
+	"@context": "https://schema.org",
+	"@type": "VideoObject",
+	name: VIDEO.titre,
+	description: VIDEO.description,
+	// Deux vignettes : celle de YouTube, en paysage et haute définition, et
+	// celle affichée sur la page. Google accepte plusieurs formats et choisit.
+	thumbnailUrl: [
+		`https://i.ytimg.com/vi/${VIDEO.id}/maxresdefault.jpg`,
+		new URL(VIDEO.poster, Astro.site).href,
+	],
+	uploadDate: VIDEO.publiee,
+	duration: VIDEO.duree,
+	embedUrl: `https://www.youtube.com/embed/${VIDEO.id}`,
+	contentUrl: `https://www.youtube.com/watch?v=${VIDEO.id}`,
+	publisher: {
+		"@type": "Organization",
+		name: SITE_TITLE,
+		logo: {
+			"@type": "ImageObject",
+			url: new URL("/images/logo-badge.png", Astro.site).href,
+		},
+	},
+};
+
 const productSchema = {
 	"@context": "https://schema.org",
 	"@type": "Product",
@@ -107,6 +151,7 @@ const productSchema = {
 
 <Layout title="La Boîte" description={PAGE_DESCRIPTION}>
 	<script type="application/ld+json" set:html={toJsonLd(productSchema)} />
+	<script type="application/ld+json" set:html={toJsonLd(videoSchema)} />
 
 	<h1 class="sr-only">La Boîte à Bivouac — Votre base, partout</h1>
 	<ScrollReveal />
@@ -135,11 +180,7 @@ const productSchema = {
 					Le week-end, c'est une base.
 				</p>
 				<figure class="m-0 mt-8">
-					<VideoYouTube
-						id="KX_vy58MSrA"
-						titre="La Boîte à Bivouac : installation complète du camp en quelques minutes"
-						poster="/images/video-presentation.jpg"
-					/>
+					<VideoYouTube id={VIDEO.id} titre={VIDEO.titre} poster={VIDEO.poster} />
 					<figcaption class="t-petit mt-4 text-ecru-100/75">
 						<span class="font-display font-semibold text-ecru-50">
 							Le camp installé en quelques minutes.
