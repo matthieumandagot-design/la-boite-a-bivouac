@@ -497,12 +497,12 @@ const fmt = (n: number) => n.toLocaleString("fr-FR");
 
 			curseurHauteur!.min = String(mini);
 			inputHauteur!.min = String(mini);
-			curseurHauteur!.max = String(plafond.maxi);
-			inputHauteur!.max = String(plafond.maxi);
+			curseurHauteur!.max = String(plafond);
+			inputHauteur!.max = String(plafond);
 
 			const v = Number(inputHauteur!.value);
 			if (v < mini) inputHauteur!.value = String(mini);
-			if (v > plafond.maxi) inputHauteur!.value = String(plafond.maxi);
+			if (v > plafond) inputHauteur!.value = String(plafond);
 			curseurHauteur!.value = inputHauteur!.value;
 
 			aideHauteur!.textContent =
