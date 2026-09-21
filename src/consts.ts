@@ -8,6 +8,7 @@ export const HOME_DESCRIPTION =
 export const NAV_LINKS = [
 	{ href: "/", label: "Accueil" },
 	{ href: "/la-boite", label: "La Boîte" },
+	{ href: "/compatibilite", label: "Compatibilité" },
 	{ href: "/equipements", label: "Équipements" },
 	{ href: "/faq", label: "FAQ" },
 	{ href: "/contact", label: "Contact" },

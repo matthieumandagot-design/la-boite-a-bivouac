@@ -1,0 +1,851 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ScrollReveal from "../components/ScrollReveal.astro";
+import { Icon } from "astro-icon/components";
+import {
+	REMORQUES,
+	HAUTEUR_DEFAUT_CM,
+	RIDELLE_DEFAUT_CM,
+	HAUTEUR_TOTALE_MAX_CM,
+	TENTE_DEFAUT_CM,
+	JEU_PAR_COTE_CM,
+	calculeBoite,
+	type Remorque,
+} from "../data/remorques";
+
+const PAGE_DESCRIPTION =
+	"Votre remorque est-elle compatible ? Choisissez votre modèle ou saisissez vos cotes : nous calculons les dimensions exactes de la Boîte à Bivouac qui s'y logera.";
+
+/** Regroupement par marque pour les <optgroup> du sélecteur. */
+const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
+	(acc[r.marque] ??= []).push(r);
+	return acc;
+}, {});
+
+const LIGNES = REMORQUES.map((r) => ({ ...r, boite: calculeBoite(r.longueur, r.largeur) }));
+
+const fmt = (n: number) => n.toLocaleString("fr-FR");
+---
+
+<Layout title="Compatibilité" description={PAGE_DESCRIPTION}>
+	<ScrollReveal />
+
+	<section class="border-b border-ardoise/30 bg-sable/50 px-6 py-16 sm:px-8 lg:px-12">
+		<p class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>
+			Compatibilité
+		</p>
+		<h1
+			class="mt-3 font-display text-4xl font-semibold text-brun-700"
+			data-reveal
+			style="--reveal-delay: 60ms"
+		>
+			Quelle Boîte pour votre remorque&nbsp;?
+		</h1>
+		{/* Seule contrainte de largeur de la page : une ligne de prose au-delà de
+		    ~80 caractères devient pénible à lire. Le reste suit la fenêtre. */}
+		<p
+			class="mt-6 max-w-[80ch] text-lg text-brun-500"
+			data-reveal
+			style="--reveal-delay: 120ms"
+		>
+			Chaque Boîte est fabriquée sur mesure pour s’adapter à l’intérieur de votre remorque. Un jeu
+			de {JEU_PAR_COTE_CM}&nbsp;cm de chaque côté facilite sa mise en place et son retrait.
+		</p>
+		<p
+			class="mt-4 max-w-[80ch] text-lg text-brun-500"
+			data-reveal
+			style="--reveal-delay: 160ms"
+		>
+			Sa hauteur standard est de {HAUTEUR_DEFAUT_CM}&nbsp;cm, ajustable selon vos besoins&nbsp;:
+			elle ne peut être inférieure à la hauteur des ridelles ni dépasser la longueur intérieure de
+			la caisse.
+		</p>
+	</section>
+
+	{/* Réglages à gauche, résultat et schémas à droite : chaque changement se
+	    voit immédiatement, sans avoir à faire défiler la page. */}
+	<section class="grid gap-8 px-6 py-16 sm:px-8 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-10 lg:px-12">
+		<div
+			class="self-start rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm lg:sticky lg:top-24"
+			data-reveal
+		>
+			<h2 class="font-display text-xl font-semibold text-brun-700">Votre remorque</h2>
+
+			<div class="mt-6 flex flex-wrap gap-2" role="group" aria-label="Méthode de saisie">
+				<button type="button" class="mode-btn" data-mode="modele" aria-pressed="true">
+					Choisir un modèle
+				</button>
+				<button type="button" class="mode-btn" data-mode="mesures" aria-pressed="false">
+					Saisir mes mesures
+				</button>
+			</div>
+
+			<div class="mt-6" data-panneau="modele">
+				<label for="modele" class="block text-sm font-medium text-brun-600">
+					Modèle de remorque
+				</label>
+				<select id="modele" class="compat-input mt-2 w-full">
+					{
+						Object.entries(PAR_MARQUE).map(([marque, modeles]) => (
+							<optgroup label={marque}>
+								{modeles.map((r) => (
+									<option value={`${r.marque}|${r.modele}`}>
+										{r.marque} {r.modele} — {r.longueur} × {r.largeur} cm
+									</option>
+								))}
+							</optgroup>
+						))
+					}
+				</select>
+				<p class="mt-2 text-sm text-brun-400">
+					Votre modèle n'est pas dans la liste&nbsp;? Passez par «&nbsp;Saisir mes
+					mesures&nbsp;»&nbsp;: le calcul est le même.
+				</p>
+			</div>
+
+			<div class="mt-6 hidden" data-panneau="mesures">
+				{/* Trois colonnes tant que la place le permet ; la colonne de gauche
+				    étant étroite en grand écran, les champs y repassent l'un sous
+				    l'autre. */}
+				<div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+					<div>
+						<label for="longueur" class="block text-sm font-medium text-brun-600">
+							Longueur intérieure (cm)
+						</label>
+						<input
+							id="longueur"
+							type="number"
+							inputmode="numeric"
+							min="50"
+							max="400"
+							step="1"
+							value="155"
+							class="compat-input mt-2 w-full"
+						/>
+					</div>
+					<div>
+						<label for="largeur" class="block text-sm font-medium text-brun-600">
+							Largeur intérieure (cm)
+						</label>
+						<input
+							id="largeur"
+							type="number"
+							inputmode="numeric"
+							min="50"
+							max="250"
+							step="1"
+							value="115"
+							class="compat-input mt-2 w-full"
+						/>
+					</div>
+					<div>
+						<label for="ridelle" class="block text-sm font-medium text-brun-600">
+							Hauteur des ridelles (cm)
+						</label>
+						<input
+							id="ridelle"
+							type="number"
+							inputmode="numeric"
+							min="10"
+							max="120"
+							step="1"
+							value={RIDELLE_DEFAUT_CM}
+							class="compat-input mt-2 w-full"
+						/>
+					</div>
+				</div>
+				<p class="mt-2 text-sm text-brun-400">
+					Mesurez au fond de la caisse, entre les parois, aux endroits les plus étroits. Les
+					ridelles sont les parois latérales&nbsp;: leur hauteur fixe le minimum de la boîte.
+				</p>
+			</div>
+
+			<div class="mt-8 border-t border-ardoise/30 pt-6">
+				<label for="hauteur" class="block text-sm font-medium text-brun-600">
+					Hauteur de la boîte (cm)
+				</label>
+				<div class="mt-2 flex items-center gap-4">
+					<input
+						id="hauteur-curseur"
+						type="range"
+						min={RIDELLE_DEFAUT_CM}
+						max={HAUTEUR_TOTALE_MAX_CM}
+						step="1"
+						value={HAUTEUR_DEFAUT_CM}
+						class="h-2 w-full accent-rouille-500"
+						aria-label="Hauteur de la boîte, curseur"
+					/>
+					<input
+						id="hauteur"
+						type="number"
+						inputmode="numeric"
+						min={RIDELLE_DEFAUT_CM}
+						max={HAUTEUR_TOTALE_MAX_CM}
+						step="1"
+						value={HAUTEUR_DEFAUT_CM}
+						class="compat-input w-24 shrink-0 text-center tabular-nums"
+					/>
+				</div>
+				<p class="mt-2 text-sm text-brun-400" id="hauteur-aide">
+					{HAUTEUR_DEFAUT_CM}&nbsp;cm par défaut&nbsp;: de quoi ranger le matériel debout sous la
+					tente de toit.
+				</p>
+
+				<div class="mt-6 border-t border-ardoise/30 pt-6">
+					<label class="flex cursor-pointer items-start gap-3 text-sm text-brun-600">
+						<input
+							id="avec-tente"
+							type="checkbox"
+							checked
+							class="mt-0.5 h-4 w-4 shrink-0 accent-rouille-500"
+						/>
+						<span>
+							Avec une tente de toit
+							<span class="mt-0.5 block text-brun-400">
+								Posée sur les barres de toit de la boîte. Sa hauteur repliée s'ajoute à la hauteur
+								hors tout, donc elle compte dans les {HAUTEUR_TOTALE_MAX_CM / 100}&nbsp;m.
+							</span>
+						</span>
+					</label>
+
+					<div id="bloc-tente" class="mt-4">
+						<label for="tente" class="block text-sm font-medium text-brun-600">
+							Hauteur de la tente repliée (cm)
+						</label>
+						<div class="mt-2 flex items-center gap-4">
+							<input
+								id="tente-curseur"
+								type="range"
+								min="10"
+								max="80"
+								step="1"
+								value={TENTE_DEFAUT_CM}
+								class="h-2 w-full accent-rouille-500"
+								aria-label="Hauteur de la tente repliée, curseur"
+							/>
+							<input
+								id="tente"
+								type="number"
+								inputmode="numeric"
+								min="10"
+								max="80"
+								step="1"
+								value={TENTE_DEFAUT_CM}
+								class="compat-input w-24 shrink-0 text-center tabular-nums"
+							/>
+						</div>
+						</div>
+				</div>
+
+			</div>
+		</div>
+
+		<div id="resultat" role="region" aria-live="polite" aria-label="Résultat">
+			<!-- rempli par le script -->
+		</div>
+	</section>
+
+	<section class="border-t border-ardoise/30 bg-ecru-100 px-6 py-16 sm:px-8 lg:px-12">
+		<div>
+			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl" data-reveal>
+				Les modèles déjà relevés
+			</h2>
+			<p class="mt-3 max-w-2xl text-brun-500" data-reveal style="--reveal-delay: 60ms">
+				Cotes intérieures relevées sur les fiches constructeur ou revendeur, et boîte
+				correspondante. Un même modèle peut changer de cotes selon l'année et la finition&nbsp;:
+				vérifiez toujours au mètre avant de commander. Les modèles marqués «&nbsp;cotes à
+				confirmer&nbsp;» viennent d'un vendeur dont la fiche n'est pas consultable
+				automatiquement.
+			</p>
+
+			<div class="mt-8 overflow-x-auto" data-reveal style="--reveal-delay: 120ms">
+				<table class="w-full min-w-[46rem] border-collapse text-left text-sm">
+					<thead>
+						<tr class="border-b border-ardoise/40 text-brun-600">
+							<th scope="col" class="py-3 pr-4 font-medium">Remorque</th>
+							<th scope="col" class="py-3 pr-4 font-medium">Intérieur caisse</th>
+							<th scope="col" class="py-3 pr-4 font-medium">
+								Boîte correspondante
+								<span class="block text-xs font-normal text-brun-400">hauteur {HAUTEUR_DEFAUT_CM} cm</span>
+							</th>
+							<th scope="col" class="py-3 pr-4 font-medium">Volume</th>
+							<th scope="col" class="py-3 font-medium">Source</th>
+						</tr>
+					</thead>
+					<tbody>
+						{
+							LIGNES.map((r) => (
+								<tr class="border-b border-ardoise/25 align-top">
+									<th scope="row" class="py-3 pr-4 font-display font-semibold text-brun-700">
+										{r.marque} {r.modele}
+										{
+											!r.verifie && (
+												<span class="mt-1 block text-xs font-normal text-rouille-500">
+													cotes à confirmer
+												</span>
+											)
+										}
+									</th>
+									<td class="py-3 pr-4 tabular-nums text-brun-500">
+										{r.longueur} × {r.largeur} cm
+										{r.ridelle !== null && <span class="block text-xs text-brun-400">ridelles {r.ridelle} cm</span>}
+									</td>
+									<td class="py-3 pr-4 tabular-nums text-brun-700">
+										{r.boite.longueur} × {r.boite.largeur} × {r.boite.hauteur} cm
+									</td>
+									<td class="py-3 pr-4 tabular-nums font-semibold text-rouille-500">
+										{fmt(r.boite.volume)} L
+									</td>
+									<td class="py-3">
+										<a
+											href={r.source}
+											target="_blank"
+											rel="noopener noreferrer"
+											class="inline-flex items-center gap-1 text-rouille-500 underline-offset-4 hover:underline"
+										>
+											Fiche
+											<Icon name="tabler:arrow-up-right" class="h-4 w-4" />
+										</a>
+									</td>
+								</tr>
+							))
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</section>
+
+	<section class="border-t border-ardoise/30 bg-sable/50 px-6 py-16">
+		<div class="mx-auto max-w-2xl text-center">
+			<h2 class="font-display text-2xl font-semibold text-brun-700" data-reveal>
+				Un doute sur vos cotes&nbsp;?
+			</h2>
+			<p class="mt-4 text-brun-500" data-reveal style="--reveal-delay: 60ms">
+				Envoyez-nous la marque, le modèle et vos mesures&nbsp;: nous vérifions avec vous et nous
+				vous répondons personnellement.
+			</p>
+			<a
+				href="/contact"
+				class="mt-8 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
+				data-reveal
+				style="--reveal-delay: 120ms"
+			>
+				Nous écrire
+				<Icon name="tabler:arrow-right" class="h-4 w-4" />
+			</a>
+		</div>
+	</section>
+
+	<script type="application/json" id="donnees-remorques" set:html={JSON.stringify(REMORQUES)} />
+</Layout>
+
+<style>
+	/* Pas de width ici : le style scopé d'Astro est plus spécifique que les
+	   utilitaires Tailwind et écraserait le w-24 du champ hauteur. La largeur
+	   est portée par une classe sur chaque champ. */
+	.compat-input {
+		border-radius: 0.75rem;
+		border: 1px solid color-mix(in srgb, var(--color-ardoise) 40%, transparent);
+		background: var(--color-ecru-50);
+		padding: 0.7rem 1rem;
+		color: var(--color-brun-700);
+		transition: border-color 0.15s, box-shadow 0.15s;
+	}
+
+	.compat-input:focus {
+		outline: none;
+		border-color: var(--color-rouille-400);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-rouille-400) 25%, transparent);
+	}
+
+	.mode-btn {
+		border-radius: 9999px;
+		border: 1px solid color-mix(in srgb, var(--color-ardoise) 45%, transparent);
+		padding: 0.5rem 1.1rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--color-brun-600);
+		transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+	}
+
+	.mode-btn:hover {
+		border-color: var(--color-rouille-400);
+		color: var(--color-rouille-500);
+	}
+
+	.mode-btn[aria-pressed="true"] {
+		background: var(--color-rouille-500);
+		border-color: var(--color-rouille-500);
+		color: var(--color-ecru-50);
+	}
+
+	.mode-btn:focus-visible,
+	.compat-input:focus-visible {
+		outline: 2px solid var(--color-rouille-400);
+		outline-offset: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.compat-input,
+		.mode-btn {
+			transition: none;
+		}
+	}
+</style>
+
+<script>
+	import {
+		HAUTEUR_DEFAUT_CM,
+		PLANCHER_DEFAUT_CM,
+		BARRES_TOIT_CM,
+		TENTE_DEFAUT_CM,
+		JEU_PAR_COTE_CM,
+		borneHauteur,
+		hauteurMini,
+		hauteurMaxi,
+		hauteurHorsTout,
+		classePeage,
+		calculeBoite,
+		type Remorque,
+	} from "../data/remorques";
+
+	const donnees = document.getElementById("donnees-remorques");
+	const sortie = document.getElementById("resultat");
+	const select = document.getElementById("modele") as HTMLSelectElement | null;
+	const inputLongueur = document.getElementById("longueur") as HTMLInputElement | null;
+	const inputLargeur = document.getElementById("largeur") as HTMLInputElement | null;
+	const inputRidelle = document.getElementById("ridelle") as HTMLInputElement | null;
+	const inputHauteur = document.getElementById("hauteur") as HTMLInputElement | null;
+	const curseurHauteur = document.getElementById("hauteur-curseur") as HTMLInputElement | null;
+	const caseTente = document.getElementById("avec-tente") as HTMLInputElement | null;
+	const inputTente = document.getElementById("tente") as HTMLInputElement | null;
+	const curseurTente = document.getElementById("tente-curseur") as HTMLInputElement | null;
+	const blocTente = document.getElementById("bloc-tente");
+	const aideHauteur = document.getElementById("hauteur-aide");
+	const boutons = [...document.querySelectorAll<HTMLButtonElement>(".mode-btn")];
+
+	if (
+		donnees &&
+		sortie &&
+		select &&
+		inputLongueur &&
+		inputLargeur &&
+		inputRidelle &&
+		inputHauteur &&
+		curseurHauteur &&
+		caseTente &&
+		inputTente &&
+		curseurTente &&
+		blocTente &&
+		aideHauteur
+	) {
+		const remorques: Remorque[] = JSON.parse(donnees.textContent ?? "[]");
+		let mode: "modele" | "mesures" = "modele";
+
+		const nb = (n: number) => n.toLocaleString("fr-FR");
+
+		/** Hauteur de tente retenue. 0 quand la case est décochée. */
+		function tenteCourante(): number {
+			if (!caseTente!.checked) return 0;
+			const v = Number(inputTente!.value);
+			if (!Number.isFinite(v)) return TENTE_DEFAUT_CM;
+			return Math.min(80, Math.max(10, Math.round(v)));
+		}
+
+		/** Cotes de la remorque en cours, selon le mode de saisie. */
+		function remorqueCourante() {
+			if (mode === "modele") {
+				const [marque, modele] = select!.value.split("|");
+				const r = remorques.find((x) => x.marque === marque && x.modele === modele);
+				return {
+					longueur: r?.longueur ?? 0,
+					largeur: r?.largeur ?? 0,
+					ridelle: r?.ridelle ?? null,
+					plancher: r?.plancher ?? null,
+					source: r?.source ?? null,
+					verifie: r?.verifie ?? true,
+					intitule: r ? `${r.marque} ${r.modele}` : "",
+				};
+			}
+			const rid = Number(inputRidelle!.value);
+			return {
+				longueur: Number(inputLongueur!.value),
+				largeur: Number(inputLargeur!.value),
+				ridelle: Number.isFinite(rid) && rid > 0 ? rid : null,
+				plancher: null,
+				source: null,
+				verifie: true,
+				intitule: "Vos mesures",
+			};
+		}
+
+		/**
+		 * Le minimum de hauteur dépend de la remorque choisie : on réaligne les
+		 * bornes du curseur et du champ, et on remonte la valeur si elle est passée
+		 * sous le nouveau minimum. Appelé sur changement de remorque, jamais
+		 * pendant la frappe dans le champ hauteur.
+		 */
+		function majBornes() {
+			const { longueur, ridelle, plancher } = remorqueCourante();
+			if (!Number.isFinite(longueur) || longueur <= 0) return;
+
+			const mini = hauteurMini(ridelle);
+			const plafond = hauteurMaxi(longueur);
+
+			curseurHauteur!.min = String(mini);
+			inputHauteur!.min = String(mini);
+			curseurHauteur!.max = String(plafond.maxi);
+			inputHauteur!.max = String(plafond.maxi);
+
+			const v = Number(inputHauteur!.value);
+			if (v < mini) inputHauteur!.value = String(mini);
+			if (v > plafond.maxi) inputHauteur!.value = String(plafond.maxi);
+			curseurHauteur!.value = inputHauteur!.value;
+
+			aideHauteur!.textContent =
+				`De ${mini} cm, la hauteur des ridelles, à ${plafond} cm, la longueur de la caisse.`;
+		}
+
+		/* Cotes de principe pour le train roulant : elles ne figurent pas sur les
+		   fiches constructeur et ne servent qu'à rendre le dessin lisible. Seules
+		   la caisse, les ridelles et la hauteur de plancher viennent des données. */
+		const TIMON = 110; // longueur du timon devant la caisse, cm
+		const ROUE = 55; // diamètre de roue (13 pouces avec pneu), cm
+		const LARGEUR_ROUE = 18; // largeur de pneu, cm
+		const JOCKEY = 16; // diamètre de la roue jockey, cm
+		const ATTELAGE = 45; // hauteur de la tête d'attelage, cm
+		const GRIS = "#9aa39b";
+		const ORANGE = "#c9762d";
+		const ENCRE = "#6b6257";
+
+		/**
+		 * Schéma à l'échelle : remorque complète (caisse, roues, timon, roue
+		 * jockey) avec la boîte en place. Le viewBox est fixe et c'est le dessin
+		 * qui est mis à l'échelle, pour que les cotes gardent la même taille quelle
+		 * que soit la remorque. Le jeu est trop fin pour être visible à cette
+		 * échelle : il est épaissi, et la légende le dit.
+		 */
+		function schema(
+			longueur: number,
+			largeur: number,
+			ridelle: number | null,
+			hauteur: number,
+			plancher: number | null,
+			tente: number,
+		): string {
+			const hautRidelle = ridelle ?? 35;
+			const hautPlancher = plancher ?? PLANCHER_DEFAUT_CM;
+			// Une boîte plus basse que les ridelles serait entièrement contenue :
+			// la partie grisée ne peut pas dépasser la hauteur de la boîte.
+			const dansRemorque = Math.min(hautRidelle, hauteur);
+			const r = (n: number) => Math.round(n * 100) / 100;
+
+			// ── Vue de côté ────────────────────────────────────────────────
+			// Repère : x = 0 à la pointe du timon, y = 0 au sol.
+			const mondeL = TIMON + longueur;
+			// Les barres de toit surélèvent tout ce qui se pose sur la boîte.
+			const hautBarres = hautPlancher + hauteur + BARRES_TOIT_CM;
+			const mondeH = hautBarres + tente;
+			// 200 et non 215 comme la vue de dessus : la cote de hauteur s'écrit
+			// horizontalement à droite du dessin et débordait sur les remorques les
+			// plus longues, où l'échelle est contrainte par la largeur.
+			const sc = Math.min(200 / mondeL, 122 / mondeH);
+			const ox = (300 - mondeL * sc) / 2;
+			const sol = 170;
+			const X = (cm: number) => r(ox + cm * sc);
+			const Y = (cm: number) => r(sol - cm * sc);
+			const T = (cm: number) => r(cm * sc); // une longueur
+
+			// Le timon descend de l'avant de la caisse vers la tête d'attelage.
+			const yTimon = (x: number) =>
+				ATTELAGE + (hautPlancher - 4 - ATTELAGE) * (x / TIMON);
+			const xJockey = 26;
+			const jeuC = Math.max(T(JEU_PAR_COTE_CM), 1.5);
+
+			// ── Vue de dessus ──────────────────────────────────────────────
+			// Repère : x = 0 à la pointe du timon, y = 0 au bord avant-gauche de
+			// la caisse ; les roues débordent de LARGEUR_ROUE de chaque côté.
+			const mondeH2 = largeur + 2 * LARGEUR_ROUE;
+			const sd = Math.min(215 / mondeL, 122 / mondeH2);
+			const ox2 = (300 - mondeL * sd) / 2;
+			const oy2 = 100 - (mondeH2 * sd) / 2;
+			const X2 = (cm: number) => r(ox2 + cm * sd);
+			const Y2 = (cm: number) => r(oy2 + (cm + LARGEUR_ROUE) * sd);
+			const T2 = (cm: number) => r(cm * sd);
+			const jeuD = Math.max(T2(JEU_PAR_COTE_CM), 1.5);
+			const xRoue = TIMON + longueur * 0.62; // centre de l'essieu
+
+			return `
+			<div class="grid gap-6 sm:grid-cols-2">
+			  <figure class="m-0">
+			    <svg viewBox="0 0 300 200" class="w-full" role="img"
+			         aria-label="Vue de dessus de la remorque avec son timon et ses roues : caisse de ${longueur} sur ${largeur} centimètres, boîte de ${longueur - 2 * JEU_PAR_COTE_CM} sur ${largeur - 2 * JEU_PAR_COTE_CM} centimètres.">
+			      <g stroke="${GRIS}" fill="none" stroke-width="2" stroke-linejoin="round">
+			        <path d="M ${X2(TIMON)} ${Y2(largeur * 0.28)} L ${X2(10)} ${Y2(largeur / 2)}
+			                 L ${X2(TIMON)} ${Y2(largeur * 0.72)}" />
+			        <rect x="${X2(0)}" y="${Y2(largeur / 2) - T2(9)}" width="${T2(14)}" height="${T2(18)}" rx="2" fill="${GRIS}" fill-opacity="0.35" />
+			        <circle cx="${X2(xJockey)}" cy="${Y2(largeur / 2)}" r="${Math.max(T2(JOCKEY / 2), 2)}" fill="${GRIS}" fill-opacity="0.35" />
+			      </g>
+			      <g fill="${GRIS}" fill-opacity="0.45">
+			        <rect x="${X2(xRoue - ROUE / 2)}" y="${Y2(-LARGEUR_ROUE)}" width="${T2(ROUE)}" height="${T2(LARGEUR_ROUE)}" rx="2" />
+			        <rect x="${X2(xRoue - ROUE / 2)}" y="${Y2(largeur)}" width="${T2(ROUE)}" height="${T2(LARGEUR_ROUE)}" rx="2" />
+			      </g>
+			      <rect x="${X2(TIMON)}" y="${Y2(0)}" width="${T2(longueur)}" height="${T2(largeur)}" rx="3"
+			            fill="none" stroke="${GRIS}" stroke-width="2" stroke-dasharray="6 4" />
+			      <rect x="${X2(TIMON) + jeuD}" y="${Y2(0) + jeuD}" width="${T2(longueur) - jeuD * 2}" height="${T2(largeur) - jeuD * 2}" rx="2"
+			            fill="${ORANGE}" fill-opacity="0.16" stroke="${ORANGE}" stroke-width="2.5" />
+			      <text x="${X2(TIMON + longueur / 2)}" y="${Y2(-LARGEUR_ROUE) - 8}" text-anchor="middle" font-size="12" fill="${ENCRE}">${longueur} cm</text>
+			      <text x="${X2(mondeL) + 15}" y="${Y2(largeur / 2)}" text-anchor="middle" font-size="12" fill="${ENCRE}"
+			            transform="rotate(-90 ${X2(mondeL) + 15} ${Y2(largeur / 2)})">${largeur} cm</text>
+			    </svg>
+			    <figcaption class="mt-1 text-center text-xs text-brun-400">Vue de dessus</figcaption>
+			  </figure>
+			  <figure class="m-0">
+			    <svg viewBox="0 0 300 200" class="w-full" role="img"
+			         aria-label="Vue de côté de la remorque sur ses roues, timon et roue jockey à l'avant : boîte de ${hauteur} centimètres de haut, emboîtée sur ${dansRemorque} centimètres dans la caisse, surmontée de barres de toit de ${BARRES_TOIT_CM} centimètres${tente > 0 ? ` et d'une tente de ${tente} centimètres` : ""}, soit ${Math.round(mondeH)} centimètres hors tout.">
+			      <line x1="${X(-8)}" y1="${sol}" x2="${X(mondeL + 8)}" y2="${sol}" stroke="${GRIS}" stroke-width="2" />
+			      <g stroke="${GRIS}" stroke-width="2.5" fill="none" stroke-linecap="round">
+			        <line x1="${X(TIMON)}" y1="${Y(hautPlancher - 4)}" x2="${X(0)}" y2="${Y(ATTELAGE)}" />
+			        <line x1="${X(xJockey)}" y1="${Y(yTimon(xJockey))}" x2="${X(xJockey)}" y2="${Y(JOCKEY)}" />
+			      </g>
+			      <circle cx="${X(xJockey)}" cy="${Y(JOCKEY / 2)}" r="${Math.max(T(JOCKEY / 2), 2)}"
+			              fill="${GRIS}" fill-opacity="0.45" stroke="${GRIS}" stroke-width="1.5" />
+			      <rect x="${X(0) - T(6)}" y="${Y(ATTELAGE) - T(7)}" width="${T(12)}" height="${T(14)}" rx="2"
+			            fill="${GRIS}" fill-opacity="0.35" stroke="${GRIS}" stroke-width="1.5" />
+			      <rect x="${X(TIMON)}" y="${Y(hautPlancher)}" width="${T(longueur)}" height="${T(7)}"
+			            fill="${GRIS}" fill-opacity="0.45" />
+			      <circle cx="${X(xRoue)}" cy="${Y(ROUE / 2)}" r="${T(ROUE / 2)}"
+			              fill="${GRIS}" fill-opacity="0.45" stroke="${GRIS}" stroke-width="2" />
+			      <circle cx="${X(xRoue)}" cy="${Y(ROUE / 2)}" r="${T(ROUE / 6)}" fill="none" stroke="${GRIS}" stroke-width="1.5" />
+			      <rect x="${X(TIMON) + jeuC}" y="${Y(hautPlancher + hauteur)}" width="${T(longueur) - jeuC * 2}" height="${T(hauteur)}" rx="2"
+			            fill="${ORANGE}" fill-opacity="0.16" stroke="${ORANGE}" stroke-width="2.5" />
+			      <rect x="${X(TIMON)}" y="${Y(hautPlancher + dansRemorque)}" width="${T(longueur)}" height="${T(dansRemorque)}"
+			            fill="${GRIS}" fill-opacity="0.3" stroke="${GRIS}" stroke-width="2" />
+			      ${
+							tente > 0
+								? `<g>
+								     <rect x="${X(TIMON) + jeuC}" y="${Y(hautBarres + tente)}"
+								           width="${T(longueur) - jeuC * 2}" height="${T(tente)}" rx="2"
+								           fill="${GRIS}" fill-opacity="0.22" stroke="${GRIS}" stroke-width="2" />
+								     ${/* Libellé court : « tente NN » débordait du cadre sur les
+								           remorques longues, où l'échelle est contrainte par la largeur. */ ""}
+								     <text x="${X(mondeL) + 8}" y="${Y(hautBarres + tente / 2) + 4}"
+								           font-size="11" fill="${ENCRE}">${tente} cm</text>
+								   </g>`
+								: ""
+						}
+			      ${/* Barres de toit transversales, vues de côté : deux blocs de
+			            ${BARRES_TOIT_CM} cm posés sur la boîte, à l'échelle comme le
+			            reste. Ce qui se pose dessus part de leur sommet. */ ""}
+			      <g fill="${GRIS}" fill-opacity="0.55" stroke="${GRIS}" stroke-width="1">
+			        <rect x="${X(TIMON + longueur * 0.18)}" y="${Y(hautBarres)}"
+			              width="${Math.max(T(14), 2)}" height="${Math.max(T(BARRES_TOIT_CM), 1.5)}" rx="1" />
+			        <rect x="${X(TIMON + longueur * 0.82) - Math.max(T(14), 2)}" y="${Y(hautBarres)}"
+			              width="${Math.max(T(14), 2)}" height="${Math.max(T(BARRES_TOIT_CM), 1.5)}" rx="1" />
+			      </g>
+			      <text x="${X(mondeL) + 8}" y="${Y(hautPlancher + hauteur / 2)}" font-size="12" fill="${ENCRE}">${hauteur} cm</text>
+			      <text x="${X(TIMON) - 6}" y="${Y(hautPlancher + dansRemorque / 2) + 4}" text-anchor="end" font-size="11" fill="${ENCRE}">${dansRemorque} cm</text>
+			      ${/* Cote hors tout : du sol au point le plus haut, tente comprise.
+			            C'est elle qui décide de la classe au péage. */ ""}
+			      <g stroke="${ENCRE}" stroke-width="1.2">
+			        <line x1="${X(-4)}" y1="${sol}" x2="${X(-4)}" y2="${Y(mondeH)}" />
+			        <line x1="${X(-4) - 3}" y1="${sol}" x2="${X(-4) + 3}" y2="${sol}" />
+			        <line x1="${X(-4) - 3}" y1="${Y(mondeH)}" x2="${X(-4) + 3}" y2="${Y(mondeH)}" />
+			      </g>
+			      <text x="${X(-4) - 8}" y="${Y(mondeH / 2)}" text-anchor="middle" font-size="11"
+			            font-weight="600" fill="${ENCRE}"
+			            transform="rotate(-90 ${X(-4) - 8} ${Y(mondeH / 2)})">${Math.round(mondeH)} cm hors tout</text>
+			    </svg>
+			    <figcaption class="mt-1 text-center text-xs text-brun-400">
+			      Vue de côté — la partie grisée est dans la caisse
+			    </figcaption>
+			  </figure>
+			</div>`;
+		}
+
+		function rendu() {
+			let longueur: number;
+			let largeur: number;
+			let ridelle: number | null = null;
+			let plancher: number | null = null;
+			let intitule: string;
+			let source: string | null = null;
+			let verifie = true;
+
+			if (mode === "modele") {
+				const [marque, modele] = select!.value.split("|");
+				const r = remorques.find((x) => x.marque === marque && x.modele === modele);
+				if (!r) return;
+				({ longueur, largeur, ridelle, plancher, source, verifie } = r);
+				intitule = `${r.marque} ${r.modele}`;
+			} else {
+				longueur = Number(inputLongueur!.value);
+				largeur = Number(inputLargeur!.value);
+				ridelle = remorqueCourante().ridelle;
+				intitule = "Vos mesures";
+				if (!Number.isFinite(longueur) || !Number.isFinite(largeur) || longueur < 50 || largeur < 50) {
+					sortie!.innerHTML = `<p class="rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 text-brun-500">
+					  Saisissez une longueur et une largeur intérieures en centimètres.</p>`;
+					return;
+				}
+			}
+
+			const tente = tenteCourante();
+			const hauteur = borneHauteur(Number(inputHauteur!.value), ridelle, longueur, plancher, tente);
+			const b = calculeBoite(longueur, largeur, hauteur, ridelle, plancher, tente);
+			const ok = b.horsGabarit.length === 0;
+
+			const horsTout = hauteurHorsTout(b.hauteur, plancher, tente);
+			const classe = classePeage(horsTout);
+			const detailHauteur =
+				`plancher ${Math.round(plancher ?? PLANCHER_DEFAUT_CM)} + boîte ${b.hauteur}` +
+				` + barres ${BARRES_TOIT_CM}` +
+				(tente > 0 ? ` + tente ${tente}` : "") +
+				` = ${horsTout} cm`;
+			const teinte =
+				classe.numero === 1
+					? "border-mousse/60 bg-mousse/15"
+					: "border-rouille-400/50 bg-rouille-500/10";
+
+			const verdict = ok
+				? `<p class="flex items-start gap-2 text-sm font-semibold text-green-800">
+				     <span aria-hidden="true">✓</span>
+				     <span>Compatible — nous fabriquons cette boîte aux cotes de votre remorque.</span></p>`
+				: `<p class="flex items-start gap-2 text-sm font-semibold text-rouille-500">
+				     <span aria-hidden="true">!</span>
+				     <span>Hors gabarit courant (${b.horsGabarit.join(", ")}) — écrivez-nous, nous étudierons
+				     votre cas au cas par cas.</span></p>`;
+
+			sortie!.innerHTML = `
+			<div class="rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm sm:p-8">
+			  <p class="text-xs font-medium uppercase tracking-widest text-rouille-500">${intitule}</p>
+			  ${/* Dimensions à gauche, volume à droite, alignés sur la même ligne de
+			        base. Ils se replient l'un sous l'autre si la place manque. */ ""}
+			  ${/* Dimensions à gauche, volume à droite. Chaque chiffre porte son
+			        libellé : au-dessus à gauche, en dessous à droite. Les deux blocs
+			        se replient l'un sous l'autre si la place manque. */ ""}
+			  <div class="mt-3 flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
+			    <p class="font-display text-3xl font-semibold text-brun-700">
+			      <span class="block font-sans text-sm font-normal text-brun-500">
+			        Dimensions de la boîte
+			      </span>
+			      ${b.longueur} × ${b.largeur} × ${b.hauteur} <span class="text-xl">cm</span>
+			    </p>
+			    <p class="font-display text-2xl font-semibold text-rouille-500 sm:text-right">
+			      ${nb(b.volume)} <span class="text-lg font-medium">litres</span>
+			      <span class="block font-sans text-sm font-normal text-brun-500">de rangement fermé</span>
+			    </p>
+			  </div>
+			  <div class="mt-6">${verdict}</div>
+			  ${
+					verifie
+						? ""
+						: `<p class="mt-4 rounded-xl bg-sable/60 px-4 py-3 text-sm text-brun-600">
+						     Cotes rapportées par un tiers&nbsp;: ce vendeur ne laisse pas consulter sa fiche
+						     automatiquement. Confirmez-les avant de commander.</p>`
+				}
+			  <div class="mt-6 rounded-xl border ${teinte} px-4 py-3">
+			    <p class="font-display font-semibold text-brun-700">${classe.libelle}</p>
+			    <p class="mt-1 text-sm text-brun-500">
+			      ${horsTout} cm hors tout, du sol au point le plus haut. ${classe.detail}
+			    </p>
+			    <p class="mt-1 text-xs tabular-nums text-brun-400">${detailHauteur}</p>
+			    ${
+						plancher === null
+							? `<p class="mt-1 text-xs text-brun-400">Hauteur de plancher absente de la fiche :
+							     estimée à ${PLANCHER_DEFAUT_CM} cm pour ce calcul.</p>`
+							: ""
+					}
+			  </div>
+			  <div class="mt-8">${schema(longueur, largeur, ridelle, b.hauteur, plancher, tente)}</div>
+			  <dl class="mt-8 grid gap-4 border-t border-ardoise/30 pt-6 text-sm sm:grid-cols-2">
+			    <div><dt class="text-brun-400">Intérieur de caisse</dt>
+			      <dd class="mt-1 tabular-nums text-brun-700">${longueur} × ${largeur} cm</dd></div>
+			    <div><dt class="text-brun-400">Jeu appliqué</dt>
+			      <dd class="mt-1 text-brun-700">${JEU_PAR_COTE_CM} cm de chaque côté, soit ${2 * JEU_PAR_COTE_CM} cm par cote</dd></div>
+			  </dl>
+			  <p class="mt-6 text-xs text-brun-400">
+			    Schéma à l'échelle, hors épaisseur des parois ; le jeu de ${JEU_PAR_COTE_CM} cm par côté y est
+			    épaissi pour rester visible. Roues, timon et roue jockey sont dessinés de façon
+			    indicative. Mesurez votre remorque avant de commander.
+			    ${source ? `<a href="${source}" target="_blank" rel="noopener noreferrer" class="text-rouille-500 underline-offset-4 hover:underline">Fiche constructeur</a>.` : ""}
+			  </p>
+			</div>`;
+		}
+
+		for (const bouton of boutons) {
+			bouton.addEventListener("click", () => {
+				mode = bouton.dataset.mode === "mesures" ? "mesures" : "modele";
+				for (const b of boutons) b.setAttribute("aria-pressed", String(b === bouton));
+				for (const panneau of document.querySelectorAll<HTMLElement>("[data-panneau]")) {
+					panneau.classList.toggle("hidden", panneau.dataset.panneau !== mode);
+				}
+				majBornes();
+				rendu();
+			});
+		}
+
+		select.addEventListener("change", () => {
+			majBornes();
+			rendu();
+		});
+		inputLongueur.addEventListener("input", rendu);
+		inputLargeur.addEventListener("input", rendu);
+		inputRidelle.addEventListener("input", rendu);
+		/* Les bornes ne bougent qu'une fois la saisie des ridelles terminée :
+		   sinon un « 4 » en cours de frappe remonterait la hauteur à 4 cm. */
+		inputRidelle.addEventListener("blur", () => {
+			majBornes();
+			rendu();
+		});
+		caseTente.addEventListener("change", () => {
+			blocTente.hidden = !caseTente.checked;
+			majBornes();
+			rendu();
+		});
+		curseurTente.addEventListener("input", () => {
+			inputTente.value = curseurTente.value;
+			majBornes();
+			rendu();
+		});
+		inputTente.addEventListener("input", () => {
+			curseurTente.value = String(tenteCourante());
+			rendu();
+		});
+		/* Comme pour la hauteur de boîte, le recalage n'a lieu qu'à la sortie du
+		   champ : sinon un « 3 » en cours de frappe deviendrait aussitôt 10. */
+		inputTente.addEventListener("blur", () => {
+			inputTente.value = String(tenteCourante());
+			curseurTente.value = inputTente.value;
+			majBornes();
+			rendu();
+		});
+
+		/* Curseur et champ chiffré pilotent la même valeur. La saisie au clavier
+		   n'est bornée qu'à la sortie du champ : borner à chaque frappe
+		   empêcherait d'effacer pour retaper un nombre. */
+		curseurHauteur.addEventListener("input", () => {
+			inputHauteur.value = curseurHauteur.value;
+			rendu();
+		});
+		/** Applique les bornes de la remorque en cours à une valeur saisie. */
+		function borneSaisie(valeur: number): number {
+			const { longueur, ridelle, plancher } = remorqueCourante();
+			return borneHauteur(valeur, ridelle, longueur, plancher, tenteCourante());
+		}
+
+		inputHauteur.addEventListener("input", () => {
+			curseurHauteur.value = String(borneSaisie(Number(inputHauteur.value)));
+			rendu();
+		});
+		inputHauteur.addEventListener("blur", () => {
+			inputHauteur.value = String(borneSaisie(Number(inputHauteur.value)));
+			curseurHauteur.value = inputHauteur.value;
+			rendu();
+		});
+
+		majBornes();
+		rendu();
+	}
+</script>
