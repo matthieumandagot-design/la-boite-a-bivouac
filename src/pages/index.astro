@@ -1,7 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
-import { HOME_DESCRIPTION } from "../consts";
+import { HOME_DESCRIPTION, HOME_TITLE } from "../consts";
 import HeroVideo from "../components/HeroVideo.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
 
@@ -33,7 +33,7 @@ const ENGAGEMENTS = [
 ];
 ---
 
-<Layout description={HOME_DESCRIPTION}>
+<Layout fullTitle={HOME_TITLE} description={HOME_DESCRIPTION}>
 	<HeroVideo />
 	<ScrollReveal />
 
@@ -52,7 +52,7 @@ const ENGAGEMENTS = [
 
 			<div class="mt-10 grid gap-6 lg:grid-cols-3">
 				<a
-					href="/la-boite"
+					href="/la-boite/"
 					class="group overflow-hidden rounded-2xl border border-ardoise/30 bg-ecru-50 shadow-sm transition-all hover:-translate-y-1 hover:border-rouille-400 hover:shadow-lg lg:col-span-2"
 					data-reveal
 				>
@@ -87,7 +87,7 @@ const ENGAGEMENTS = [
 				</a>
 
 				<a
-					href="/equipements"
+					href="/equipements/"
 					class="group flex flex-col rounded-2xl border border-dashed border-ardoise/50 bg-sable/40 p-8 transition-all hover:border-rouille-400 hover:bg-sable/60"
 					data-reveal
 					style="--reveal-delay: 120ms"
@@ -154,7 +154,7 @@ const ENGAGEMENTS = [
 					la suite ensemble.
 				</p>
 				<a
-					href="/contact"
+					href="/contact/"
 					class="bg-gold text-forest mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-sm transition-opacity hover:opacity-90"
 					data-reveal
 					style="--reveal-delay: 180ms"

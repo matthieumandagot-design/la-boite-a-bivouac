@@ -5,7 +5,7 @@
 	},
 	{
 		"question": "Avec quelles remorques est-elle compatible ?",
-		"answer": "Elle est conçue pour s’adapter à des remorques utilitaires standards, mais peut aussi être fabriquée pour des remorques artisanales, sous réserve que leurs dimensions et leur structure permettent une installation sûre.\r\n\r\nAvant fabrication ou commande, quelques dimensions et caractéristiques de la remorque permettront de valider la compatibilité."
+		"answer": "La Boîte à Bivouac est conçue pour les remorques utilitaires standards. Elle peut également être fabriquée sur mesure pour une remorque artisanale, à condition que ses dimensions et sa structure permettent une installation sûre.\r\n\r\nVotre remorque est-elle compatible ? Faites une première analyse avec notre outil de compatibilité en ligne. La compatibilité définitive sera confirmée avant toute commande ou fabrication."
 	},
 	{
 		"question": "Combien de temps faut-il pour installer ou retirer la caisse ?",
@@ -21,11 +21,11 @@
 	},
 	{
 		"question": "Quelles sont les dimensions de la caisse ?",
-		"answer": "La V1 mesure environ 1 830 mm de long × 1 130 mm de large × 1 000 mm de haut (dimensions extérieures). Ces dimensions sont susceptibles d'évoluer sur la V2."
+		"answer": "Chaque caisse est fabriquée sur mesure : sa longueur et sa largeur sont adaptées aux dimensions intérieures de votre remorque, avec 1 cm de jeu de chaque côté pour faciliter son installation et son retrait.\r\n\r\nLa hauteur standard est de 90 cm. Elle peut être ajustée selon vos besoins, sans être inférieure à la hauteur des ridelles ni dépasser la longueur intérieure de la remorque.\r\n\r\nPour étudier votre configuration, utilisez notre outil d’analyse de compatibilité.\r\n\r\nLa V1 mesure environ 1 830 mm de long × 1 130 mm de large × 1 000 mm de haut (dimensions extérieures). Ces dimensions sont susceptibles d'évoluer sur la V2."
 	},
 	{
 		"question": "Quel est le poids de La Boîte à Bivouac ?",
-		"answer": "La V1 est un prototype en acier et OSB. La V2 sera optimisée pour être plus légère. Le poids définitif sera communiqué à la sortie de la version commerciale.\r\n\r\nL’objectif est de rester sous les 90 kg pour la caisse seule,"
+		"answer": "La V1 est un prototype en acier et OSB. La V2 sera optimisée pour être plus légère. Le poids définitif sera communiqué à la sortie de la version commerciale.\r\n\r\nL’objectif est de rester sous les 90 kg pour la caisse seule."
 	},
 	{
 		"question": "N'importe quelle tente de toit peut-elle s'installer ?",
@@ -53,15 +53,15 @@
 	},
 	{
 		"question": "De quels matériaux est-elle faite ?",
-		"answer": "La V1 est principalement composée d’une structure en acier soudé et de panneaux en bois, avec des barres de toit en acier.\r\nCe choix apporte un bon compromis entre résistance, simplicité de fabrication et coût.\r\n\r\nPour la V2, certains matériaux et sections pourront évoluer afin de réduire le poids et améliorer l’aérodynamisme, tout en conservant la robustesse nécessaire."
+		"answer": "La V1 est principalement composée d’une structure en acier soudé et de panneaux en bois, avec des barres de toit en acier.\r\n\r\nCe choix apporte un bon compromis entre résistance, simplicité de fabrication et coût.\r\n\r\nPour la V2, certains matériaux et sections pourront évoluer afin de réduire le poids et améliorer l’aérodynamisme, tout en conservant la robustesse nécessaire."
 	},
 	{
 		"question": "Peut-on personnaliser la caisse ?",
-		"answer": "Oui. La Boîte à Bivouac est pensée pour être personnalisable selon les usages et les envies.\r\nLes possibilités pourront notamment concerner les aménagements intérieurs, les rangements, les systèmes de fixation, certains équipements extérieurs ou encore les finitions.\r\n\r\nL’objectif est de proposer une base commune robuste, puis des options adaptées à chaque type d’aventure."
+		"answer": "Oui. La Boîte à Bivouac est pensée pour être personnalisable selon les usages et les envies.\r\n\r\nLes possibilités pourront notamment concerner les aménagements intérieurs, les rangements, les systèmes de fixation, certains équipements extérieurs ou encore les finitions.\r\n\r\nL’objectif est de proposer une base commune robuste, puis des options adaptées à chaque type d’aventure."
 	},
 	{
 		"question": "Quelle est la différence entre la V1 et la V2 ?",
-		"answer": "La V1 est le prototype qui a validé le concept après plusieurs semaines de test terrain. \r\nLa V2, prévue en septembre 2026, sera plus légère, plus aérodynamique, avec un système de fixation rapide et une compatibilité élargie."
+		"answer": "La V1 est le prototype qui a validé le concept après plusieurs semaines de test terrain.\r\n \r\nLa V2, prévue en septembre 2026, sera plus légère, plus aérodynamique, avec un système de fixation rapide et une compatibilité élargie."
 	},
 	{
 		"question": "Quel est le prix ?",

@@ -13,6 +13,10 @@ const year = new Date().getFullYear();
 				<div>
 					<p class="font-display text-base font-semibold text-brun-700">{SITE_TITLE}</p>
 					<p class="text-xs text-brun-400">{TAGLINE}</p>
+					{/* La ville en clair, et pas seulement dans les données
+					    structurées : « Occitanie » couvre 13 départements, ce qui
+					    ne permet de ressortir sur aucune recherche locale. */}
+					<p class="text-xs text-brun-400">Toulouse, Haute-Garonne</p>
 				</div>
 			</a>
 
@@ -65,9 +69,9 @@ const year = new Date().getFullYear();
 			&copy; {year} {SITE_TITLE} — Conçu et fabriqué en Occitanie.
 		</p>
 		<p class="mt-2 text-xs text-brun-500/50">
-			<a href="/mentions-legales" class="hover:text-brun-500">Mentions légales</a>
+			<a href="/mentions-legales/" class="hover:text-brun-500">Mentions légales</a>
 			<span aria-hidden="true"> · </span>
-			<a href="/confidentialite" class="hover:text-brun-500">Politique de confidentialité</a>
+			<a href="/confidentialite/" class="hover:text-brun-500">Politique de confidentialité</a>
 		</p>
 	</div>
 </footer>

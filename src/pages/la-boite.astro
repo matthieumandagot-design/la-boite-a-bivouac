@@ -87,8 +87,20 @@ const productSchema = {
 		// la section prix du site (voir src/pages/index.astro).
 		price: "2000",
 		priceCurrency: "EUR",
-		availability: "https://schema.org/PreOrder",
-		url: "https://laboiteabivouac.fr/la-boite",
+		// Tant que le prix reste indicatif, on borne sa validité : sans cette
+		// date, Google considère l'offre comme périmée au bout de quelques mois
+		// et peut cesser d'afficher le résultat enrichi.
+		priceValidUntil: "2026-12-31",
+		itemCondition: "https://schema.org/NewCondition",
+		// Pas de propriété availability : la page annonce « elle sera disponible
+		// en pré-commande à l'automne », et aucun tunnel de commande n'existe
+		// aujourd'hui. Déclarer PreOrder laisserait entendre qu'on peut commander
+		// dès maintenant. À repasser à https://schema.org/PreOrder le jour où les
+		// pré-commandes ouvrent réellement.
+		//
+		// Barre oblique finale : sans elle, la donnée structurée pointait vers
+		// une redirection 301.
+		url: new URL("/la-boite/", Astro.site).href,
 	},
 };
 ---

@@ -1,5 +1,11 @@
 export const SITE_TITLE = "La Boîte à Bivouac";
 export const TAGLINE = "L'aventure tient dans une boîte";
+
+// Titre de la page d'accueil. Sans lui, l'accueil retombait sur SITE_TITLE
+// seul — 20 caractères, aucun mot-clé — alors que c'est la page la plus
+// importante du site. On garde la marque en tête, suivie de ce que le
+// produit est réellement, pour rester sous les ~60 caractères affichés.
+export const HOME_TITLE = "La Boîte à Bivouac — Module de bivouac pour votre remorque";
 export const SITE_DESCRIPTION =
 	"La Boîte à Bivouac conçoit un box modulaire à installer sur une remorque que vous possédez déjà. Le même module s'adapte au bivouac, à la montagne et à la mer, avec une structure renforcée capable d'accueillir une tente de toit et un VTT XXL. Conçu et fabriqué en Occitanie.";
 export const HOME_DESCRIPTION =
@@ -7,11 +13,11 @@ export const HOME_DESCRIPTION =
 
 export const NAV_LINKS = [
 	{ href: "/", label: "Accueil" },
-	{ href: "/la-boite", label: "La Boîte" },
-	{ href: "/compatibilite", label: "Compatibilité" },
-	{ href: "/equipements", label: "Équipements" },
-	{ href: "/faq", label: "FAQ" },
-	{ href: "/contact", label: "Contact" },
+	{ href: "/la-boite/", label: "La Boîte" },
+	{ href: "/compatibilite/", label: "Compatibilité" },
+	{ href: "/equipements/", label: "Équipements" },
+	{ href: "/faq/", label: "FAQ" },
+	{ href: "/contact/", label: "Contact" },
 ];
 
 export const NAVBAR_SOCIAL_LINKS = [

@@ -40,6 +40,13 @@ jobs:
           FB_PAGE_ACCESS_TOKEN: ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
 
+      # Aligne les fichiers de repli versionnés sur ce que l'admin PHP a
+      # réellement publié, pour que le HTML généré contienne la FAQ et le
+      # catalogue à jour plutôt qu'un contenu figé. N'échoue jamais : en cas
+      # d'incident réseau, le repli du dépôt est conservé.
+      - name: Sync live content into build fallbacks
+        run: node scripts/fetch-contenu-live.mjs
+
       - name: Build site
         run: npm run build
 

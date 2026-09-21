@@ -12,6 +12,8 @@ import {
 	calculeBoite,
 	type Remorque,
 } from "../data/remorques";
+import { toJsonLd } from "../utils/jsonld";
+import { SITE_TITLE } from "../consts";
 
 const PAGE_DESCRIPTION =
 	"Votre remorque est-elle compatible ? Choisissez votre modèle ou saisissez vos cotes : nous calculons les dimensions exactes de la Boîte à Bivouac qui s'y logera.";
@@ -25,9 +27,63 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 const LIGNES = REMORQUES.map((r) => ({ ...r, boite: calculeBoite(r.longueur, r.largeur) }));
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
+
+/**
+ * Le relevé des remorques est la donnée la plus singulière du site : des cotes
+ * intérieures réelles, marque par marque, que peu de sources publient en
+ * France. Déclarée en Dataset, elle devient exploitable et citable par les
+ * moteurs de réponse, au lieu de rester un tableau que seul un humain peut
+ * lire. On n'y met que ce qui est réellement mesuré, et on signale les fiches
+ * non vérifiées plutôt que de les présenter comme certaines.
+ */
+const datasetSchema = {
+	"@context": "https://schema.org",
+	"@type": "Dataset",
+	name: "Dimensions intérieures des remorques utilitaires courantes en France",
+	description:
+		`Relevé de ${REMORQUES.length} modèles de remorques de ${new Set(REMORQUES.map((r) => r.marque)).size} marques : ` +
+		"longueur et largeur intérieures de caisse, hauteur de ridelle et PTAC. " +
+		`${REMORQUES.filter((r) => !r.verifie).length} fiches proviennent d'une source tierce et sont signalées « cotes à confirmer ».`,
+	url: new URL("/compatibilite/", Astro.site).href,
+	inLanguage: "fr",
+	isAccessibleForFree: true,
+	creator: { "@type": "Organization", name: SITE_TITLE, url: Astro.site?.origin },
+	variableMeasured: [
+		{ "@type": "PropertyValue", name: "Longueur intérieure", unitCode: "CMT" },
+		{ "@type": "PropertyValue", name: "Largeur intérieure", unitCode: "CMT" },
+		{ "@type": "PropertyValue", name: "Hauteur de ridelle", unitCode: "CMT" },
+		{ "@type": "PropertyValue", name: "PTAC", unitCode: "KGM" },
+	],
+	hasPart: {
+		"@type": "ItemList",
+		numberOfItems: REMORQUES.length,
+		itemListElement: REMORQUES.map((r, i) => ({
+			"@type": "ListItem",
+			position: i + 1,
+			item: {
+				"@type": "Product",
+				name: `${r.marque} ${r.modele}`,
+				brand: { "@type": "Brand", name: r.marque },
+				additionalProperty: [
+					{ "@type": "PropertyValue", name: "Longueur intérieure", value: r.longueur, unitCode: "CMT" },
+					{ "@type": "PropertyValue", name: "Largeur intérieure", value: r.largeur, unitCode: "CMT" },
+					...(r.ridelle === null
+						? []
+						: [{ "@type": "PropertyValue", name: "Hauteur de ridelle", value: r.ridelle, unitCode: "CMT" }]),
+					...(r.ptac === null
+						? []
+						: [{ "@type": "PropertyValue", name: "PTAC", value: r.ptac, unitCode: "KGM" }]),
+					{ "@type": "PropertyValue", name: "Cotes vérifiées", value: r.verifie ? "oui" : "à confirmer" },
+				],
+			},
+		})),
+	},
+};
 ---
 
 <Layout title="Compatibilité" description={PAGE_DESCRIPTION}>
+	<script type="application/ld+json" set:html={toJsonLd(datasetSchema)} />
+
 	<ScrollReveal />
 
 	<section class="border-b border-ardoise/30 bg-sable/50 px-6 py-16 sm:px-8 lg:px-12">
@@ -328,7 +384,7 @@ const fmt = (n: number) => n.toLocaleString("fr-FR");
 				vous répondons personnellement.
 			</p>
 			<a
-				href="/contact"
+				href="/contact/"
 				class="mt-8 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
 				data-reveal
 				style="--reveal-delay: 120ms"

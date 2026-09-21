@@ -1,7 +1,7 @@
 ---
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
-import { SITE_TITLE, SITE_DESCRIPTION, HOME_DESCRIPTION, SOCIAL_LINKS } from "../consts";
+import { SITE_TITLE, TAGLINE, SITE_DESCRIPTION, HOME_DESCRIPTION, SOCIAL_LINKS } from "../consts";
 import { toJsonLd } from "../utils/jsonld";
 import "../styles/global.css";
 import "../styles/brand.css";
@@ -10,10 +10,18 @@ interface Props {
 	title?: string;
 	fullTitle?: string;
 	description?: string;
+	/** Visuel de partage propre à la page. Chemin absolu depuis la racine du
+	 *  site ; il est transformé en URL complète plus bas. */
+	image?: string;
 }
 
-const { title, fullTitle, description = SITE_DESCRIPTION } = Astro.props;
+const { title, fullTitle, description = SITE_DESCRIPTION, image } = Astro.props;
 const pageTitle = fullTitle ?? (title ? `${title} · ${SITE_TITLE}` : SITE_TITLE);
+
+// Partage social. Facebook, LinkedIn et WhatsApp exigent des URL absolues :
+// un chemin relatif est ignoré et la carte s'affiche alors sans visuel.
+const pageUrl = new URL(Astro.url.pathname, Astro.site).href;
+const shareImage = new URL(image ?? "/images/og-partage.jpg", Astro.site).href;
 
 // Organization : présent sur toutes les pages passant par ce layout (donc pas
 // sur /admin/*, qui utilise AdminLayout.astro, un layout entièrement séparé).
@@ -24,6 +32,19 @@ const organizationSchema = {
 	url: "https://laboiteabivouac.fr",
 	logo: "https://laboiteabivouac.fr/images/logo-badge.png",
 	description: HOME_DESCRIPTION,
+	// Rattachement géographique. Pas de rue ni de code postal : il n'y a pas
+	// d'adresse commerciale ouverte au public, et en inventer une serait faux.
+	// La commune et le département suffisent à ancrer l'entreprise localement.
+	address: {
+		"@type": "PostalAddress",
+		addressLocality: "Toulouse",
+		addressRegion: "Haute-Garonne",
+		addressCountry: "FR",
+	},
+	// Reprend ce que la page Contact annonce déjà : « France — expéditions et
+	// rendez-vous sur devis ». Rien n'est élargi au-delà.
+	areaServed: { "@type": "Country", name: "France" },
+	email: "contact@laboiteabivouac.fr",
 	sameAs: SOCIAL_LINKS.map((social) => social.href),
 };
 
@@ -61,8 +82,27 @@ const breadcrumbSchema = !isHome && title
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content={description} />
 		<meta name="robots" content="index, follow" />
-		<link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
+		<link rel="canonical" href={pageUrl} />
 		<title>{pageTitle}</title>
+
+		{/* Partage social. og:type vaut "website" partout : le site n'a pas de
+		    contenu daté de type article. Les dimensions sont déclarées pour que
+		    LinkedIn et Facebook réservent la bonne zone avant même d'avoir
+		    téléchargé le visuel. */}
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={SITE_TITLE} />
+		<meta property="og:locale" content="fr_FR" />
+		<meta property="og:title" content={pageTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={pageUrl} />
+		<meta property="og:image" content={shareImage} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content={`${SITE_TITLE} — ${TAGLINE}`} />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={pageTitle} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={shareImage} />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
