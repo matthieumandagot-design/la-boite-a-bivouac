@@ -171,87 +171,78 @@ const productSchema = {
 
 	<BivouacExplorer />
 
+	{/* La V1 et la fabrication en Occitanie ne font qu'un : c'est cette
+	    version-là qui a été soudée à la main. Toutes les photos partagent le
+	    même groupe de visionneuse, on peut donc les parcourir d'un bout à
+	    l'autre. */}
 	<section id="apres-exploration" class="scroll-mt-24 bg-ecru-100 px-6 py-20 sm:px-8 lg:px-12">
-		<div>
-			<h2 class="t-titre font-display font-semibold text-brun-700" data-reveal>
-				Fabriquée à la main, en Occitanie.
-			</h2>
-			<p class="t-corps mt-4 max-w-[70ch] text-brun-500" data-reveal style="--reveal-delay: 90ms">
-				Le châssis est entièrement soudé à la main. Tubes acier, panneaux OSB, charnières robustes.
-				Un produit conçu pour durer et pour être réparable.
-			</p>
-			<div class="mt-10 grid gap-6 sm:grid-cols-2">
-				<button
-					type="button"
-					class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm"
-					data-lightbox="fabrication"
-					data-reveal
-					style="--reveal-delay: 180ms"
-				>
-					<img
-						src="/images/fabrication-chassis.jpeg"
-						alt="Châssis acier soudé"
-						loading="lazy"
-						class="h-full w-full object-cover"
-					/>
-				</button>
-				<button
-					type="button"
-					class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm"
-					data-lightbox="fabrication"
-					data-reveal
-					style="--reveal-delay: 240ms"
-				>
-					<img
-						src="/images/fabrication-garage.jpeg"
-						alt="Caisse finalisée"
-						loading="lazy"
-						class="h-full w-full object-cover"
-					/>
-				</button>
-			</div>
-		</div>
-	</section>
-
-	{/* V1 et V2 côte à côte : on lit d'un coup d'œil ce qui est validé et ce qui
-	    arrive. Chacune dans sa carte, de hauteur égale. */}
-	<section class="px-6 py-20 sm:px-8 lg:px-12">
-		<div class="grid gap-8 lg:auto-rows-fr lg:grid-cols-2">
-			<div
-				class="flex flex-col rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm sm:p-8"
-				data-reveal="left"
-			>
-				<button
-					type="button"
-					class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-xl"
-					data-lightbox="prototype"
-				>
-					<img
-						src="/images/produit-tente.jpeg"
-						alt="La Boîte à Bivouac, prototype V1"
-						loading="lazy"
-						class="h-full w-full object-cover"
-					/>
-				</button>
-				<span class="mt-6 inline-block self-start rounded-full bg-mousse px-4 py-1 t-menu font-medium uppercase tracking-widest text-brun-700">
+		<div class="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
+			<div data-reveal="left">
+				<span class="inline-block rounded-full bg-mousse px-4 py-1 t-menu font-medium uppercase tracking-widest text-brun-700">
 					Testée · En conditions réelles
 				</span>
 				<h2 class="mt-4 t-titre font-display font-semibold text-brun-700">
-					V1 — Le prototype validé
+					V1 — fabriquée à la main, en Occitanie
 				</h2>
-				<p class="t-corps mt-4 text-brun-500">
+				<p class="t-corps mt-4 max-w-[70ch] text-brun-500">
+					Le châssis est entièrement soudé à la main. Tubes acier, panneaux OSB, charnières
+					robustes. Un produit conçu pour durer et pour être réparable.
+				</p>
+				<p class="t-corps mt-4 max-w-[70ch] text-brun-500">
 					La V1 a roulé, bivouaqué et été testée pendant des semaines. Elle a validé le concept
 					: la caisse tient sur la remorque, la tente de toit fonctionne, les vélos rentrent. Les
 					apprentissages de ces essais alimentent directement la suite.
 				</p>
 			</div>
 
-			<div
-				class="flex flex-col rounded-2xl border border-ardoise/30 bg-sable/50 p-6 shadow-sm sm:p-8"
+			<button
+				type="button"
+				class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm"
+				data-lightbox="v1"
 				data-reveal="right"
 				style="--reveal-delay: 120ms"
 			>
-				<div class="flex aspect-[4/3] w-full items-center justify-center rounded-xl bg-graphite p-12">
+				<img
+					src="/images/produit-tente.jpeg"
+					alt="La Boîte à Bivouac, prototype V1"
+					loading="lazy"
+					class="h-full w-full object-cover"
+				/>
+			</button>
+		</div>
+
+		<h3 class="t-sous mt-16 font-display font-semibold text-brun-700" data-reveal>En images</h3>
+		<div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+			{
+				[
+					{
+						src: "/images/fabrication-chassis.jpeg",
+						alt: "Châssis acier soudé",
+					},
+					{
+						src: "/images/fabrication-garage.jpeg",
+						alt: "Caisse finalisée",
+					},
+					...GALLERY_IMAGES,
+				].map((img, index) => (
+					<button
+						type="button"
+						class="lightbox-trigger aspect-square w-full overflow-hidden rounded-xl shadow-sm"
+						data-lightbox="v1"
+						data-reveal
+						style={`--reveal-delay: ${index * 60}ms`}
+					>
+						<img src={img.src} alt={img.alt} loading="lazy" class="h-full w-full object-cover" />
+					</button>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="border-t border-ardoise/30 bg-sable/50 px-6 py-20 sm:px-8 lg:px-12">
+		<div class="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
+			<div class="lg:order-2" data-reveal="right">
+				<div class="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-graphite p-12 shadow-sm">
 					<img
 						src="/images/logo-badge.png"
 						alt="Logo La Boîte à Bivouac"
@@ -259,13 +250,15 @@ const productSchema = {
 						class="h-auto w-full max-w-[220px] object-contain"
 					/>
 				</div>
-				<span class="mt-6 inline-block self-start rounded-full bg-rouille-500 px-4 py-1 t-menu font-medium uppercase tracking-widest text-ecru-50">
+			</div>
+			<div class="lg:order-1" data-reveal="left" style="--reveal-delay: 120ms">
+				<span class="inline-block rounded-full bg-rouille-500 px-4 py-1 t-menu font-medium uppercase tracking-widest text-ecru-50">
 					Septembre 2026
 				</span>
 				<h2 class="mt-4 t-titre font-display font-semibold text-brun-700">
 					V2 — Ce qui arrive en septembre
 				</h2>
-				<p class="t-corps mt-4 text-brun-500">
+				<p class="t-corps mt-4 max-w-[70ch] text-brun-500">
 					La V2 intègre les retours des tests terrain. Plus légère, plus aérodynamique, avec un vrai
 					système de fixation à la remorque conçu pour être installé et retiré en moins de
 					10 minutes. Elle sera disponible en pré-commande à l'automne.
@@ -278,23 +271,6 @@ const productSchema = {
 					</div>
 				</div>
 			</div>
-		</div>
-
-		<h3 class="t-sous mt-16 font-display font-semibold text-brun-700" data-reveal>En images</h3>
-		<div class="mt-6 grid grid-cols-3 gap-4">
-			{
-				GALLERY_IMAGES.map((img, index) => (
-					<button
-						type="button"
-						class="lightbox-trigger aspect-square w-full overflow-hidden rounded-xl shadow-sm"
-						data-lightbox="galerie"
-						data-reveal
-						style={`--reveal-delay: ${index * 60}ms`}
-					>
-						<img src={img.src} alt={img.alt} loading="lazy" class="h-full w-full object-cover" />
-					</button>
-				))
-			}
 		</div>
 	</section>
 
