@@ -37,13 +37,13 @@ const ENGAGEMENTS = [
 	<HeroVideo />
 	<ScrollReveal />
 
-	<section class="bg-ecru-100 px-6 py-20">
-		<div class="mx-auto max-w-5xl">
-			<p class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>
+	<section class="bg-ecru-100 px-6 py-20 sm:px-8 lg:px-12">
+		<div>
+			<p class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>
 				Ce que nous proposons
 			</p>
 			<h2
-				class="mt-3 font-display text-2xl font-semibold text-brun-700 sm:text-3xl"
+				class="mt-3 t-titre font-display font-semibold text-brun-700"
 				data-reveal
 				style="--reveal-delay: 60ms"
 			>
@@ -65,10 +65,10 @@ const ENGAGEMENTS = [
 						class="aspect-[16/9] w-full object-cover"
 					/>
 					<div class="p-8">
-						<p class="text-xs font-medium uppercase tracking-widest text-rouille-500">
+						<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">
 							Notre produit
 						</p>
-						<h3 class="mt-3 font-display text-2xl font-semibold text-brun-700">
+						<h3 class="mt-3 t-titre font-display font-semibold text-brun-700">
 							La Boîte à Bivouac
 						</h3>
 						<p class="mt-3 text-brun-500">
@@ -95,11 +95,11 @@ const ENGAGEMENTS = [
 					<span class="flex h-11 w-11 items-center justify-center rounded-full bg-ecru-50 text-rouille-500">
 						<Icon name="tabler:tent" class="h-5 w-5" />
 					</span>
-					<p class="mt-5 text-xs font-medium uppercase tracking-widest text-brun-400">
+					<p class="mt-5 t-menu font-medium uppercase tracking-widest text-brun-400">
 						En option
 					</p>
-					<h3 class="mt-2 font-display text-lg font-semibold text-brun-700">Les équipements</h3>
-					<p class="mt-3 flex-1 text-sm text-brun-500">
+					<h3 class="mt-2 t-sous font-display font-semibold text-brun-700">Les équipements</h3>
+					<p class="t-petit mt-3 flex-1 text-brun-500">
 						Tente de toit, porte-vélos, rangements : du matériel à ajouter selon vos besoins, sur
 						la remorque, dans la Boîte ou sur ses barres de toit. La Boîte fonctionne très bien
 						sans.
@@ -116,13 +116,13 @@ const ENGAGEMENTS = [
 		</div>
 	</section>
 
-	<section class="bg-graphite px-6 py-20 text-ecru-50">
-		<div class="mx-auto max-w-5xl">
-			<p class="text-xs font-medium uppercase tracking-widest text-mousse" data-reveal>
+	<section class="bg-graphite px-6 py-20 text-ecru-50 sm:px-8 lg:px-12">
+		<div>
+			<p class="t-menu font-medium uppercase tracking-widest text-mousse" data-reveal>
 				Notre façon de faire
 			</p>
 			<h2
-				class="mt-3 max-w-2xl font-display text-2xl font-semibold sm:text-3xl"
+				class="t-titre mt-3 max-w-[80ch] font-display font-semibold"
 				data-reveal
 				style="--reveal-delay: 60ms"
 			>
@@ -137,7 +137,7 @@ const ENGAGEMENTS = [
 								<Icon name={item.icon} class="h-6 w-6" />
 							</span>
 							<div>
-								<h3 class="font-display text-lg font-semibold">{item.titre}</h3>
+								<h3 class="t-sous font-display font-semibold">{item.titre}</h3>
 								<p class="mt-1 text-ecru-100/80">{item.texte}</p>
 							</div>
 						</div>
@@ -146,10 +146,10 @@ const ENGAGEMENTS = [
 			</div>
 
 			<div class="mt-16 border-t border-ecru-50/15 pt-14 text-center">
-				<h2 class="font-display text-2xl font-semibold sm:text-3xl" data-reveal>
+				<h2 class="t-titre font-display font-semibold" data-reveal>
 					Vous avez une remorque. On a une boîte.
 				</h2>
-				<p class="mx-auto mt-4 max-w-2xl text-ecru-100/80" data-reveal style="--reveal-delay: 90ms">
+				<p class="t-corps mx-auto mt-4 max-w-[80ch] text-ecru-100/80" data-reveal style="--reveal-delay: 90ms">
 					Parlez-nous de votre projet, de votre usage, de ce que vous transportez. On construira
 					la suite ensemble.
 				</p>

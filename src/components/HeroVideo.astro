@@ -175,9 +175,9 @@ const {
   grid-template-columns: 1fr 1fr;
   gap:             3rem;
   align-items:     center;
-  max-width:       1200px;
-  margin:          0 auto;
-  padding:         3rem 2rem;
+  /* Pleine largeur comme le reste du site : la marge latérale s'élargit avec
+     l'écran au lieu de plafonner le contenu au centre. */
+  padding:         3rem clamp(1.5rem, 3vw, 3rem);
 }
 
 /* ────────────────────────────────────────────────────────────────

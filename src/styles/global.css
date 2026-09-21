@@ -38,6 +38,43 @@ body {
 	color: var(--color-brun-700);
 }
 
+/* Typographie fluide, commune à toutes les pages : la taille suit la largeur
+   de la fenêtre, entre un plancher lisible sur téléphone et un plafond qui
+   évite les titres démesurés sur grand écran. Le pas de vw reste faible, le
+   gros du travail est fait par les bornes.
+
+   Ne pas cumuler avec un utilitaire Tailwind de taille (text-2xl et consorts) :
+   à spécificité égale, c'est l'ordre de déclaration qui trancherait. Une seule
+   des deux familles par élément. */
+.t-hero {
+	font-size: clamp(1.875rem, 1.4rem + 2.2vw, 3.75rem);
+	line-height: 1.08;
+}
+
+.t-titre {
+	font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.75rem);
+	line-height: 1.16;
+}
+
+.t-sous {
+	font-size: clamp(1.125rem, 1rem + 0.6vw, 1.6rem);
+	line-height: 1.3;
+}
+
+.t-corps {
+	font-size: clamp(1rem, 0.95rem + 0.25vw, 1.25rem);
+	line-height: 1.65;
+}
+
+.t-petit {
+	font-size: clamp(0.875rem, 0.84rem + 0.17vw, 1.05rem);
+	line-height: 1.6;
+}
+
+.t-menu {
+	font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.875rem);
+}
+
 /* Micro-typo de la charte graphique : labels/boutons courts en capitales */
 .eyebrow {
 	text-transform: uppercase;

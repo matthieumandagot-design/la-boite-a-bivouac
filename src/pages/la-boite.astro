@@ -109,79 +109,74 @@ const productSchema = {
 		/>
 		<div class="absolute inset-0 bg-gradient-to-r from-graphite/95 via-graphite/80 to-graphite/65"></div>
 		<div
-			class="relative mx-auto grid w-full max-w-6xl gap-10 px-6 py-20 lg:grid-cols-2 lg:items-center lg:gap-14"
+			class="relative grid w-full gap-10 px-6 py-20 sm:px-8 lg:grid-cols-2 lg:items-start lg:gap-14 lg:px-12"
 		>
 			<div data-reveal="left">
-				<h2 class="font-display text-3xl font-semibold sm:text-4xl">Le concept</h2>
-				<p class="mt-4 text-ecru-100/90">
+				<h2 class="t-hero font-display font-semibold">Le concept</h2>
+				<p class="t-corps mt-4 text-ecru-100/90">
 					La Boîte à Bivouac, c'est une caisse modulaire en acier et bois qui vient s'installer dans
 					une remorque utilitaire standard. Sur le dessus, une tente de toit. À l'intérieur, de la
 					place pour transporter ce qui compte&nbsp;: vélos, matériel de camping, équipement outdoor.
 				</p>
-				<p class="mt-4 text-ecru-100/90">
+				<p class="t-corps mt-4 text-ecru-100/90">
 					Aucune modification de la remorque. Aucun usage condamné. La semaine, c'est une remorque.
 					Le week-end, c'est une base.
 				</p>
+				<figure class="m-0 mt-8">
+					<VideoYouTube
+						id="KX_vy58MSrA"
+						titre="La Boîte à Bivouac : installation complète du camp en quelques minutes"
+						poster="/images/video-presentation.jpg"
+					/>
+					<figcaption class="t-petit mt-4 text-ecru-100/75">
+						<span class="font-display font-semibold text-ecru-50">
+							Le camp installé en quelques minutes.
+						</span>{" "}
+						Déplier la tente, ouvrir les panneaux, sortir le matériel&nbsp;: une installation
+						complète, sans montage compliqué ni outil à sortir.
+					</figcaption>
+				</figure>
 			</div>
-			<figure class="m-0" data-reveal="right" style="--reveal-delay: 140ms">
-				<VideoYouTube
-					id="KX_vy58MSrA"
-					titre="La Boîte à Bivouac : installation complète du camp en quelques minutes"
-					poster="/images/video-presentation.jpg"
-				/>
-				<figcaption class="mt-4 text-sm text-ecru-100/75">
-					<span class="font-display font-semibold text-ecru-50">
-						Le camp installé en quelques minutes.
-					</span>{" "}
-					Déplier la tente, ouvrir les panneaux, sortir le matériel&nbsp;: une installation complète,
-					sans montage compliqué ni outil à sortir.
-				</figcaption>
-			</figure>
-		</div>
-	</section>
-
-	<section class="bg-ecru-100 px-6 py-20">
-		<div class="mx-auto max-w-5xl">
-			<h2 class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>
-				L'essentiel
-			</h2>
-			{/* auto-rows-fr : les six blocs gardent la même hauteur malgré des
-			    textes de longueurs très différentes. Seulement à partir de sm,
-			    car en colonne unique cela ne ferait qu'ajouter du vide. */}
-			<ul class="mt-8 grid gap-6 sm:auto-rows-fr sm:grid-cols-2 lg:grid-cols-3">
-				{
-					ESSENTIALS.map((item, index) => (
-						<li
-							class="flex flex-col rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm"
-							data-reveal
-							style={`--reveal-delay: ${index * 70}ms`}
-						>
-							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
-								{
-									item.svg ? (
-										<span class="h-6 w-6 [&>svg]:h-full [&>svg]:w-full" set:html={item.svg} />
-									) : (
-										<Icon name={item.icon} class="h-6 w-6" />
-									)
-								}
-							</span>
-							<h3 class="mt-5 font-display text-lg font-semibold text-brun-700">{item.title}</h3>
-							<p class="mt-2 text-sm text-brun-500">{item.text}</p>
-						</li>
-					))
-				}
-			</ul>
+			<div data-reveal="right" style="--reveal-delay: 140ms">
+				{/* Les six points sont ici en version compacte — icône à gauche,
+				    texte à droite — pour tenir dans une colonne sans étirer le bloc
+				    sur toute la hauteur de la page. */}
+				<div>
+					<h3 class="t-menu font-medium uppercase tracking-widest text-mousse">L'essentiel</h3>
+					<ul class="mt-4 grid gap-4 sm:grid-cols-2">
+						{
+							ESSENTIALS.map((item) => (
+								<li class="flex gap-4 rounded-xl border border-ecru-50/15 bg-ecru-50/5 p-4">
+									<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
+										{
+											item.svg ? (
+												<span class="h-5 w-5 [&>svg]:h-full [&>svg]:w-full" set:html={item.svg} />
+											) : (
+												<Icon name={item.icon} class="h-5 w-5" />
+											)
+										}
+									</span>
+									<div>
+										<p class="font-display font-semibold text-ecru-50">{item.title}</p>
+										<p class="t-petit mt-1 text-ecru-100/75">{item.text}</p>
+									</div>
+								</li>
+							))
+						}
+					</ul>
+				</div>
+			</div>
 		</div>
 	</section>
 
 	<BivouacExplorer />
 
-	<section id="apres-exploration" class="scroll-mt-24 bg-ecru-100 px-6 py-20">
-		<div class="mx-auto max-w-5xl">
-			<h2 class="font-display text-2xl font-semibold text-brun-700 sm:text-3xl" data-reveal>
+	<section id="apres-exploration" class="scroll-mt-24 bg-ecru-100 px-6 py-20 sm:px-8 lg:px-12">
+		<div>
+			<h2 class="t-titre font-display font-semibold text-brun-700" data-reveal>
 				Fabriquée à la main, en Occitanie.
 			</h2>
-			<p class="mt-4 max-w-2xl text-brun-500" data-reveal style="--reveal-delay: 90ms">
+			<p class="t-corps mt-4 max-w-[70ch] text-brun-500" data-reveal style="--reveal-delay: 90ms">
 				Le châssis est entièrement soudé à la main. Tubes acier, panneaux OSB, charnières robustes.
 				Un produit conçu pour durer et pour être réparable.
 			</p>
@@ -218,37 +213,74 @@ const productSchema = {
 		</div>
 	</section>
 
-	<section class="mx-auto max-w-5xl px-6 py-20">
-		<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
-			<button
-				type="button"
-				class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm"
-				data-lightbox="prototype"
+	{/* V1 et V2 côte à côte : on lit d'un coup d'œil ce qui est validé et ce qui
+	    arrive. Chacune dans sa carte, de hauteur égale. */}
+	<section class="px-6 py-20 sm:px-8 lg:px-12">
+		<div class="grid gap-8 lg:auto-rows-fr lg:grid-cols-2">
+			<div
+				class="flex flex-col rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm sm:p-8"
 				data-reveal="left"
 			>
-				<img
-					src="/images/produit-tente.jpeg"
-					alt="La Boîte à Bivouac, prototype V1"
-					loading="lazy"
-					class="h-full w-full object-cover"
-				/>
-			</button>
-			<div data-reveal="right" style="--reveal-delay: 120ms">
-				<span class="inline-block rounded-full bg-mousse px-4 py-1 text-xs font-medium uppercase tracking-widest text-brun-700">
+				<button
+					type="button"
+					class="lightbox-trigger aspect-[4/3] w-full overflow-hidden rounded-xl"
+					data-lightbox="prototype"
+				>
+					<img
+						src="/images/produit-tente.jpeg"
+						alt="La Boîte à Bivouac, prototype V1"
+						loading="lazy"
+						class="h-full w-full object-cover"
+					/>
+				</button>
+				<span class="mt-6 inline-block self-start rounded-full bg-mousse px-4 py-1 t-menu font-medium uppercase tracking-widest text-brun-700">
 					Testée · En conditions réelles
 				</span>
-				<h2 class="mt-4 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
+				<h2 class="mt-4 t-titre font-display font-semibold text-brun-700">
 					V1 — Le prototype validé
 				</h2>
-				<p class="mt-4 text-brun-500">
+				<p class="t-corps mt-4 text-brun-500">
 					La V1 a roulé, bivouaqué et été testée pendant des semaines. Elle a validé le concept
 					: la caisse tient sur la remorque, la tente de toit fonctionne, les vélos rentrent. Les
 					apprentissages de ces essais alimentent directement la suite.
 				</p>
 			</div>
+
+			<div
+				class="flex flex-col rounded-2xl border border-ardoise/30 bg-sable/50 p-6 shadow-sm sm:p-8"
+				data-reveal="right"
+				style="--reveal-delay: 120ms"
+			>
+				<div class="flex aspect-[4/3] w-full items-center justify-center rounded-xl bg-graphite p-12">
+					<img
+						src="/images/logo-badge.png"
+						alt="Logo La Boîte à Bivouac"
+						loading="lazy"
+						class="h-auto w-full max-w-[220px] object-contain"
+					/>
+				</div>
+				<span class="mt-6 inline-block self-start rounded-full bg-rouille-500 px-4 py-1 t-menu font-medium uppercase tracking-widest text-ecru-50">
+					Septembre 2026
+				</span>
+				<h2 class="mt-4 t-titre font-display font-semibold text-brun-700">
+					V2 — Ce qui arrive en septembre
+				</h2>
+				<p class="t-corps mt-4 text-brun-500">
+					La V2 intègre les retours des tests terrain. Plus légère, plus aérodynamique, avec un vrai
+					système de fixation à la remorque conçu pour être installé et retiré en moins de
+					10 minutes. Elle sera disponible en pré-commande à l'automne.
+				</p>
+				<div class="mt-6">
+					<p class="t-petit font-semibold text-brun-700">Restez informé</p>
+					<p class="t-petit mt-1 text-brun-400">Recevez un email dès que la V2 est disponible.</p>
+					<div class="mt-3">
+						<SubscribeForm />
+					</div>
+				</div>
+			</div>
 		</div>
 
-		<h3 class="mt-16 font-display text-xl font-semibold text-brun-700" data-reveal>En images</h3>
+		<h3 class="t-sous mt-16 font-display font-semibold text-brun-700" data-reveal>En images</h3>
 		<div class="mt-6 grid grid-cols-3 gap-4">
 			{
 				GALLERY_IMAGES.map((img, index) => (
@@ -266,70 +298,33 @@ const productSchema = {
 		</div>
 	</section>
 
-	<section class="border-t border-ardoise/30 bg-sable/50 px-6 py-20">
-		<div class="mx-auto max-w-5xl">
-			<div class="grid gap-10 lg:grid-cols-2 lg:items-center">
-				<div class="lg:order-2" data-reveal="right">
-					<div class="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-graphite p-12 shadow-sm">
-						<img
-							src="/images/logo-badge.png"
-							alt="Logo La Boîte à Bivouac"
-							loading="lazy"
-							class="h-auto w-full max-w-[220px] object-contain"
-						/>
-					</div>
-				</div>
-				<div class="lg:order-1" data-reveal="left" style="--reveal-delay: 120ms">
-					<span class="inline-block rounded-full bg-rouille-500 px-4 py-1 text-xs font-medium uppercase tracking-widest text-ecru-50">
-						Septembre 2026
-					</span>
-					<h2 class="mt-4 font-display text-2xl font-semibold text-brun-700 sm:text-3xl">
-						V2 — Ce qui arrive en septembre
-					</h2>
-					<p class="mt-4 text-brun-500">
-						La V2 intègre les retours des tests terrain. Plus légère, plus aérodynamique, avec un
-						vrai système de fixation à la remorque conçu pour être installé et retiré en moins de
-						10 minutes. Elle sera disponible en pré-commande à l'automne.
-					</p>
-					<div class="mt-6">
-						<p class="text-sm font-semibold text-brun-700">Restez informé</p>
-						<p class="mt-1 text-xs text-brun-400">Recevez un email dès que la V2 est disponible.</p>
-						<div class="mt-3">
-							<SubscribeForm />
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section class="border-t border-ardoise/30 bg-ecru-50 px-6 py-20 text-center">
-		<div class="mx-auto max-w-2xl">
-			<h2 class="text-xs font-medium uppercase tracking-widest text-rouille-500" data-reveal>
+	<section class="border-t border-ardoise/30 bg-ecru-50 px-6 py-20 text-center sm:px-8 lg:px-12">
+		<div class="mx-auto max-w-[min(70ch,100%)]">
+			<h2 class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>
 				Le juste prix
 			</h2>
 			<p
-				class="mt-4 font-display text-2xl font-semibold text-brun-700 sm:text-3xl"
+				class="mt-4 t-titre font-display font-semibold text-brun-700"
 				data-reveal
 				style="--reveal-delay: 90ms"
 			>
 				2&nbsp;000&nbsp;€.
 			</p>
-			<p class="mt-4 text-brun-500" data-reveal style="--reveal-delay: 180ms">
+			<p class="t-corps mt-4 max-w-[70ch] text-brun-500" data-reveal style="--reveal-delay: 180ms">
 				Nous voulons que partir à quatre ou cinq reste accessible. C'est ce qui guide nos
 				choix&nbsp;: des matériaux simples, un assemblage que nous maîtrisons, et le prix le plus
 				bas que nous puissions tenir sans rogner sur la solidité.
 			</p>
-			<p class="mt-6 text-sm text-brun-400" data-reveal style="--reveal-delay: 240ms">
+			<p class="t-petit mt-6 text-brun-400" data-reveal style="--reveal-delay: 240ms">
 				*Prix de vente indicatif, susceptible de varier selon la configuration et les options
 				choisies. Les équipements ne sont pas compris.
 			</p>
 		</div>
 	</section>
 
-	<section class="bg-graphite px-6 py-20">
-		<div class="mx-auto max-w-4xl">
-			<h2 class="font-display text-2xl font-semibold text-ecru-50 sm:text-3xl" data-reveal>
+	<section class="bg-graphite px-6 py-20 sm:px-8 lg:px-12">
+		<div>
+			<h2 class="t-titre font-display font-semibold text-ecru-50" data-reveal>
 				Nous suivre
 			</h2>
 			<ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
