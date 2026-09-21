@@ -356,7 +356,15 @@ const productSchema = {
 			<h2 class="t-titre font-display font-semibold text-ecru-50" data-reveal>
 				Nous suivre
 			</h2>
-			<ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			{/* Le nombre de colonnes suit le nombre de réseaux, pour qu'ils tiennent
+			    sur une seule ligne. Une valeur figée se désaccordait dès qu'on en
+			    ajoutait un : passer à quatre réseaux laissait le dernier seul sur
+			    une deuxième ligne. minmax(0,1fr) laisse les cartes se resserrer
+			    plutôt que déborder. */}
+			<ul
+				class="mt-8 grid gap-4 sm:grid-cols-2 lg:[grid-template-columns:repeat(var(--reseaux),minmax(0,1fr))]"
+				style={`--reseaux: ${SOCIAL_LINKS.length}`}
+			>
 				{
 					SOCIAL_LINKS.map((social, index) => (
 						<li data-reveal style={`--reveal-delay: ${index * 80}ms`}>
