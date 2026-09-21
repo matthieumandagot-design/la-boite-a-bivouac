@@ -251,6 +251,11 @@ const faqSchema = {
     margin: 0;
     padding: 0 1.35rem 1.25rem;
     color: var(--color-brun-500);
+    /* Les réponses sont saisies dans un textarea de l'admin : leurs retours à
+       la ligne doivent survivre à l'affichage. pre-line les conserve tout en
+       laissant le texte se replier normalement, et sans passer par du HTML —
+       le contenu reste du texte, jamais interprété comme balisage. */
+    white-space: pre-line;
   }
 
   .faq-item[data-open] { border-color: color-mix(in srgb, var(--color-rouille-400) 55%, transparent); }
