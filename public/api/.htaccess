@@ -4,3 +4,18 @@
 RewriteEngine On
 RewriteCond %{HTTP:Authorization} ^(.*)
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+
+# Les fichiers de configuration ne sont jamais demandés par un client : ils sont
+# inclus par les endpoints. Interdire leur accès direct ne change donc rien au
+# fonctionnement du site. Ils ne produisent aujourd'hui aucune sortie — ce ne
+# sont que des define() — mais une erreur de syntaxe ou un serveur qui cesse
+# d'interpréter PHP renverrait le mot de passe SMTP et les clés Stripe en clair.
+<FilesMatch "^config(-[a-z]+)?(\.example)?\.php$">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order allow,deny
+		Deny from all
+	</IfModule>
+</FilesMatch>

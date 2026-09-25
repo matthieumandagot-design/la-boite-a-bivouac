@@ -14,6 +14,7 @@ define('BAB_ADMIN', true);
 
 require_once __DIR__ . '/../lib/admin-session.php';
 require_once __DIR__ . '/../lib/settings.php';
+require_once __DIR__ . '/../lib/stripe.php';
 
 // Avant toute sortie : les paramètres de cookie n'ont plus d'effet une fois la
 // session démarrée, et les en-têtes d'authentification ne peuvent plus partir
@@ -95,18 +96,32 @@ if (is_string($derniereMaj)) {
 	}
 }
 
-// Le seul point de la checklist que le serveur puisse trancher seul. Les autres
-// relèvent d'un jugement humain : les afficher « validés » automatiquement
-// donnerait une fausse assurance.
+// Clés Stripe présentes sur le serveur, par mode. Lues depuis
+// api/config-stripe.php, écrit au déploiement à partir des secrets GitHub : rien
+// n'est modifiable depuis cette page, c'est un diagnostic.
+$clesParMode = [
+	'test' => stripeDiagnostic('test'),
+	'live' => stripeDiagnostic('live'),
+];
+$paiementPret = stripeConfigure($modePaiement);
+
+// Les deux points que le serveur puisse trancher seul. Les autres relèvent d'un
+// jugement humain : les afficher « validés » automatiquement donnerait une
+// fausse assurance. Le troisième élément est la précision affichée quand le
+// point n'est pas rempli — chaque ligne a la sienne.
 $checklist = [
-	['CGV publiées, avec l\'exception de rétractation pour un bien sur mesure', null],
-	['Mentions légales complétées : SIRET, adresse, régime de TVA', null],
-	['Politique de confidentialité à jour : comptes, commandes, durées de conservation', null],
-	['Prix renseignés dans le catalogue', null],
-	['Paiement basculé en mode réel', $modePaiement === 'live'],
+	['CGV publiées, avec l\'exception de rétractation pour un bien sur mesure', null, ''],
+	['Mentions légales complétées : SIRET, adresse, régime de TVA', null, ''],
+	['Politique de confidentialité à jour : comptes, commandes, durées de conservation', null, ''],
+	['Prix renseignés dans le catalogue', null, ''],
+	['Clés Stripe du mode réel déposées sur le serveur', stripeConfigure('live'), 'aucune clé « live » déployée'],
+	['Paiement basculé en mode réel', $modePaiement === 'live', 'actuellement en test'],
 ];
 
 $avertissementTest = $commerceActif && $modePaiement === 'test';
+// Boutique ouverte sans clé pour le mode en cours : les visiteurs verraient un
+// tunnel de commande qui échoue au moment de payer.
+$avertissementCles = $commerceActif && !$paiementPret;
 ?>
 <!doctype html>
 <html lang="fr">
@@ -153,6 +168,13 @@ $avertissementTest = $commerceActif && $modePaiement === 'test';
 					<div role="alert" style="margin-bottom:1.25rem;padding:1rem 1.15rem;border-radius:.5rem;background:#fff4e0;border:1px solid #f0cf94;color:#7a4e00;font-size:.9rem;line-height:1.6;">
 						<strong>Le module est ouvert au public alors que le paiement est en mode test.</strong><br />
 						Les clients peuvent commander sans être débités. Basculez le paiement en mode réel, ou refermez le module.
+					</div>
+				<?php endif; ?>
+
+				<?php if ($avertissementCles) : ?>
+					<div role="alert" style="margin-bottom:1.25rem;padding:1rem 1.15rem;border-radius:.5rem;background:#fdeaea;border:1px solid #f3c2c2;color:#8c2020;font-size:.9rem;line-height:1.6;">
+						<strong>Le module est ouvert mais le paiement n'est pas configuré en mode <?= h($modePaiement) ?>.</strong><br />
+						Les clés manquantes sont listées plus bas. En l'état, un client irait jusqu'au paiement et se verrait refuser.
 					</div>
 				<?php endif; ?>
 
@@ -211,13 +233,67 @@ $avertissementTest = $commerceActif && $modePaiement === 'test';
 						validation humaine — le site ne peut pas les vérifier à votre place.
 					</p>
 					<ul style="list-style:none;margin:0;padding:0;">
-						<?php foreach ($checklist as [$libelle, $etat]) : ?>
+						<?php foreach ($checklist as [$libelle, $etat, $note]) : ?>
 							<li style="display:flex;gap:.7rem;align-items:flex-start;padding:.45rem 0;border-top:1px solid #f0ece2;font-size:.9rem;">
 								<span aria-hidden="true" style="flex-shrink:0;"><?= $etat === true ? '✅' : ($etat === false ? '⬜' : '•') ?></span>
-								<span><?= h($libelle) ?><?= $etat === false ? ' <em style="color:#8a6d1f;">(actuellement en test)</em>' : '' ?></span>
+								<span>
+									<?= h($libelle) ?><?php if ($etat === false && $note !== '') : ?>
+										<em style="color:#8a6d1f;">(<?= h($note) ?>)</em>
+									<?php endif; ?>
+								</span>
 							</li>
 						<?php endforeach; ?>
 					</ul>
+				</section>
+
+				<section class="carte">
+					<h2 class="titre-carte">Clés Stripe</h2>
+					<p class="aide" style="margin-bottom:1rem;">
+						Déposées comme secrets du dépôt GitHub, puis écrites sur le serveur au
+						déploiement. Elles ne sont ni modifiables ni lisibles ici : seuls le préfixe
+						et les quatre derniers caractères sont affichés, de quoi vérifier que la bonne
+						clé est arrivée. Pour en changer, modifiez le secret dans GitHub et relancez
+						un déploiement.
+					</p>
+
+					<?php foreach ($clesParMode as $mode => $cles) : ?>
+						<?php $complet = $cles['secret']['presente'] && $cles['webhook']['presente']; ?>
+						<div style="border:1px solid #e3ded2;border-radius:.5rem;padding:.9rem 1rem;margin-bottom:.75rem;<?= $mode === $modePaiement ? 'border-color:#122218;' : '' ?>">
+							<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.6rem;">
+								<strong style="font-size:.95rem;">
+									Mode <?= $mode === 'live' ? 'réel' : 'test' ?>
+									<?php if ($mode === $modePaiement) : ?>
+										<span class="aide" style="font-weight:400;">— mode actif</span>
+									<?php endif; ?>
+								</strong>
+								<span class="etat <?= $complet ? 'etat--on' : 'etat--off' ?>">
+									<?= $complet ? 'Paiement possible' : 'Incomplet' ?>
+								</span>
+							</div>
+							<ul style="list-style:none;margin:0;padding:0;">
+								<?php foreach ($cles as $cle) : ?>
+									<li style="display:flex;gap:.7rem;align-items:baseline;padding:.3rem 0;font-size:.88rem;">
+										<span aria-hidden="true" style="flex-shrink:0;"><?= $cle['presente'] ? '✅' : '⬜' ?></span>
+										<span>
+											<?= h($cle['libelle']) ?>
+											<code style="font-size:.82rem;color:#5d6b60;">(<?= h($cle['nom']) ?>)</code>
+											<?php if ($cle['empreinte'] !== null) : ?>
+												<br /><span class="aide"><?= h($cle['empreinte']) ?></span>
+											<?php else : ?>
+												<br /><span class="aide">Absente du serveur.</span>
+											<?php endif; ?>
+										</span>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						</div>
+					<?php endforeach; ?>
+
+					<p class="aide">
+						Les deux clés d'un mode vont ensemble. Une clé secrète sans secret de webhook
+						permettrait d'encaisser un paiement que le site ne saurait pas rattacher à une
+						commande : dans ce cas, le paiement est refusé plutôt qu'accepté à moitié.
+					</p>
 				</section>
 
 				<dialog id="confirmation">

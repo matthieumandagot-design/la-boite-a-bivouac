@@ -25,3 +25,7 @@ define('ADMIN_PASSWORD_HASH', '');
 // Sel secret servant à calculer les tokens de désinscription (hash_hmac), pour
 // que les liens de désinscription ne soient pas falsifiables.
 define('UNSUBSCRIBE_SALT', '');
+
+// Les clés Stripe ne sont PAS ici : elles vivent dans config-stripe.php, généré
+// séparément par le même script. Voir config-stripe.example.php pour le détail
+// et la raison de cette séparation.

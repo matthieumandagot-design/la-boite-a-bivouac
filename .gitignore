@@ -41,6 +41,9 @@ public/data/rate-limits.json
 # jamais dans le repo, seulement dans dist/ après build en CI.
 public/admin/config.php
 public/api/config.php
+# Clés Stripe, générées à part pour ne pas redéfinir les constantes d'admin
+# (voir public/api/config-stripe.example.php).
+public/api/config-stripe.php
 
 # macOS-specific files
 .DS_Store

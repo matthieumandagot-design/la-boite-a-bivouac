@@ -56,7 +56,13 @@ jobs:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
 
-      - name: Write newsletter API credentials
+      # Écrit dist/api/config.php : identifiants de la newsletter et de l'admin,
+      # plus les clés Stripe si elles existent. Un secret Stripe non défini vaut
+      # la chaîne vide et n'est pas une erreur : le script l'ignore et le
+      # paiement reste simplement indisponible dans ce mode. Les quatre clés
+      # sont référencées d'avance pour que le passage au paiement réel ne
+      # demande que d'ajouter le secret, sans toucher à ce fichier.
+      - name: Write API credentials (newsletter, admin, Stripe)
         run: node scripts/write-api-config.mjs
         env:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
@@ -64,6 +70,10 @@ jobs:
           SMTP_LOGIN: ${{ secrets.SMTP_LOGIN }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           NEWSLETTER_TOKEN_SALT: ${{ secrets.NEWSLETTER_TOKEN_SALT }}
+          STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+          STRIPE_TEST_WEBHOOK_SECRET: ${{ secrets.STRIPE_TEST_WEBHOOK_SECRET }}
+          STRIPE_LIVE_SECRET_KEY: ${{ secrets.STRIPE_LIVE_SECRET_KEY }}
+          STRIPE_LIVE_WEBHOOK_SECRET: ${{ secrets.STRIPE_LIVE_WEBHOOK_SECRET }}
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

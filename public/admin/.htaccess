@@ -4,3 +4,17 @@
 RewriteEngine On
 RewriteCond %{HTTP:Authorization} ^(.*)
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+
+# config.php porte l'identifiant et le hash du mot de passe d'administration. Il
+# est inclus par les pages de /admin, jamais demandé par un client : l'interdire
+# ne change rien au fonctionnement. Même raisonnement que public/api/.htaccess —
+# le jour où le serveur cesse d'interpréter PHP, le fichier ne fuite pas.
+<FilesMatch "^config\.php$">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order allow,deny
+		Deny from all
+	</IfModule>
+</FilesMatch>
