@@ -33,7 +33,11 @@ const ADMIN_OUTILS = [
 	['https://cloud.umami.is/analytics/eu/websites', '📊', 'Umami'],
 	['https://search.google.com/search-console?hl=fr&resource_id=https://laboiteabivouac.fr/', '🔍', 'Search Console'],
 	['https://app.brevo.com/', '✉️', 'Brevo'],
-	['https://dashboard.stripe.com/', '💳', 'Stripe'],
+	// Tableau de bord du compte Stripe, en MODE TEST. Au passage en paiement
+	// réel, retirer « /test » de cette URL — ici et dans les trois autres barres
+	// latérales (AdminLayout.astro, faq.php, equipements.php). Le laisser
+	// afficherait un tableau de bord vide alors que de vrais paiements arrivent.
+	['https://dashboard.stripe.com/acct_1UJZzZ1YjormFH5b/test/dashboard', '💳', 'Stripe'],
 ];
 
 function h(string $valeur): string

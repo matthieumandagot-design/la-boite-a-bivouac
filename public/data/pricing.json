@@ -1,0 +1,31 @@
+{
+	"_AVERTISSEMENT": "VALEURS FACTICES — AUCUN PRIX RÉEL. Placeholders autorisés par Matthieu le 25/09/2026 pour débloquer le développement, en attendant la réponse à la question 1 de docs/SPEC-module-commercial.md (modèle de prix de la Boîte : fixe, selon dimensions, ou selon options). Tant que provisoire vaut true, toute interface affichant ces montants doit les signaler comme indicatifs.",
+	"provisoire": true,
+	"devise": "EUR",
+	"_note_tva": "Question 4 non tranchée (franchise en base ou non). Les montants ci-dessous sont traités comme TTC, comme le prix de 2 000 € déjà affiché publiquement sur /la-boite. À revoir dès que le régime est connu.",
+	"mention_provisoire": "Prix indicatif, non contractuel",
+
+	"boite": {
+		"_note": "Le prix de base reprend les 2 000 € annoncés sur le site pour rester cohérent avec ce qu'un visiteur a déjà pu lire. C'est le seul point de contact avec la réalité ; tout le reste est arbitraire.",
+		"prix_base_cents": 200000,
+
+		"_note_dimensions": "Composante liée à la taille, à zéro tant que le modèle n'est pas arrêté. Laisser à 0 revient à un prix fixe, ce qui est le comportement le plus prudent : aucun client ne se verra facturer un supplément inventé.",
+		"supplement_par_litre_cents": 0,
+		"supplement_par_cm_hauteur_cents": 0,
+
+		"_note_bornes": "Garde-fous du recalcul serveur. Un total sorti de cet intervalle signale une erreur de configuration plutôt qu'une commande légitime : mieux vaut refuser que facturer n'importe quoi.",
+		"total_min_cents": 100000,
+		"total_max_cents": 500000
+	},
+
+	"options": {
+		"_note": "Liste des options du configurateur non arrêtée (question 6, phase 2). Vide volontairement : inventer des options donnerait l'illusion d'un catalogue décidé.",
+		"disponibles": []
+	},
+
+	"livraison": {
+		"_note": "Question 3 non tranchée (livraison, retrait à l'atelier, frais de port). Zéro en attendant — ne facturer aucun port est le choix le moins risqué face à un client.",
+		"forfait_cents": 0,
+		"retrait_atelier_possible": true
+	}
+}

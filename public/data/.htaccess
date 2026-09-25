@@ -2,12 +2,21 @@
 # /data/equipements.json sont lus par le navigateur pour afficher la FAQ et le
 # catalogue. On n'interdit donc que ce qui n'a aucune raison d'être servi.
 #
-# Les réglages du module commercial en font partie : settings.json révèle si la
-# boutique est ouverte et surtout si le paiement tourne en mode test — une
-# information qui n'aide qu'un attaquant. Le front n'en a pas besoin, il passe
-# par /api/settings.php, qui ne renvoie que deux booléens.
+# settings.json révèle si la boutique est ouverte et surtout si le paiement
+# tourne en mode test — une information qui n'aide qu'un attaquant. Le front
+# n'en a pas besoin, il passe par /api/settings.php, qui ne renvoie que deux
+# booléens.
+#
+# pricing.json tant que ses montants sont provisoires. Ni Astro, qui l'importe
+# au build, ni le PHP, qui le lit sur disque, ne passent par HTTP : l'interdire
+# ne coûte rien et évite de publier des prix factices.
+#
+# questions.json contient les questions envoyées par les visiteurs, avant toute
+# modération. Seuls ask-question.php et admin/faq.php le lisent, et tous deux
+# sur le disque. Rien ne le récupère par HTTP : il n'y a aucune raison qu'un
+# tiers puisse lire ce qu'un visiteur vient d'écrire.
 
-<FilesMatch "^settings(\.default)?\.json$">
+<FilesMatch "^(settings\.default|settings|pricing|questions)\.json$">
 	<IfModule mod_authz_core.c>
 		Require all denied
 	</IfModule>

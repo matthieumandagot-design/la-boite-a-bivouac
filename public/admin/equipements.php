@@ -936,6 +936,9 @@ foreach ($equipements as $item) {
 					<a href="https://app.brevo.com/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
 						<span aria-hidden="true">📧</span> Brevo
 					</a>
+					<a href="https://dashboard.stripe.com/acct_1UJZzZ1YjormFH5b/test/dashboard" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
+						<span aria-hidden="true">💳</span> Stripe
+					</a>
 					<a href="https://manager.eu.ovhcloud.com/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .75rem;border-radius:.5rem;text-decoration:none;font-size:.82rem;font-weight:500;color:#babba8;">
 						<span aria-hidden="true">☁️</span> OVH Manager
 					</a>
