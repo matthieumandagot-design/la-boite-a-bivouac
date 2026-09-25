@@ -53,6 +53,28 @@ const socialIconPaths: Record<string, string> = {
 		</nav>
 
 		<div class="col-start-3 flex items-center justify-self-end gap-3">
+			{/* Accès au module commercial. Écrits masqués dans le HTML statique :
+			    src/scripts/features.ts ne les révèle qu'après confirmation du
+			    serveur que la boutique est ouverte, ou qu'un admin est reconnu.
+			    Le masquage est un confort d'affichage, pas une protection — celle-ci
+			    est dans public/lib/commerce-guard.php. */}
+			<a
+				href="/compte/"
+				data-feature="commerce"
+				hidden
+				class="t-menu font-medium text-brun-600 transition-colors hover:text-rouille-500"
+			>
+				Mon compte
+			</a>
+			<a
+				href="/panier/"
+				data-feature="commerce"
+				hidden
+				aria-label="Panier"
+				class="flex h-9 w-9 items-center justify-center rounded-full text-brun-600 transition-colors hover:bg-sable hover:text-rouille-500"
+			>
+				<Icon name="tabler:shopping-cart" class="h-5 w-5" />
+			</a>
 			<ul class="hidden items-center gap-3 md:flex">
 				{
 					NAVBAR_SOCIAL_LINKS.map((social) => (

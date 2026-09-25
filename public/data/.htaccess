@@ -1,0 +1,18 @@
+# Le dossier /data est public par nécessité : /data/faq.json et
+# /data/equipements.json sont lus par le navigateur pour afficher la FAQ et le
+# catalogue. On n'interdit donc que ce qui n'a aucune raison d'être servi.
+#
+# Les réglages du module commercial en font partie : settings.json révèle si la
+# boutique est ouverte et surtout si le paiement tourne en mode test — une
+# information qui n'aide qu'un attaquant. Le front n'en a pas besoin, il passe
+# par /api/settings.php, qui ne renvoie que deux booléens.
+
+<FilesMatch "^settings(\.default)?\.json$">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order allow,deny
+		Deny from all
+	</IfModule>
+</FilesMatch>
