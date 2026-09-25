@@ -104,12 +104,16 @@ export function ajouter(ligne: Ligne): void {
 		if (existante) {
 			existante.quantite = Math.min(10, (Number(existante.quantite) || 1) + (Number(ligne.quantite) || 1));
 			ecrire(lignes);
+			// Même événement que pour une nouvelle ligne : du point de vue de la
+			// mesure, ajouter un deuxième exemplaire reste un ajout au panier.
+			mesurer("ajout_panier");
 			return;
 		}
 	}
 
 	lignes.push(ligne);
 	ecrire(lignes.slice(0, 20));
+	mesurer("ajout_panier");
 }
 
 export function definirQuantite(index: number, quantite: number): void {
@@ -185,6 +189,22 @@ export async function recalculer(): Promise<PanierCalcule | null> {
 		return (await reponse.json()) as PanierCalcule;
 	} catch {
 		return null;
+	}
+}
+
+/**
+ * Événement de mesure d'audience (docs/SPEC-module-commercial.md §6.7).
+ *
+ * Umami, sans cookie et sans donnée personnelle : on envoie un nom d'étape, rien
+ * d'autre — ni numéro de commande, ni montant, ni identifiant client. Le script
+ * peut être absent (bloqueur de publicité, réseau coupé) : l'appel est alors
+ * sans effet, et surtout sans erreur.
+ */
+export function mesurer(evenement: string): void {
+	try {
+		(window as unknown as { umami?: { track: (nom: string) => void } }).umami?.track(evenement);
+	} catch {
+		// La mesure d'audience ne doit jamais interrompre un achat.
 	}
 }
 

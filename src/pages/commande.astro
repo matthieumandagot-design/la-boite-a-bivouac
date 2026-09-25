@@ -23,7 +23,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 </PageCommerce>
 
 <script>
-	import { lire, vider, recalculer, formaterCents, jetonCsrf } from "../scripts/panier";
+	import { lire, vider, recalculer, formaterCents, jetonCsrf, mesurer } from "../scripts/panier";
 	import type { PanierCalcule } from "../scripts/panier";
 
 	const zone = document.getElementById("tunnel");
@@ -234,6 +234,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 				vider();
 				zone!.replaceChildren(etapeConfirmation(reponse.donnees.numero, reponse.donnees.total_cents, panier));
 				window.scrollTo({ top: 0, behavior: "smooth" });
+				void lancerPaiement(reponse.donnees.numero);
 				return;
 			}
 
@@ -252,23 +253,116 @@ import PageCommerce from "../components/PageCommerce.astro";
 		return bloc;
 	}
 
-	/** Étape 5 : c'est enregistré. */
+	/** Étape 5 : c'est enregistré, le paiement s'ouvre. */
 	function etapeConfirmation(numero: string, totalCents: number, panier: PanierCalcule): HTMLElement {
 		const bloc = carte("Commande enregistrée");
+		bloc.id = "bloc-confirmation";
 		bloc.append(
 			el("p", "t-corps mt-4 text-brun-700", `Votre commande porte le numéro ${numero}.`),
 			el("p", "t-petit mt-2 text-brun-500", `Montant : ${formaterCents(totalCents)}.`),
-			el(
-				"p",
-				"t-petit mt-4 text-brun-500",
-				"Elle est en attente de paiement. Le règlement en ligne arrive prochainement ; " +
-					"vous retrouverez la commande et son statut dans votre espace client.",
-			),
 		);
 		if (panier.provisoire) {
 			bloc.append(el("p", "t-petit mt-2 text-rouille-500", `${panier.mention} — montants factices.`));
 		}
-		bloc.append(lien("/compte/", "Voir mes commandes"));
+		const attente = el("p", "t-petit mt-4 text-brun-500", "Ouverture du paiement sécurisé…");
+		attente.id = "etat-paiement";
+		attente.setAttribute("role", "status");
+		bloc.append(attente);
+		return bloc;
+	}
+
+	/**
+	 * Demande une session Stripe et y envoie le client.
+	 *
+	 * Le serveur seul décide du montant : on ne lui transmet qu'un numéro de
+	 * commande. En cas de refus — clés absentes, mode test hors administration —
+	 * la commande reste enregistrée et en attente, et le message le dit plutôt
+	 * que de laisser une page qui tourne.
+	 */
+	async function lancerPaiement(numero: string): Promise<void> {
+		const etat = document.getElementById("etat-paiement");
+		const reponse = await envoyer("/api/checkout.php", "POST", { numero });
+
+		if (reponse.ok && typeof reponse.donnees.url === "string") {
+			mesurer("paiement_lance");
+			window.location.href = reponse.donnees.url;
+			return;
+		}
+
+		if (!etat) return;
+		etat.className = "t-petit mt-4 text-rouille-500";
+		etat.textContent =
+			(reponse.donnees.error ?? "Le paiement n'a pas pu être ouvert.") +
+			" Votre commande reste enregistrée, en attente de paiement.";
+
+		const reprendre = bouton("Réessayer le paiement");
+		reprendre.addEventListener("click", () => {
+			etat.className = "t-petit mt-4 text-brun-500";
+			etat.textContent = "Ouverture du paiement sécurisé…";
+			reprendre.remove();
+			void lancerPaiement(numero);
+		});
+		etat.parentElement?.append(reprendre, lien("/compte/", "Voir mes commandes"));
+	}
+
+	/**
+	 * Retour depuis la page de paiement.
+	 *
+	 * SEUL LE WEBHOOK FAIT FOI (§6.5). Arriver ici ne prouve rien : cette URL
+	 * peut être ouverte, rechargée ou fabriquée. On interroge donc le serveur en
+	 * boucle jusqu'à ce que la commande passe à « Payée », et on le dit
+	 * clairement tant que ce n'est pas le cas.
+	 */
+	function ecranRetourPaiement(numero: string, annule: boolean): HTMLElement {
+		const bloc = carte(annule ? "Paiement interrompu" : "Paiement en cours de confirmation");
+		const etat = el(
+			"p",
+			"t-corps mt-4 text-brun-500",
+			annule
+				? `Le paiement de la commande ${numero} n'a pas été finalisé. Elle reste enregistrée, en attente de paiement.`
+				: `Nous attendons la confirmation de votre banque pour la commande ${numero}. Cela prend quelques secondes.`,
+		);
+		etat.setAttribute("role", "status");
+		bloc.append(etat);
+
+		if (annule) {
+			const reprendre = bouton("Reprendre le paiement");
+			reprendre.addEventListener("click", () => {
+				etat.textContent = "Ouverture du paiement sécurisé…";
+				reprendre.remove();
+				etat.id = "etat-paiement";
+				void lancerPaiement(numero);
+			});
+			bloc.append(reprendre, lien("/compte/", "Voir mes commandes"));
+			return bloc;
+		}
+
+		// Sondage court : au-delà, on ne fait pas patienter indéfiniment devant un
+		// écran qui tourne, la commande se retrouve dans l'espace client.
+		let restants = 15;
+		const minuteur = window.setInterval(async () => {
+			const reponse = await envoyer(`/api/commandes.php?numero=${encodeURIComponent(numero)}`, "GET");
+			const statut = reponse.donnees?.commande?.statut;
+
+			if (statut === "payee") {
+				window.clearInterval(minuteur);
+				mesurer("paiement_confirme");
+				etat.className = "t-corps mt-4 text-brun-700";
+				etat.textContent = `Paiement confirmé. Votre commande ${numero} est enregistrée, vous allez recevoir un email de confirmation.`;
+				bloc.append(lien("/compte/", "Voir mes commandes"));
+				return;
+			}
+
+			if (--restants <= 0) {
+				window.clearInterval(minuteur);
+				etat.className = "t-petit mt-4 text-brun-500";
+				etat.textContent =
+					`La confirmation de la commande ${numero} tarde. Ce n'est pas inquiétant : ` +
+					"dès que votre banque nous répond, la commande passe à « Payée » dans votre espace client.";
+				bloc.append(lien("/compte/", "Voir mes commandes"));
+			}
+		}, 2000);
+
 		return bloc;
 	}
 
@@ -278,6 +372,16 @@ import PageCommerce from "../components/PageCommerce.astro";
 		jeton = await jetonCsrf(true);
 		if (!jeton) {
 			zone.replaceChildren(el("p", "t-petit text-brun-400", "Commande indisponible pour le moment."));
+			return;
+		}
+
+		// Retour depuis Stripe : traité avant tout le reste, le panier est vide à
+		// ce stade et le tunnel n'aurait plus rien à afficher.
+		const parametres = new URLSearchParams(window.location.search);
+		const paiement = parametres.get("paiement");
+		const numeroRetour = parametres.get("numero");
+		if ((paiement === "ok" || paiement === "annule") && numeroRetour) {
+			zone.replaceChildren(ecranRetourPaiement(numeroRetour, paiement === "annule"));
 			return;
 		}
 
@@ -306,6 +410,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 
 		if (adresses.length > 0) {
 			blocs.push(etapeRecapitulatif(panier, () => adresseChoisie));
+			mesurer("debut_commande");
 		}
 
 		zone.replaceChildren(...blocs);
