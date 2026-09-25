@@ -21,7 +21,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 </PageCommerce>
 
 <script>
-	import { jetonCsrf } from "../scripts/panier";
+	import { jetonCsrf, formaterCents } from "../scripts/panier";
 
 	const zone = document.getElementById("compte-zone");
 
@@ -264,7 +264,15 @@ import PageCommerce from "../components/PageCommerce.astro";
 		return bloc;
 	}
 
-	function ecranClient(client: Client, adresses: Adresse[]): HTMLElement {
+	type Commande = {
+		numero: string;
+		statut_libelle: string;
+		total_cents: number;
+		payment_mode: string;
+		created_at: string;
+	};
+
+	function ecranClient(client: Client, adresses: Adresse[], commandes: Commande[]): HTMLElement {
 		const bloc = el("div");
 
 		// Coordonnées
@@ -344,11 +352,32 @@ import PageCommerce from "../components/PageCommerce.astro";
 		});
 
 		// Commandes
-		const commandes = carte("Commandes");
-		commandes.append(
-			el("p", "t-petit mt-4 text-brun-400", "Aucune commande pour l'instant. Le tunnel de commande arrive prochainement."),
-		);
-		bloc.append(commandes);
+		const historique = carte("Commandes");
+		if (commandes.length === 0) {
+			historique.append(el("p", "t-petit mt-4 text-brun-400", "Aucune commande pour l'instant."));
+		}
+		commandes.forEach((commande) => {
+			const ligne = el("div", "mt-4 flex flex-wrap items-baseline justify-between gap-2 border-t border-ardoise/20 pt-4");
+			const gauche = el("div");
+			const titre = el("p", "font-display font-semibold text-brun-700", commande.numero);
+			if (commande.payment_mode === "test") {
+				// Une commande de test n'a donné lieu à aucun encaissement : le
+				// client doit le voir aussi, pas seulement l'administration.
+				const badge = el("span", "ml-2 rounded-full bg-rouille-500 px-2 py-0.5 text-[0.65rem] font-semibold text-ecru-50", "TEST");
+				titre.append(badge);
+			}
+			gauche.append(titre, el("p", "t-petit text-brun-500", dateLisible(commande.created_at)));
+			ligne.append(gauche);
+
+			const droite = el("div", "text-right");
+			droite.append(
+				el("p", "font-semibold text-brun-700", formaterCents(commande.total_cents)),
+				el("p", "t-petit text-brun-500", commande.statut_libelle),
+			);
+			ligne.append(droite);
+			historique.append(ligne);
+		});
+		bloc.append(historique);
 
 		// Suppression
 		const fin = carte("Supprimer mon compte");
@@ -408,8 +437,33 @@ import PageCommerce from "../components/PageCommerce.astro";
 			return;
 		}
 
+		// Retour au tunnel de commande, quand on vient de là. Seuls les chemins
+		// internes sont suivis : un « retour » vers un autre site ferait de cette
+		// page une rampe de lancement vers n'importe où.
+		const retour = new URLSearchParams(window.location.search).get("retour");
+		if (retour && /^\/[a-z0-9/_-]*$/i.test(retour)) {
+			window.location.replace(retour);
+			return;
+		}
+
 		const carnet = await envoyer("/api/compte-adresses.php", "GET");
-		zone.replaceChildren(ecranClient(etat.donnees.client as Client, (carnet.donnees.adresses ?? []) as Adresse[]));
+		const historique = await envoyer("/api/commandes.php", "GET");
+
+		zone.replaceChildren(
+			ecranClient(
+				etat.donnees.client as Client,
+				(carnet.donnees.adresses ?? []) as Adresse[],
+				(historique.donnees.commandes ?? []) as Commande[],
+			),
+		);
+	}
+
+	/** Date ISO-8601 UTC rendue lisible en heure locale. */
+	function dateLisible(iso: string): string {
+		const date = new Date(iso);
+		return Number.isNaN(date.getTime())
+			? ""
+			: date.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 	}
 
 	void afficher();

@@ -1,7 +1,315 @@
 ---
+/**
+ * Tunnel de commande (docs/SPEC-module-commercial.md §6.4).
+ *
+ * Panier → connexion → adresse → récapitulatif → validation.
+ *
+ * L'étape de connexion renvoie vers /compte plutôt que de reproduire les
+ * formulaires : il y en a déjà deux là-bas, et une troisième copie finirait par
+ * diverger sur un détail de sécurité. Le retour ramène ici.
+ *
+ * Le récapitulatif n'additionne rien : il affiche ce que /api/panier.php
+ * renvoie, et la commande est créée à partir des mêmes choix, recalculés une
+ * dernière fois côté serveur.
+ */
+
 import PageCommerce from "../components/PageCommerce.astro";
 ---
 
 <PageCommerce title="Commande" description="Finaliser votre commande.">
-	<p class="t-corps mt-4 text-brun-500">Le tunnel de commande arrive en phase 1.</p>
+	<div id="tunnel" class="mt-8 max-w-[46rem]">
+		<p class="t-petit text-brun-400">Chargement…</p>
+	</div>
 </PageCommerce>
+
+<script>
+	import { lire, vider, recalculer, formaterCents, jetonCsrf } from "../scripts/panier";
+	import type { PanierCalcule } from "../scripts/panier";
+
+	const zone = document.getElementById("tunnel");
+	let jeton: string | null = null;
+
+	type Adresse = {
+		id: number;
+		libelle: string;
+		ligne1: string;
+		ligne2: string;
+		code_postal: string;
+		ville: string;
+		pays: string;
+		telephone: string;
+	};
+
+	async function envoyer(url: string, methode: string, corps?: unknown): Promise<any> {
+		const entetes: Record<string, string> = { Accept: "application/json" };
+		if (corps !== undefined) entetes["Content-Type"] = "application/json";
+		if (jeton) entetes["X-CSRF-Token"] = jeton;
+
+		const reponse = await fetch(url, {
+			method: methode,
+			cache: "no-store",
+			credentials: "same-origin",
+			headers: entetes,
+			body: corps === undefined ? undefined : JSON.stringify(corps),
+		});
+		const donnees = await reponse.json().catch(() => ({}));
+		if (typeof donnees.csrf === "string") jeton = donnees.csrf;
+
+		return { ok: reponse.ok, statut: reponse.status, donnees };
+	}
+
+	function el<K extends keyof HTMLElementTagNameMap>(balise: K, classe = "", texte = ""): HTMLElementTagNameMap[K] {
+		const noeud = document.createElement(balise);
+		if (classe) noeud.className = classe;
+		if (texte) noeud.textContent = texte;
+		return noeud;
+	}
+
+	function carte(titre: string): HTMLElement {
+		const section = el("section", "mb-6 rounded-2xl border border-ardoise/30 bg-ecru-50 p-6");
+		if (titre) section.append(el("h2", "t-sous font-display font-semibold text-brun-700", titre));
+		return section;
+	}
+
+	function bouton(texte: string, principal = true): HTMLButtonElement {
+		const noeud = el(
+			"button",
+			principal
+				? "mt-5 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-5 py-2.5 font-semibold text-ecru-50 transition-colors hover:bg-rouille-400 disabled:opacity-50"
+				: "t-petit text-brun-500 underline transition-colors hover:text-rouille-500",
+			texte,
+		);
+		noeud.type = "button";
+		return noeud;
+	}
+
+	function lien(href: string, texte: string): HTMLAnchorElement {
+		const noeud = el(
+			"a",
+			"mt-5 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-5 py-2.5 font-semibold text-ecru-50 transition-colors hover:bg-rouille-400",
+			texte,
+		);
+		noeud.href = href;
+		return noeud;
+	}
+
+	/** Étape 1 : rien à commander. */
+	function etapePanierVide(): HTMLElement {
+		const bloc = carte("");
+		bloc.append(
+			el("p", "t-corps text-brun-500", "Votre panier est vide."),
+			lien("/boutique/", "Voir la boutique"),
+		);
+		return bloc;
+	}
+
+	/** Étape 2 : il faut un compte pour commander (§3, la commande invité est hors périmètre). */
+	function etapeConnexion(): HTMLElement {
+		const bloc = carte("Se connecter");
+		bloc.append(
+			el(
+				"p",
+				"t-corps mt-4 text-brun-500",
+				"Commander demande un compte : c'est lui qui vous donnera accès au suivi de votre commande.",
+			),
+			lien("/compte/?retour=/commande/", "Se connecter ou créer un compte"),
+		);
+		return bloc;
+	}
+
+	/** Étape 3 : choix de l'adresse de livraison. */
+	function etapeAdresse(adresses: Adresse[], surChoix: (id: number) => void): HTMLElement {
+		const bloc = carte("Adresse de livraison");
+
+		if (adresses.length === 0) {
+			bloc.append(
+				el("p", "t-corps mt-4 text-brun-500", "Aucune adresse enregistrée."),
+				lien("/compte/", "Ajouter une adresse"),
+			);
+			return bloc;
+		}
+
+		const liste = el("div", "mt-4 grid gap-3");
+		adresses.forEach((adresse, rang) => {
+			const label = el("label", "flex cursor-pointer items-start gap-3 rounded-xl border border-ardoise/30 p-4");
+			const radio = el("input");
+			radio.type = "radio";
+			radio.name = "adresse";
+			radio.value = String(adresse.id);
+			radio.checked = rang === 0;
+			radio.className = "mt-1";
+			radio.addEventListener("change", () => surChoix(adresse.id));
+			label.append(radio);
+
+			const texte = el("div");
+			if (adresse.libelle) texte.append(el("p", "t-petit font-semibold text-brun-600", adresse.libelle));
+			texte.append(
+				el("p", "t-petit text-brun-500", adresse.ligne1),
+				...(adresse.ligne2 ? [el("p", "t-petit text-brun-500", adresse.ligne2)] : []),
+				el("p", "t-petit text-brun-500", `${adresse.code_postal} ${adresse.ville} (${adresse.pays})`),
+			);
+			label.append(texte);
+			liste.append(label);
+		});
+
+		bloc.append(liste);
+		const ajouter = bouton("Gérer mes adresses", false);
+		ajouter.className += " mt-4 block";
+		ajouter.addEventListener("click", () => (window.location.href = "/compte/"));
+		bloc.append(ajouter);
+
+		return bloc;
+	}
+
+	/** Étape 4 : récapitulatif et validation. */
+	function etapeRecapitulatif(panier: PanierCalcule, adresseId: () => number): HTMLElement {
+		const bloc = carte("Récapitulatif");
+
+		const table = el("div", "mt-4");
+		panier.lignes.forEach((ligne) => {
+			const rangee = el("div", "flex items-start justify-between gap-4 border-t border-ardoise/20 py-3");
+			const gauche = el("div");
+			gauche.append(el("p", "font-display font-semibold text-brun-700", `${ligne.quantite} × ${ligne.libelle}`));
+			if (ligne.detail) gauche.append(el("p", "t-petit text-brun-500", ligne.detail));
+			rangee.append(gauche, el("p", "font-semibold text-brun-700", formaterCents(ligne.total_cents)));
+			table.append(rangee);
+		});
+		bloc.append(table);
+
+		const total = el("div", "mt-4 flex items-baseline justify-between border-t border-ardoise/30 pt-4");
+		total.append(
+			el("span", "t-corps text-brun-600", "Total"),
+			el("span", "t-sous font-display font-semibold text-brun-700", formaterCents(panier.total_cents)),
+		);
+		bloc.append(total);
+
+		if (panier.provisoire) {
+			bloc.append(
+				el("p", "t-petit mt-2 text-rouille-500", `${panier.mention} — montants factices, aucun engagement.`),
+			);
+		}
+
+		// Case obligatoire. Tant que les CGV ne sont pas publiées, on le dit :
+		// faire accepter un texte inexistant ne vaut rien, ni juridiquement ni
+		// pour la personne qui coche.
+		const cgvLabel = el("label", "mt-6 flex cursor-pointer items-start gap-3");
+		const cgv = el("input");
+		cgv.type = "checkbox";
+		cgv.className = "mt-1";
+		cgvLabel.append(cgv, el("span", "t-petit text-brun-500", "J'accepte les conditions générales de vente."));
+		bloc.append(cgvLabel);
+
+		const avertissement = el("p", "t-petit mt-2 text-rouille-500");
+		avertissement.hidden = true;
+		bloc.append(avertissement);
+
+		const message = el("p", "t-petit mt-4");
+		message.setAttribute("role", "status");
+		message.hidden = true;
+		bloc.append(message);
+
+		// Mention imposée par le code de la consommation pour un achat en ligne.
+		const valider = bouton("Commander avec obligation de paiement");
+		valider.addEventListener("click", async () => {
+			if (!cgv.checked) {
+				avertissement.textContent = "Vous devez accepter les conditions générales de vente.";
+				avertissement.hidden = false;
+				return;
+			}
+			avertissement.hidden = true;
+			valider.disabled = true;
+			message.textContent = "Enregistrement de la commande…";
+			message.className = "t-petit mt-4 text-brun-500";
+			message.hidden = false;
+
+			const reponse = await envoyer("/api/commande-creer.php", "POST", {
+				lignes: lire(),
+				adresse_id: adresseId(),
+				cgv: true,
+			});
+
+			if (reponse.ok) {
+				// Le panier a rempli son office : le garder ferait recommander la
+				// même chose au rechargement suivant.
+				vider();
+				zone!.replaceChildren(etapeConfirmation(reponse.donnees.numero, reponse.donnees.total_cents, panier));
+				window.scrollTo({ top: 0, behavior: "smooth" });
+				return;
+			}
+
+			valider.disabled = false;
+			message.className = "t-petit mt-4 text-rouille-500";
+			message.textContent = reponse.donnees.error ?? "Enregistrement impossible.";
+
+			// 409 : le panier a changé entre l'affichage et le clic. On le
+			// recharge, le client voit ce qui a sauté.
+			if (reponse.statut === 409) {
+				window.setTimeout(() => void afficher(), 1800);
+			}
+		});
+		bloc.append(valider);
+
+		return bloc;
+	}
+
+	/** Étape 5 : c'est enregistré. */
+	function etapeConfirmation(numero: string, totalCents: number, panier: PanierCalcule): HTMLElement {
+		const bloc = carte("Commande enregistrée");
+		bloc.append(
+			el("p", "t-corps mt-4 text-brun-700", `Votre commande porte le numéro ${numero}.`),
+			el("p", "t-petit mt-2 text-brun-500", `Montant : ${formaterCents(totalCents)}.`),
+			el(
+				"p",
+				"t-petit mt-4 text-brun-500",
+				"Elle est en attente de paiement. Le règlement en ligne arrive prochainement ; " +
+					"vous retrouverez la commande et son statut dans votre espace client.",
+			),
+		);
+		if (panier.provisoire) {
+			bloc.append(el("p", "t-petit mt-2 text-rouille-500", `${panier.mention} — montants factices.`));
+		}
+		bloc.append(lien("/compte/", "Voir mes commandes"));
+		return bloc;
+	}
+
+	async function afficher(): Promise<void> {
+		if (!zone) return;
+
+		jeton = await jetonCsrf(true);
+		if (!jeton) {
+			zone.replaceChildren(el("p", "t-petit text-brun-400", "Commande indisponible pour le moment."));
+			return;
+		}
+
+		if (lire().length === 0) {
+			zone.replaceChildren(etapePanierVide());
+			return;
+		}
+
+		const etat = await envoyer("/api/compte.php", "GET");
+		if (!etat.ok || etat.donnees.connecte !== true) {
+			zone.replaceChildren(etapeConnexion());
+			return;
+		}
+
+		const panier = await recalculer();
+		if (!panier) {
+			zone.replaceChildren(el("p", "t-petit text-brun-400", "Panier indisponible pour le moment."));
+			return;
+		}
+
+		const carnet = await envoyer("/api/compte-adresses.php", "GET");
+		const adresses: Adresse[] = carnet.donnees.adresses ?? [];
+
+		let adresseChoisie = adresses[0]?.id ?? 0;
+		const blocs: HTMLElement[] = [etapeAdresse(adresses, (id) => (adresseChoisie = id))];
+
+		if (adresses.length > 0) {
+			blocs.push(etapeRecapitulatif(panier, () => adresseChoisie));
+		}
+
+		zone.replaceChildren(...blocs);
+	}
+
+	void afficher();
+</script>
