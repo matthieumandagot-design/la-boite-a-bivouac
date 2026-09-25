@@ -1,7 +1,416 @@
 ---
+/**
+ * Mon compte (docs/SPEC-module-commercial.md §6.1).
+ *
+ * Quatre états, un seul visible à la fois : connexion, inscription, choix d'un
+ * nouveau mot de passe (quand on arrive depuis le lien reçu par email), et
+ * l'espace client une fois connecté.
+ *
+ * Tout le contenu est inerte dans le HTML statique : c'est le script qui décide
+ * quoi montrer, après avoir demandé au serveur si une session est ouverte. Les
+ * données affichées ne viennent jamais du navigateur.
+ */
+
 import PageCommerce from "../components/PageCommerce.astro";
 ---
 
-<PageCommerce title="Mon compte" description="Vos coordonnées et vos commandes.">
-	<p class="t-corps mt-4 text-brun-500">L'espace client arrive en phase 1.</p>
+<PageCommerce title="Mon compte" description="Vos coordonnées, vos adresses et vos commandes.">
+	<div id="compte-zone" class="mt-8 max-w-[46rem]">
+		<p class="t-petit text-brun-400">Chargement…</p>
+	</div>
 </PageCommerce>
+
+<script>
+	import { jetonCsrf } from "../scripts/panier";
+
+	const zone = document.getElementById("compte-zone");
+
+	/** Jeton courant. Renouvelé par le serveur à chaque connexion ou déconnexion. */
+	let jeton: string | null = null;
+
+	type Client = { id: number; email: string; prenom: string; nom: string };
+	type Adresse = {
+		id: number;
+		libelle: string;
+		ligne1: string;
+		ligne2: string;
+		code_postal: string;
+		ville: string;
+		pays: string;
+		telephone: string;
+	};
+
+	/** Appel JSON authentifié par le jeton CSRF courant. */
+	async function envoyer(url: string, methode: string, corps?: unknown): Promise<any> {
+		const entetes: Record<string, string> = { Accept: "application/json" };
+		if (corps !== undefined) entetes["Content-Type"] = "application/json";
+		if (jeton) entetes["X-CSRF-Token"] = jeton;
+
+		const reponse = await fetch(url, {
+			method: methode,
+			cache: "no-store",
+			credentials: "same-origin",
+			headers: entetes,
+			body: corps === undefined ? undefined : JSON.stringify(corps),
+		});
+
+		const donnees = await reponse.json().catch(() => ({}));
+		// Le serveur renvoie un nouveau jeton chaque fois que la session change
+		// d'identité : le suivre évite un refus au coup d'après.
+		if (typeof donnees.csrf === "string") jeton = donnees.csrf;
+
+		return { ok: reponse.ok, statut: reponse.status, donnees };
+	}
+
+	// ── Fabriques d'éléments ─────────────────────────────────────────────
+
+	function el<K extends keyof HTMLElementTagNameMap>(
+		balise: K,
+		classe = "",
+		texte = "",
+	): HTMLElementTagNameMap[K] {
+		const noeud = document.createElement(balise);
+		if (classe) noeud.className = classe;
+		if (texte) noeud.textContent = texte;
+		return noeud;
+	}
+
+	function carte(titre: string): HTMLElement {
+		const section = el("section", "mb-6 rounded-2xl border border-ardoise/30 bg-ecru-50 p-6");
+		section.append(el("h2", "t-sous font-display font-semibold text-brun-700", titre));
+		return section;
+	}
+
+	function champ(nom: string, intitule: string, type = "text", valeur = ""): HTMLLabelElement {
+		const label = el("label", "mt-4 block");
+		label.append(el("span", "t-petit font-medium text-brun-600", intitule));
+		const input = el("input", "mt-1 w-full rounded-xl border border-ardoise/40 bg-white px-3 py-2 text-brun-700");
+		input.type = type;
+		input.name = nom;
+		input.value = valeur;
+		if (type === "password") input.autocomplete = nom === "motdepasse" ? "current-password" : "new-password";
+		if (type === "email") input.autocomplete = "email";
+		label.append(input);
+		return label;
+	}
+
+	function boutonPrincipal(texte: string): HTMLButtonElement {
+		const bouton = el("button", "mt-5 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-5 py-2.5 font-semibold text-ecru-50 transition-colors hover:bg-rouille-400 disabled:opacity-50", texte);
+		bouton.type = "submit";
+		return bouton;
+	}
+
+	function lienBouton(texte: string): HTMLButtonElement {
+		const bouton = el("button", "t-petit text-brun-500 underline transition-colors hover:text-rouille-500", texte);
+		bouton.type = "button";
+		return bouton;
+	}
+
+	function messagerie(): { noeud: HTMLElement; dire: (texte: string, erreur?: boolean) => void } {
+		const noeud = el("p", "t-petit mt-4");
+		noeud.setAttribute("role", "status");
+		noeud.hidden = true;
+		return {
+			noeud,
+			dire(texte: string, erreur = false) {
+				noeud.textContent = texte;
+				noeud.className = `t-petit mt-4 ${erreur ? "text-rouille-500" : "text-brun-500"}`;
+				noeud.hidden = texte === "";
+			},
+		};
+	}
+
+	/** Valeur d'un champ du formulaire, toujours sous forme de chaîne. */
+	function valeur(formulaire: HTMLFormElement, nom: string): string {
+		const donnees = new FormData(formulaire).get(nom);
+		return typeof donnees === "string" ? donnees : "";
+	}
+
+	// ── Écrans ───────────────────────────────────────────────────────────
+
+	function ecranConnexion(): HTMLElement {
+		const bloc = el("div");
+
+		// Connexion
+		const connexion = carte("Se connecter");
+		const fConnexion = el("form");
+		fConnexion.append(champ("email", "Adresse email", "email"), champ("motdepasse", "Mot de passe", "password"));
+		const msgConnexion = messagerie();
+		fConnexion.append(boutonPrincipal("Se connecter"), msgConnexion.noeud);
+		connexion.append(fConnexion);
+
+		const oubli = lienBouton("Mot de passe oublié ?");
+		oubli.className += " mt-4 block";
+		connexion.append(oubli);
+		bloc.append(connexion);
+
+		fConnexion.addEventListener("submit", async (evenement) => {
+			evenement.preventDefault();
+			msgConnexion.dire("Connexion…");
+			const reponse = await envoyer("/api/compte-connexion.php", "POST", {
+				email: valeur(fConnexion, "email"),
+				motdepasse: valeur(fConnexion, "motdepasse"),
+			});
+			if (reponse.ok) {
+				void afficher();
+			} else {
+				msgConnexion.dire(reponse.donnees.error ?? "Connexion impossible.", true);
+			}
+		});
+
+		oubli.addEventListener("click", () => {
+			const formulaire = el("form", "mt-4");
+			formulaire.append(champ("email", "Votre adresse email", "email"));
+			const msg = messagerie();
+			formulaire.append(boutonPrincipal("Envoyer le lien"), msg.noeud);
+			oubli.replaceWith(formulaire);
+
+			formulaire.addEventListener("submit", async (evenement) => {
+				evenement.preventDefault();
+				msg.dire("Envoi…");
+				await envoyer("/api/compte-motdepasse-oublie.php", "POST", { email: valeur(formulaire, "email") });
+				// Réponse volontairement identique quoi qu'il arrive : elle ne doit
+				// pas révéler si l'adresse correspond à un compte.
+				msg.dire("Si un compte existe pour cette adresse, un lien vient d'être envoyé. Il est valable une heure.");
+			});
+		});
+
+		// Inscription
+		const inscription = carte("Créer un compte");
+		const fInscription = el("form");
+		fInscription.append(
+			champ("prenom", "Prénom"),
+			champ("nom", "Nom"),
+			champ("email", "Adresse email", "email"),
+			champ("motdepasse", "Mot de passe (10 caractères minimum)", "password"),
+		);
+		const msgInscription = messagerie();
+		fInscription.append(boutonPrincipal("Créer mon compte"), msgInscription.noeud);
+		inscription.append(fInscription);
+		bloc.append(inscription);
+
+		fInscription.addEventListener("submit", async (evenement) => {
+			evenement.preventDefault();
+			msgInscription.dire("Création…");
+
+			const identifiants = {
+				email: valeur(fInscription, "email"),
+				motdepasse: valeur(fInscription, "motdepasse"),
+			};
+
+			const creation = await envoyer("/api/compte-inscription.php", "POST", {
+				...identifiants,
+				prenom: valeur(fInscription, "prenom"),
+				nom: valeur(fInscription, "nom"),
+			});
+
+			if (!creation.ok) {
+				const champs = creation.donnees.champs ?? {};
+				const premier = Object.values(champs)[0];
+				msgInscription.dire(
+					typeof premier === "string" ? premier : (creation.donnees.error ?? "Création impossible."),
+					true,
+				);
+				return;
+			}
+
+			// L'inscription ne connecte pas : elle répond la même chose que
+			// l'adresse soit libre ou déjà prise, pour ne pas révéler l'existence
+			// d'un compte. On enchaîne donc sur une connexion ordinaire, qui
+			// réussit si le compte vient d'être créé.
+			const connexionAuto = await envoyer("/api/compte-connexion.php", "POST", identifiants);
+			if (connexionAuto.ok) {
+				void afficher();
+			} else {
+				msgInscription.dire(
+					"Cette adresse est peut-être déjà associée à un compte. Essayez de vous connecter.",
+					true,
+				);
+			}
+		});
+
+		return bloc;
+	}
+
+	function ecranReinitialisation(jetonReinit: string): HTMLElement {
+		const bloc = carte("Choisir un nouveau mot de passe");
+		const formulaire = el("form");
+		formulaire.append(champ("motdepasse", "Nouveau mot de passe (10 caractères minimum)", "password"));
+		const msg = messagerie();
+		formulaire.append(boutonPrincipal("Enregistrer"), msg.noeud);
+		bloc.append(formulaire);
+
+		formulaire.addEventListener("submit", async (evenement) => {
+			evenement.preventDefault();
+			msg.dire("Enregistrement…");
+			const reponse = await envoyer("/api/compte-motdepasse-reinit.php", "POST", {
+				jeton: jetonReinit,
+				motdepasse: valeur(formulaire, "motdepasse"),
+			});
+
+			if (reponse.ok) {
+				// Le jeton disparaît de l'URL : il ne sert plus, et il n'a rien à
+				// faire dans l'historique du navigateur.
+				history.replaceState(null, "", "/compte/");
+				msg.dire("Mot de passe modifié. Vous pouvez vous connecter.");
+				window.setTimeout(() => void afficher(), 1200);
+			} else {
+				const champs = reponse.donnees.champs ?? {};
+				const premier = Object.values(champs)[0];
+				msg.dire(typeof premier === "string" ? premier : (reponse.donnees.error ?? "Lien invalide."), true);
+			}
+		});
+
+		return bloc;
+	}
+
+	function ecranClient(client: Client, adresses: Adresse[]): HTMLElement {
+		const bloc = el("div");
+
+		// Coordonnées
+		const identite = carte("Coordonnées");
+		const nomComplet = `${client.prenom} ${client.nom}`.trim();
+		identite.append(
+			el("p", "t-corps mt-4 text-brun-700", nomComplet === "" ? client.email : nomComplet),
+			el("p", "t-petit text-brun-500", client.email),
+		);
+		const deconnexion = lienBouton("Se déconnecter");
+		deconnexion.className += " mt-5 block";
+		identite.append(deconnexion);
+		bloc.append(identite);
+
+		deconnexion.addEventListener("click", async () => {
+			await envoyer("/api/compte-deconnexion.php", "POST", {});
+			void afficher();
+		});
+
+		// Adresses
+		const carnet = carte("Adresses");
+		if (adresses.length === 0) {
+			carnet.append(el("p", "t-petit mt-4 text-brun-400", "Aucune adresse enregistrée."));
+		}
+		adresses.forEach((adresse) => {
+			const ligne = el("div", "mt-4 flex items-start justify-between gap-4 border-t border-ardoise/20 pt-4");
+			const texte = el("div");
+			if (adresse.libelle) texte.append(el("p", "t-petit font-semibold text-brun-600", adresse.libelle));
+			texte.append(
+				el("p", "t-petit text-brun-500", adresse.ligne1),
+				...(adresse.ligne2 ? [el("p", "t-petit text-brun-500", adresse.ligne2)] : []),
+				el("p", "t-petit text-brun-500", `${adresse.code_postal} ${adresse.ville} (${adresse.pays})`),
+			);
+			ligne.append(texte);
+
+			const supprimer = lienBouton("Supprimer");
+			supprimer.addEventListener("click", async () => {
+				await envoyer(`/api/compte-adresses.php?id=${adresse.id}`, "DELETE");
+				void afficher();
+			});
+			ligne.append(supprimer);
+			carnet.append(ligne);
+		});
+
+		const fAdresse = el("form", "mt-6 border-t border-ardoise/20 pt-4");
+		fAdresse.append(
+			champ("libelle", "Intitulé (facultatif)"),
+			champ("ligne1", "Adresse"),
+			champ("ligne2", "Complément (facultatif)"),
+			champ("code_postal", "Code postal"),
+			champ("ville", "Ville"),
+			champ("telephone", "Téléphone (facultatif)", "tel"),
+		);
+		const msgAdresse = messagerie();
+		fAdresse.append(boutonPrincipal("Ajouter cette adresse"), msgAdresse.noeud);
+		carnet.append(fAdresse);
+		bloc.append(carnet);
+
+		fAdresse.addEventListener("submit", async (evenement) => {
+			evenement.preventDefault();
+			msgAdresse.dire("Enregistrement…");
+			const reponse = await envoyer("/api/compte-adresses.php", "POST", {
+				libelle: valeur(fAdresse, "libelle"),
+				ligne1: valeur(fAdresse, "ligne1"),
+				ligne2: valeur(fAdresse, "ligne2"),
+				code_postal: valeur(fAdresse, "code_postal"),
+				ville: valeur(fAdresse, "ville"),
+				telephone: valeur(fAdresse, "telephone"),
+			});
+			if (reponse.ok) {
+				void afficher();
+			} else {
+				const champs = reponse.donnees.champs ?? {};
+				const premier = Object.values(champs)[0];
+				msgAdresse.dire(typeof premier === "string" ? premier : (reponse.donnees.error ?? "Adresse refusée."), true);
+			}
+		});
+
+		// Commandes
+		const commandes = carte("Commandes");
+		commandes.append(
+			el("p", "t-petit mt-4 text-brun-400", "Aucune commande pour l'instant. Le tunnel de commande arrive prochainement."),
+		);
+		bloc.append(commandes);
+
+		// Suppression
+		const fin = carte("Supprimer mon compte");
+		fin.append(
+			el(
+				"p",
+				"t-petit mt-4 text-brun-500",
+				"Vos coordonnées et vos adresses sont effacées. Les commandes déjà passées sont conservées sans vous identifier, comme la comptabilité l'exige. L'opération est définitive.",
+			),
+		);
+		const fSuppression = el("form", "mt-2");
+		fSuppression.append(champ("motdepasse", "Confirmez avec votre mot de passe", "password"));
+		const msgSuppression = messagerie();
+		const boutonSuppression = boutonPrincipal("Supprimer définitivement");
+		boutonSuppression.className = boutonSuppression.className.replace("bg-rouille-500", "bg-brun-700").replace("hover:bg-rouille-400", "hover:bg-brun-600");
+		fSuppression.append(boutonSuppression, msgSuppression.noeud);
+		fin.append(fSuppression);
+		bloc.append(fin);
+
+		fSuppression.addEventListener("submit", async (evenement) => {
+			evenement.preventDefault();
+			if (!window.confirm("Supprimer définitivement votre compte ?")) return;
+			msgSuppression.dire("Suppression…");
+			const reponse = await envoyer("/api/compte-suppression.php", "POST", {
+				motdepasse: valeur(fSuppression, "motdepasse"),
+			});
+			if (reponse.ok) {
+				void afficher();
+			} else {
+				msgSuppression.dire(reponse.donnees.error ?? "Suppression impossible.", true);
+			}
+		});
+
+		return bloc;
+	}
+
+	// ── Aiguillage ───────────────────────────────────────────────────────
+
+	async function afficher(): Promise<void> {
+		if (!zone) return;
+
+		jeton = await jetonCsrf(true);
+		if (!jeton) {
+			zone.replaceChildren(el("p", "t-petit text-brun-400", "Espace client indisponible pour le moment."));
+			return;
+		}
+
+		const reinit = new URLSearchParams(window.location.search).get("reinit");
+		if (reinit) {
+			zone.replaceChildren(ecranReinitialisation(reinit));
+			return;
+		}
+
+		const etat = await envoyer("/api/compte.php", "GET");
+		if (!etat.ok || etat.donnees.connecte !== true) {
+			zone.replaceChildren(ecranConnexion());
+			return;
+		}
+
+		const carnet = await envoyer("/api/compte-adresses.php", "GET");
+		zone.replaceChildren(ecranClient(etat.donnees.client as Client, (carnet.donnees.adresses ?? []) as Adresse[]));
+	}
+
+	void afficher();
+</script>

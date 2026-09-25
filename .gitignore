@@ -59,6 +59,10 @@ public/data/equipements.json
 public/uploads/equipements/*
 !public/uploads/equipements/.gitkeep
 
+# Photos du catalogue produits, televersees depuis /admin/produits.php.
+public/uploads/produits/*
+!public/uploads/produits/.gitkeep
+
 # Réglages du module commercial édités depuis /admin/parametres.php : état
 # serveur, jamais commité. Les valeurs par défaut restent dans
 # public/data/settings.default.json.

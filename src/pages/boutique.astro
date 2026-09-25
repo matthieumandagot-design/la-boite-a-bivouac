@@ -1,10 +1,290 @@
 ---
+/**
+ * Boutique (docs/SPEC-module-commercial.md §6.2 et §6.3).
+ *
+ * Deux blocs : la configuration de la Boîte, et les accessoires.
+ *
+ * Le configurateur complet vit sur /compatibilite à partir de la phase 2 ; ce
+ * qu'on trouve ici est le strict nécessaire pour mettre une Boîte au panier —
+ * une remorque du catalogue ou des cotes saisies, une hauteur. La liste des
+ * remorques est incluse au build depuis src/data/remorques.ts : c'est la même
+ * source que /compatibilite, et le serveur la relit de son côté au moment de
+ * calculer (voir public/lib/remorques.php).
+ *
+ * Aucun prix n'est écrit dans cette page. Tous ceux qui s'affichent viennent
+ * d'un appel à /api/panier.php ou /api/produits.php.
+ */
+
 import PageCommerce from "../components/PageCommerce.astro";
+import { REMORQUES, HAUTEUR_DEFAUT_CM } from "../data/remorques";
+
+/** Regroupées par marque, comme sur /compatibilite. */
+const PAR_MARQUE = REMORQUES.reduce<Record<string, typeof REMORQUES>>((acc, remorque) => {
+	(acc[remorque.marque] ??= []).push(remorque);
+	return acc;
+}, {});
 ---
 
 <PageCommerce
 	title="Boutique"
-	description="Accessoires compatibles avec La Boîte à Bivouac."
+	description="La Boîte à Bivouac sur mesure et ses accessoires."
 >
-	<p class="t-corps mt-4 text-brun-500">Le catalogue arrive en phase 1.</p>
+	<p class="t-corps mt-4 max-w-[70ch] text-brun-500">
+		Choisissez votre remorque : les dimensions de la Boîte en découlent. Si votre modèle
+		n'est pas listé, saisissez les cotes intérieures de la caisse.
+	</p>
+
+	<section class="mt-10 rounded-2xl border border-ardoise/30 bg-ecru-50 p-6">
+		<h2 class="t-sous font-display font-semibold text-brun-700">Votre Boîte</h2>
+
+		<div class="mt-6 grid gap-5 sm:grid-cols-2">
+			<label class="block">
+				<span class="t-petit font-medium text-brun-600">Remorque</span>
+				<select
+					id="remorque"
+					class="mt-2 w-full rounded-xl border border-ardoise/40 bg-white px-3 py-2 text-brun-700"
+				>
+					<option value="">Cotes personnalisées</option>
+					{
+						Object.entries(PAR_MARQUE).map(([marque, modeles]) => (
+							<optgroup label={marque}>
+								{modeles.map((r) => (
+									<option value={`${r.marque}|${r.modele}`} data-longueur={r.longueur} data-largeur={r.largeur} data-ridelle={r.ridelle ?? ""}>
+										{r.marque} {r.modele} — {r.longueur} × {r.largeur} cm
+									</option>
+								))}
+							</optgroup>
+						))
+					}
+				</select>
+			</label>
+
+			<label class="block">
+				<span class="t-petit font-medium text-brun-600">Hauteur souhaitée (cm)</span>
+				<input
+					id="hauteur"
+					type="number"
+					min="20"
+					max="260"
+					value={HAUTEUR_DEFAUT_CM}
+					class="mt-2 w-full rounded-xl border border-ardoise/40 bg-white px-3 py-2 text-brun-700"
+				/>
+			</label>
+		</div>
+
+		<div id="cotes-manuelles" class="mt-5 grid gap-5 sm:grid-cols-3">
+			<label class="block">
+				<span class="t-petit font-medium text-brun-600">Longueur intérieure (cm)</span>
+				<input id="longueur" type="number" min="1" max="1000" value="155" class="mt-2 w-full rounded-xl border border-ardoise/40 bg-white px-3 py-2 text-brun-700" />
+			</label>
+			<label class="block">
+				<span class="t-petit font-medium text-brun-600">Largeur intérieure (cm)</span>
+				<input id="largeur" type="number" min="1" max="1000" value="115" class="mt-2 w-full rounded-xl border border-ardoise/40 bg-white px-3 py-2 text-brun-700" />
+			</label>
+			<label class="block">
+				<span class="t-petit font-medium text-brun-600">Hauteur de ridelle (cm)</span>
+				<input id="ridelle" type="number" min="0" max="200" value="40" class="mt-2 w-full rounded-xl border border-ardoise/40 bg-white px-3 py-2 text-brun-700" />
+			</label>
+		</div>
+
+		{/* Rempli par le serveur : ni les dimensions ni le prix ne sont calculés ici. */}
+		<p id="apercu-boite" class="t-petit mt-6 text-brun-500" role="status">Calcul en cours…</p>
+
+		<button
+			id="ajouter-boite"
+			type="button"
+			class="mt-5 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-5 py-2.5 font-semibold text-ecru-50 transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-50"
+		>
+			Ajouter la Boîte au panier
+		</button>
+	</section>
+
+	<section class="mt-12">
+		<h2 class="t-sous font-display font-semibold text-brun-700">Accessoires</h2>
+		<div id="accessoires" class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+			<p class="t-petit text-brun-400">Chargement du catalogue…</p>
+		</div>
+	</section>
 </PageCommerce>
+
+<script>
+	import { ajouter, formaterCents, jetonCsrf } from "../scripts/panier";
+
+	const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
+
+	const selectRemorque = $<HTMLSelectElement>("remorque");
+	const champHauteur = $<HTMLInputElement>("hauteur");
+	const champLongueur = $<HTMLInputElement>("longueur");
+	const champLargeur = $<HTMLInputElement>("largeur");
+	const champRidelle = $<HTMLInputElement>("ridelle");
+	const blocCotes = $("cotes-manuelles");
+	const apercu = $("apercu-boite");
+	const bouton = $<HTMLButtonElement>("ajouter-boite");
+	const grilleAccessoires = $("accessoires");
+
+	if (selectRemorque && champHauteur && blocCotes && apercu && bouton) {
+		/** La configuration courante, au format attendu par le serveur. */
+		function ligneBoite() {
+			const cle = selectRemorque!.value;
+			const base = { type: "boite" as const, quantite: 1, hauteur: Number(champHauteur!.value) || undefined };
+
+			return cle
+				? { ...base, remorque: cle }
+				: {
+						...base,
+						longueur: Number(champLongueur?.value) || 0,
+						largeur: Number(champLargeur?.value) || 0,
+						ridelle: champRidelle?.value === "" ? null : Number(champRidelle?.value),
+					};
+		}
+
+		/**
+		 * Demande au serveur ce que donne la configuration courante.
+		 *
+		 * On envoie un panier d'une seule ligne à /api/panier.php plutôt que de
+		 * refaire le calcul ici : c'est exactement la règle qui s'appliquera à
+		 * la commande, et rien ne peut diverger.
+		 */
+		async function actualiserApercu(): Promise<void> {
+			const jeton = await jetonCsrf();
+			if (!jeton) {
+				apercu!.textContent = "Configuration indisponible pour le moment.";
+				bouton!.disabled = true;
+				return;
+			}
+
+			try {
+				const reponse = await fetch("/api/panier.php", {
+					method: "POST",
+					cache: "no-store",
+					credentials: "same-origin",
+					headers: { "Content-Type": "application/json", "X-CSRF-Token": jeton },
+					body: JSON.stringify({ lignes: [ligneBoite()] }),
+				});
+				if (!reponse.ok) throw new Error(String(reponse.status));
+
+				const donnees = await reponse.json();
+				const ligne = donnees.lignes?.[0];
+
+				if (!ligne) {
+					apercu!.textContent = donnees.refusees?.[0]?.motif ?? "Configuration impossible.";
+					bouton!.disabled = true;
+					return;
+				}
+
+				const mention = donnees.provisoire ? ` — ${donnees.mention}` : "";
+				apercu!.textContent = `${ligne.detail} · ${formaterCents(ligne.total_cents)}${mention}`;
+				bouton!.disabled = false;
+			} catch {
+				apercu!.textContent = "Configuration indisponible pour le moment.";
+				bouton!.disabled = true;
+			}
+		}
+
+		function refleterMode(): void {
+			// Les cotes ne servent que hors catalogue : les laisser modifiables
+			// ferait croire qu'elles l'emportent sur la remorque choisie.
+			blocCotes!.hidden = selectRemorque!.value !== "";
+			void actualiserApercu();
+		}
+
+		selectRemorque.addEventListener("change", refleterMode);
+		[champHauteur, champLongueur, champLargeur, champRidelle].forEach((champ) =>
+			champ?.addEventListener("change", () => void actualiserApercu()),
+		);
+
+		bouton.addEventListener("click", () => {
+			ajouter(ligneBoite());
+			bouton.textContent = "Ajouté au panier ✓";
+			window.setTimeout(() => (bouton.textContent = "Ajouter la Boîte au panier"), 2000);
+		});
+
+		refleterMode();
+	}
+
+	/** Catalogue des accessoires, lu depuis la base via l'API. */
+	async function chargerAccessoires(): Promise<void> {
+		if (!grilleAccessoires) return;
+
+		try {
+			const reponse = await fetch("/api/produits.php?type=accessoire", {
+				cache: "no-store",
+				credentials: "same-origin",
+				headers: { Accept: "application/json" },
+			});
+			if (!reponse.ok) throw new Error(String(reponse.status));
+
+			const donnees = await reponse.json();
+			const produits: any[] = donnees.produits ?? [];
+
+			if (produits.length === 0) {
+				grilleAccessoires.innerHTML =
+					'<p class="t-petit text-brun-400">Aucun accessoire au catalogue pour l\'instant.</p>';
+				return;
+			}
+
+			grilleAccessoires.replaceChildren(
+				...produits.map((produit) => carteAccessoire(produit, donnees.provisoire, donnees.mention)),
+			);
+		} catch {
+			grilleAccessoires.innerHTML =
+				'<p class="t-petit text-brun-400">Catalogue indisponible pour le moment.</p>';
+		}
+	}
+
+	function carteAccessoire(produit: any, provisoire: boolean, mention: string): HTMLElement {
+		const carte = document.createElement("article");
+		carte.className = "flex flex-col rounded-2xl border border-ardoise/30 bg-ecru-50 p-5";
+
+		if (produit.photo) {
+			const image = document.createElement("img");
+			image.src = produit.photo;
+			image.alt = "";
+			image.loading = "lazy";
+			image.className = "mb-4 h-40 w-full rounded-xl object-cover";
+			carte.append(image);
+		}
+
+		const titre = document.createElement("p");
+		titre.className = "font-display font-semibold text-brun-700";
+		// textContent et non innerHTML : le nom vient de la base, donc d'une
+		// saisie humaine, et n'a aucune raison d'être interprété comme du HTML.
+		titre.textContent = produit.nom;
+		carte.append(titre);
+
+		if (produit.description) {
+			const description = document.createElement("p");
+			description.className = "t-petit mt-1 flex-1 text-brun-500";
+			description.textContent = produit.description;
+			carte.append(description);
+		}
+
+		const prix = document.createElement("p");
+		prix.className = "mt-4 font-semibold text-brun-700";
+		prix.textContent = formaterCents(produit.prix_cents);
+		carte.append(prix);
+
+		if (provisoire) {
+			const badge = document.createElement("p");
+			badge.className = "t-petit text-rouille-500";
+			badge.textContent = mention;
+			carte.append(badge);
+		}
+
+		const bouton = document.createElement("button");
+		bouton.type = "button";
+		bouton.className =
+			"mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-mousse px-4 py-2 font-semibold text-sable transition-colors hover:bg-brun-700";
+		bouton.textContent = "Ajouter au panier";
+		bouton.addEventListener("click", () => {
+			ajouter({ type: "accessoire", produit_id: produit.id, quantite: 1 });
+			bouton.textContent = "Ajouté ✓";
+			window.setTimeout(() => (bouton.textContent = "Ajouter au panier"), 2000);
+		});
+		carte.append(bouton);
+
+		return carte;
+	}
+
+	void chargerAccessoires();
+</script>

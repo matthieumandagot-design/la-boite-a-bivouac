@@ -117,3 +117,4 @@ jobs:
             **/data/private/commerce.sqlite-wal
             **/data/private/commerce.sqlite-shm
             **/uploads/equipements/**
+            **/uploads/produits/**

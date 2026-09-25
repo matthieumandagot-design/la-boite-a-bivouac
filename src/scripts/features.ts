@@ -19,6 +19,8 @@
  *    répond 404 tant que le module dort.
  */
 
+import { rafraichirBadge } from "./panier";
+
 type EtatModule = { commerce: boolean; preview: boolean };
 
 const SELECTEUR = '[data-feature="commerce"]';
@@ -71,6 +73,9 @@ async function initialise(): Promise<void> {
 
 	if (etat.commerce || etat.preview) {
 		revele();
+		// La pastille du panier n'est mise à jour qu'une fois l'icône révélée :
+		// avant, il n'y a rien à compter à l'écran.
+		rafraichirBadge();
 	}
 
 	if (etat.preview) {

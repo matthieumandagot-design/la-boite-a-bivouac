@@ -190,8 +190,9 @@ function panierRecalcule($brut): array
 	// raison de perdre les articles légitimes qui le précèdent.
 	$entrees = array_slice(array_values($entrees), 0, PANIER_LIGNES_MAX);
 
-	foreach ($entrees as $entree) {
+	foreach ($entrees as $position => $entree) {
 		if (!is_array($entree)) {
+			$refusees[] = ['index' => $position, 'type' => 'inconnu', 'motif' => 'Ligne non reconnue.'];
 			continue;
 		}
 
@@ -202,11 +203,16 @@ function panierRecalcule($brut): array
 			default => ['ok' => false, 'type' => 'inconnu', 'motif' => 'Ligne non reconnue.'],
 		};
 
+		// La position d'origine voyage avec la ligne : sans elle, le navigateur
+		// devrait deviner à quelle entrée du localStorage correspond quel
+		// résultat — et se tromperait dès qu'une ligne est écartée.
+		$resultat['index'] = $position;
+
 		if ($resultat['ok']) {
 			unset($resultat['ok']);
 			$lignes[] = $resultat;
 		} else {
-			$refusees[] = ['type' => $resultat['type'], 'motif' => $resultat['motif']];
+			$refusees[] = ['index' => $position, 'type' => $resultat['type'], 'motif' => $resultat['motif']];
 		}
 	}
 

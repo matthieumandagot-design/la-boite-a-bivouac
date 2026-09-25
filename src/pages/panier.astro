@@ -1,7 +1,185 @@
 ---
+/**
+ * Panier (docs/SPEC-module-commercial.md §6.3).
+ *
+ * La page n'additionne rien. Elle envoie le contenu du localStorage à
+ * /api/panier.php et affiche ce que le serveur répond : libellés, dimensions,
+ * prix unitaires, total. Un prix trafiqué dans le stockage du navigateur n'a
+ * donc aucun effet — il n'y a même pas de champ prix à trafiquer.
+ *
+ * Le bouton « Commander » attend le tunnel de commande (§6.4), livré plus tard.
+ */
+
 import PageCommerce from "../components/PageCommerce.astro";
 ---
 
-<PageCommerce title="Panier" description="Votre panier.">
-	<p class="t-corps mt-4 text-brun-500">Le panier arrive en phase 1.</p>
+<PageCommerce title="Panier" description="Votre sélection.">
+	<div id="panier-contenu" class="mt-8">
+		<p class="t-petit text-brun-400">Chargement du panier…</p>
+	</div>
 </PageCommerce>
+
+<script>
+	import { lire, definirQuantite, retirer, vider, recalculer, formaterCents } from "../scripts/panier";
+	import type { PanierCalcule } from "../scripts/panier";
+
+	const contenu = document.getElementById("panier-contenu");
+
+	function vide(): HTMLElement {
+		const bloc = document.createElement("div");
+		bloc.className = "rounded-2xl border border-ardoise/30 bg-ecru-50 p-8 text-center";
+		bloc.innerHTML =
+			'<p class="t-corps text-brun-500">Votre panier est vide.</p>' +
+			'<a href="/boutique/" class="mt-5 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-5 py-2.5 font-semibold text-ecru-50 transition-colors hover:bg-rouille-400">Voir la boutique</a>';
+		return bloc;
+	}
+
+	function messageErreur(): HTMLElement {
+		const bloc = document.createElement("div");
+		bloc.className = "rounded-2xl border border-ardoise/30 bg-ecru-50 p-8 text-center";
+		bloc.innerHTML =
+			'<p class="t-corps text-brun-500">Impossible de calculer le panier pour le moment.</p>' +
+			'<p class="t-petit mt-2 text-brun-400">Réessayez dans un instant.</p>';
+		return bloc;
+	}
+
+	/** Une ligne du panier, telle que le serveur l'a recalculée. */
+	function carteLigne(ligne: PanierCalcule["lignes"][number], index: number, provisoire: boolean, mention: string): HTMLElement {
+		const article = document.createElement("article");
+		article.className = "flex flex-wrap items-start gap-4 border-t border-ardoise/20 py-5";
+
+		if (ligne.photo) {
+			const image = document.createElement("img");
+			image.src = ligne.photo;
+			image.alt = "";
+			image.loading = "lazy";
+			image.className = "h-20 w-20 rounded-xl object-cover";
+			article.append(image);
+		}
+
+		const texte = document.createElement("div");
+		texte.className = "min-w-[14rem] flex-1";
+
+		const titre = document.createElement("p");
+		titre.className = "font-display font-semibold text-brun-700";
+		titre.textContent = ligne.libelle;
+		texte.append(titre);
+
+		if (ligne.detail) {
+			const detail = document.createElement("p");
+			detail.className = "t-petit mt-1 text-brun-500";
+			detail.textContent = ligne.detail;
+			texte.append(detail);
+		}
+		article.append(texte);
+
+		const quantite = document.createElement("input");
+		quantite.type = "number";
+		quantite.min = "1";
+		quantite.max = "10";
+		quantite.value = String(ligne.quantite);
+		quantite.setAttribute("aria-label", `Quantité pour ${ligne.libelle}`);
+		quantite.className = "w-20 rounded-xl border border-ardoise/40 bg-white px-3 py-2 text-brun-700";
+		quantite.addEventListener("change", () => {
+			definirQuantite(index, Number(quantite.value));
+			void afficher();
+		});
+		article.append(quantite);
+
+		const montants = document.createElement("div");
+		montants.className = "min-w-[8rem] text-right";
+		const total = document.createElement("p");
+		total.className = "font-semibold text-brun-700";
+		total.textContent = formaterCents(ligne.total_cents);
+		montants.append(total);
+		if (provisoire) {
+			const badge = document.createElement("p");
+			badge.className = "t-petit text-rouille-500";
+			badge.textContent = mention;
+			montants.append(badge);
+		}
+		article.append(montants);
+
+		const supprimer = document.createElement("button");
+		supprimer.type = "button";
+		supprimer.className = "t-petit text-brun-400 underline transition-colors hover:text-rouille-500";
+		supprimer.textContent = "Retirer";
+		supprimer.addEventListener("click", () => {
+			retirer(index);
+			void afficher();
+		});
+		article.append(supprimer);
+
+		return article;
+	}
+
+	async function afficher(): Promise<void> {
+		if (!contenu) return;
+
+		if (lire().length === 0) {
+			contenu.replaceChildren(vide());
+			return;
+		}
+
+		const panier = await recalculer();
+		if (!panier) {
+			contenu.replaceChildren(messageErreur());
+			return;
+		}
+
+		const fragments: HTMLElement[] = [];
+
+		// Les lignes écartées d'abord : un article devenu indisponible doit se
+		// voir avant le total, pas après.
+		if (panier.refusees.length > 0) {
+			const alerte = document.createElement("div");
+			alerte.className = "mb-6 rounded-2xl border border-rouille-500/40 bg-rouille-500/5 p-4";
+			const titre = document.createElement("p");
+			titre.className = "t-petit font-semibold text-rouille-500";
+			titre.textContent = "Certaines lignes ont été écartées :";
+			alerte.append(titre);
+			const liste = document.createElement("ul");
+			liste.className = "t-petit mt-2 list-disc pl-5 text-brun-500";
+			panier.refusees.forEach((refus) => {
+				const item = document.createElement("li");
+				item.textContent = refus.motif;
+				liste.append(item);
+			});
+			alerte.append(liste);
+			fragments.push(alerte);
+		}
+
+		// Chaque ligne porte la position d'origine que le serveur lui a rendue :
+		// modifier une quantité vise donc la bonne entrée du localStorage, même
+		// quand des lignes ont été écartées entre-temps.
+		panier.lignes.forEach((ligne) => {
+			fragments.push(carteLigne(ligne, ligne.index, panier.provisoire, panier.mention));
+		});
+
+		const pied = document.createElement("div");
+		pied.className = "mt-8 rounded-2xl border border-ardoise/30 bg-ecru-50 p-6";
+		pied.innerHTML =
+			`<div class="flex items-baseline justify-between"><span class="t-corps text-brun-600">Total</span>` +
+			`<span class="t-sous font-display font-semibold text-brun-700">${formaterCents(panier.total_cents)}</span></div>` +
+			(panier.provisoire
+				? `<p class="t-petit mt-2 text-rouille-500">${panier.mention} — montants factices, aucun engagement.</p>`
+				: "") +
+			`<p class="t-petit mt-4 text-brun-400">Le tunnel de commande et le paiement arrivent prochainement.</p>`;
+		fragments.push(pied);
+
+		const vider_ = document.createElement("button");
+		vider_.type = "button";
+		vider_.className = "t-petit mt-4 text-brun-400 underline transition-colors hover:text-rouille-500";
+		vider_.textContent = "Vider le panier";
+		vider_.addEventListener("click", () => {
+			vider();
+			void afficher();
+		});
+		fragments.push(vider_);
+
+		contenu.replaceChildren(...fragments);
+	}
+
+	void afficher();
+	window.addEventListener("bab:panier", () => void afficher());
+</script>

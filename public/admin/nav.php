@@ -33,6 +33,7 @@ const ADMIN_LIENS = [
 	['/admin/send-news/', '📨', 'Envoyer une news'],
 	['/admin/equipements.php', '🧰', 'Équipements'],
 	['/admin/faq.php', '❓', 'FAQ'],
+	['/admin/produits.php', '📦', 'Produits'],
 	['/admin/parametres.php', '⚙️', 'Paramètres'],
 	['/admin/base.php', '🗄️', 'Base de données'],
 ];
