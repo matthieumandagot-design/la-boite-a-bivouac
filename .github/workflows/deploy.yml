@@ -80,10 +80,22 @@ jobs:
           # public/lib/rate-limit.php) : jamais commités, donc exclus du
           # déploiement pour ne pas être supprimés par ce sync. Même raison pour
           # les photos d'équipements téléversées depuis l'admin.
+          #
+          # Même logique pour le module commercial : data/settings.json porte
+          # l'état de l'interrupteur, réglé depuis /admin/parametres.php, et
+          # data/private/commerce.sqlite contient les comptes clients et les
+          # commandes. Un déploiement qui les écraserait remettrait la boutique
+          # dans un état arbitraire et détruirait des données de vente. Le
+          # .htaccess du dossier data/private, lui, reste versionné et déployé :
+          # c'est lui qui interdit l'accès HTTP à la base.
           exclude: |
             **/data/faq.json
             **/data/questions.json
             **/data/subscribers.json
             **/data/rate-limits.json
             **/data/equipements.json
+            **/data/settings.json
+            **/data/private/commerce.sqlite
+            **/data/private/commerce.sqlite-wal
+            **/data/private/commerce.sqlite-shm
             **/uploads/equipements/**

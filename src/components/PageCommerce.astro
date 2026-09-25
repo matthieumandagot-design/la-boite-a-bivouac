@@ -1,0 +1,91 @@
+---
+/**
+ * Coquille commune aux pages du module commercial : /panier, /compte,
+ * /commande, /boutique (docs/SPEC-module-commercial.md §5.3).
+ *
+ * En phase 0 ces pages n'ont pas de contenu — elles existent pour que le
+ * comportement « module désactivé » soit vérifiable dès maintenant : absentes
+ * du sitemap, en noindex, et renvoyées vers l'accueil tant que la boutique
+ * dort. Leur contenu réel arrive en phase 1.
+ *
+ * La redirection se fait forcément dans le navigateur : le site est statique,
+ * Apache ne sait pas si l'interrupteur est levé. Ce n'est donc pas une mesure
+ * de sécurité — ces pages ne contiendront jamais de donnée sensible, qui
+ * transite par les endpoints, eux protégés côté serveur par commerce-guard.
+ */
+
+import Layout from "../layouts/Layout.astro";
+
+interface Props {
+	title: string;
+	description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<Layout title={title} description={description} noindex>
+	{/* Le contenu ne s'affiche qu'une fois le module confirmé ouvert. Sans
+	    cela, la page clignoterait avant de disparaître à la redirection. */}
+	<section
+		data-feature="commerce"
+		hidden
+		class="px-6 py-20 sm:px-8 lg:px-12"
+	>
+		<h1 class="t-titre font-display font-semibold text-brun-700">{title}</h1>
+		<slot />
+	</section>
+
+	{/* Écran d'attente, le temps de savoir si la page a le droit d'exister. */}
+	<p
+		data-commerce-attente
+		class="t-petit px-6 py-20 text-center text-brun-400 sm:px-8 lg:px-12"
+	>
+		Chargement…
+	</p>
+</Layout>
+
+<script>
+	/**
+	 * Décide si la page peut rester affichée.
+	 *
+	 * Fermé par défaut : toute réponse inattendue, toute erreur réseau renvoie
+	 * à l'accueil. Mieux vaut un visiteur remis sur la page d'accueil qu'une
+	 * page de boutique ouverte alors que la boutique ne l'est pas.
+	 *
+	 * replace() plutôt que href : la page refusée ne doit pas s'installer dans
+	 * l'historique, sinon le bouton Retour y ramène en boucle.
+	 */
+	async function controleAcces(): Promise<void> {
+		let autorise = false;
+
+		try {
+			const reponse = await fetch("/api/settings.php", {
+				cache: "no-store",
+				headers: { Accept: "application/json" },
+				credentials: "same-origin",
+			});
+
+			if (reponse.ok) {
+				const donnees: unknown = await reponse.json();
+				if (typeof donnees === "object" && donnees !== null) {
+					const { commerce, preview } = donnees as Record<string, unknown>;
+					autorise = commerce === true || preview === true;
+				}
+			}
+		} catch {
+			autorise = false;
+		}
+
+		if (!autorise) {
+			window.location.replace("/");
+			return;
+		}
+
+		document
+			.querySelectorAll<HTMLElement>("[data-commerce-attente]")
+			.forEach((element) => element.remove());
+	}
+
+	void controleAcces();
+</script>

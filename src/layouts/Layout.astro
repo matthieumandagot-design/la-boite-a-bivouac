@@ -13,9 +13,13 @@ interface Props {
 	/** Visuel de partage propre à la page. Chemin absolu depuis la racine du
 	 *  site ; il est transformé en URL complète plus bas. */
 	image?: string;
+	/** Retire la page des moteurs de recherche. Utilisé par les pages du module
+	 *  commercial, qui n'ont rien à faire dans un index tant que la boutique
+	 *  n'est pas ouverte — et qui redirigent vers l'accueil dans ce cas. */
+	noindex?: boolean;
 }
 
-const { title, fullTitle, description = SITE_DESCRIPTION, image } = Astro.props;
+const { title, fullTitle, description = SITE_DESCRIPTION, image, noindex = false } = Astro.props;
 const pageTitle = fullTitle ?? (title ? `${title} · ${SITE_TITLE}` : SITE_TITLE);
 
 // Partage social. Facebook, LinkedIn et WhatsApp exigent des URL absolues :
@@ -81,7 +85,7 @@ const breadcrumbSchema = !isHome && title
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content={description} />
-		<meta name="robots" content="index, follow" />
+		<meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
 		<link rel="canonical" href={pageUrl} />
 		<title>{pageTitle}</title>
 
@@ -114,10 +118,29 @@ const breadcrumbSchema = !isHome && title
 		{breadcrumbSchema && <script type="application/ld+json" set:html={toJsonLd(breadcrumbSchema)} />}
 	</head>
 	<body class="flex min-h-screen flex-col font-sans">
+		{/* Bandeau d'aperçu du module commercial : visible uniquement pour un
+		    administrateur reconnu, quand la boutique est encore fermée au
+		    public. Révélé par src/scripts/features.ts, jamais rendu visible
+		    par le serveur — le HTML statique est le même pour tout le monde. */}
+		<div
+			data-commerce-preview
+			hidden
+			role="status"
+			class="bg-rouille-500 px-6 py-2 text-center t-petit font-medium text-ecru-50"
+		>
+			Mode aperçu — boutique non publique
+		</div>
 		<Header />
 		<main class="flex-1">
 			<slot />
 		</main>
 		<Footer />
+
+		{/* Interroge /api/settings.php et révèle les éléments commerciaux si le
+		    module est ouvert, ou si un admin est reconnu. Échec = rien n'est
+		    révélé (voir le commentaire du script). */}
+		<script>
+			import "../scripts/features";
+		</script>
 	</body>
 </html>

@@ -55,3 +55,14 @@ public/data/equipements.json
 # Photos d'equipements televersees depuis l'admin.
 public/uploads/equipements/*
 !public/uploads/equipements/.gitkeep
+
+# Réglages du module commercial édités depuis /admin/parametres.php : état
+# serveur, jamais commité. Les valeurs par défaut restent dans
+# public/data/settings.default.json.
+public/data/settings.json
+
+# Base SQLite du module commercial et ses fichiers annexes (WAL, index partagé).
+# Contiennent des données clients : jamais dans le dépôt.
+public/data/private/*.sqlite
+public/data/private/*.sqlite-wal
+public/data/private/*.sqlite-shm

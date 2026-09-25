@@ -1,0 +1,30 @@
+# Dossier des données privées du module commercial : base SQLite et ses
+# fichiers annexes (-wal, -shm). Rien ici ne doit être servi par HTTP.
+#
+# Le reste de /data est au contraire public — /data/faq.json et
+# /data/equipements.json sont lus par le navigateur —, d'où cette interdiction
+# limitée à ce sous-dossier plutôt qu'à /data entier.
+#
+# Les deux syntaxes cohabitent : Apache 2.4 lit la première, 2.2 la seconde.
+# Les gardes IfModule évitent l'erreur 500 si l'un des modules manque.
+
+<IfModule mod_authz_core.c>
+	Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+	Order allow,deny
+	Deny from all
+</IfModule>
+
+# Ceinture et bretelles : même si une réécriture ou une configuration d'hôte
+# contournait les règles ci-dessus, aucun de ces fichiers ne serait servi.
+<FilesMatch "\.(sqlite|sqlite3|db|sqlite-wal|sqlite-shm|json)$">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order allow,deny
+		Deny from all
+	</IfModule>
+</FilesMatch>

@@ -1,0 +1,13 @@
+# Les fichiers de migration décrivent tout le schéma de la base : noms de
+# tables, colonnes, contraintes. Servis par HTTP, ils donneraient à un attaquant
+# la carte exacte de ce qu'il cherche à atteindre. Ils ne sont lus que par PHP,
+# côté serveur, et n'ont donc aucune raison d'être accessibles.
+
+<IfModule mod_authz_core.c>
+	Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+	Order allow,deny
+	Deny from all
+</IfModule>

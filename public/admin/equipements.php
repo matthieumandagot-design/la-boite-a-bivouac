@@ -1,7 +1,12 @@
 <?php
 declare(strict_types=1);
 
-session_start();
+// Session partagée avec le module commercial : c'est sa trace qui permet au
+// site public de reconnaître un admin et d'afficher le mode aperçu, le Basic
+// Auth n'étant pas transmis hors de /admin. Remplace session_start() pour
+// poser au passage un cookie Secure/HttpOnly/SameSite.
+require_once __DIR__ . '/../lib/admin-session.php';
+demarrerSessionAdmin();
 
 // Empêche l'indexation par les moteurs de recherche, en plus de robots.txt.
 header('X-Robots-Tag: noindex, nofollow', true);
@@ -62,6 +67,9 @@ if ($user === null || $pass === null) {
 if (!hash_equals(ADMIN_USERNAME, $user) || !password_verify($pass, ADMIN_PASSWORD_HASH)) {
 	denyAccess();
 }
+
+// Authentification confirmée : on en garde la trace pour le mode aperçu.
+marquerSessionAdmin();
 
 if (empty($_SESSION['csrf_token'])) {
 	$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -902,6 +910,12 @@ foreach ($equipements as $item) {
 					</a>
 					<a href="/admin/faq.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
 						<span aria-hidden="true">❓</span> FAQ
+					</a>
+					<a href="/admin/parametres.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
+						<span aria-hidden="true">⚙️</span> Paramètres
+					</a>
+					<a href="/admin/base.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
+						<span aria-hidden="true">🗄️</span> Base de données
 					</a>
 					<a href="/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-top:.75rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#babba8;border-top:1px solid rgba(232,224,200,0.12);padding-top:1rem;">
 						<span aria-hidden="true">🌐</span> Voir le site
