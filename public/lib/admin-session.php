@@ -17,37 +17,21 @@ declare(strict_types=1);
  * d'abord, et elle expire d'elle-même.
  */
 
+require_once __DIR__ . '/session.php';
+
 /** Au-delà, la trace admin est ignorée et il faut repasser par /admin. */
 const ADMIN_SESSION_TTL = 8 * 3600;
 
 /**
- * Démarre la session avec un cookie durci, avant toute écriture de sortie.
+ * Démarre la session, avant toute écriture de sortie.
  *
- * À appeler à la place de session_start(). Les paramètres de cookie doivent
- * être posés AVANT le démarrage : une fois la session ouverte, ils n'ont plus
- * aucun effet.
+ * À appeler à la place de session_start(). Le durcissement du cookie vit
+ * désormais dans session.php, partagé avec les comptes clients : un seul
+ * endroit où les drapeaux Secure / HttpOnly / SameSite sont décidés.
  */
 function demarrerSessionAdmin(): void
 {
-	if (session_status() === PHP_SESSION_ACTIVE) {
-		return;
-	}
-
-	session_set_cookie_params([
-		// Chemin racine : le cookie posé par /admin/*.php doit accompagner les
-		// appels à /api/settings.php, sinon le mode aperçu ne peut pas marcher.
-		'path' => '/',
-		// Le site est servi en HTTPS de bout en bout ; on refuse que ce cookie
-		// parte en clair si une URL http:// traînait quelque part.
-		'secure' => true,
-		'httponly' => true,
-		// Lax et non Strict : l'admin doit rester reconnu en arrivant sur le
-		// site depuis un lien externe. Suffisant ici, le cookie n'autorisant
-		// aucune action d'écriture à lui seul.
-		'samesite' => 'Lax',
-	]);
-
-	session_start();
+	demarrerSessionSite();
 }
 
 /** Marque la session courante comme authentifiée. À appeler après le Basic Auth. */
@@ -69,7 +53,7 @@ function sessionAdminOuverte(): bool
 	if (session_status() !== PHP_SESSION_ACTIVE) {
 		// Pas de cookie de session : inutile d'en créer un pour un visiteur
 		// anonyme, cela poserait un cookie à tout le monde sans raison.
-		if (!isset($_COOKIE[session_name()])) {
+		if (!sessionSitePresente()) {
 			return false;
 		}
 		demarrerSessionAdmin();
