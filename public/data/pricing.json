@@ -20,7 +20,8 @@
 	},
 
 	"options": {
-		"_note": "Liste des options du configurateur non arrêtée (question 6, phase 2). Vide volontairement : inventer des options donnerait l'illusion d'un catalogue décidé.",
+		"_note": "Liste des options du configurateur non arrêtée (question 6, phase 2). Vide volontairement : inventer des options donnerait l'illusion d'un catalogue décidé. La mécanique, elle, est en place — ajouter une entrée ici la fait apparaître dans le configurateur et la rend facturable, sans toucher au code.",
+		"_format": "Chaque entrée : { \"id\": \"identifiant-stable-en-minuscules\", \"libelle\": \"Nom affiché\", \"description\": \"Une phrase, facultative\", \"prix_cents\": 0 }. L'id voyage dans l'URL partageable et dans le panier : ne jamais le renommer une fois publié, une commande passée y ferait référence.",
 		"disponibles": []
 	},
 

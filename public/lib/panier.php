@@ -102,24 +102,39 @@ function panierLigneBoite(array $ligne): array
 		];
 	}
 
-	$prix = prixBoiteCents($dimensions);
+	// Options du configurateur (§7). Un identifiant inconnu fait refuser la
+	// ligne : il signale un catalogue qui a changé, ou un panier bricolé. Dans
+	// les deux cas, deviner ce que le client voulait serait pire que demander.
+	$options = prixOptionsCents($ligne['options'] ?? []);
+	if ($options['inconnues'] !== []) {
+		return [
+			'ok' => false,
+			'type' => 'boite',
+			'motif' => 'Une option choisie n\'existe plus : revoyez votre configuration.',
+		];
+	}
+
+	$prix = prixBoiteCents($dimensions, $options['cents']);
 	if ($prix['hors_bornes']) {
 		// Configuration de prix incohérente : refuser vaut mieux que facturer un
 		// montant que personne n'a décidé.
 		return ['ok' => false, 'type' => 'boite', 'motif' => 'Prix indisponible pour cette configuration.'];
 	}
 
+	$libellesOptions = array_column($options['retenues'], 'libelle');
+
 	return [
 		'ok' => true,
 		'type' => 'boite',
 		'libelle' => 'La Boîte à Bivouac sur mesure',
 		'detail' => sprintf(
-			'%d × %d × %d cm — %d L (%s)',
+			'%d × %d × %d cm — %d L (%s)%s',
 			$dimensions['longueur'],
 			$dimensions['largeur'],
 			$dimensions['hauteur'],
 			$dimensions['volume'],
-			$libelleRemorque
+			$libelleRemorque,
+			$libellesOptions === [] ? '' : ' · ' . implode(', ', $libellesOptions)
 		),
 		'configuration' => [
 			'remorque' => $cle === '' ? null : $cle,
@@ -127,6 +142,7 @@ function panierLigneBoite(array $ligne): array
 			'largeur_interieure' => $largeur,
 			'ridelle' => $ridelle,
 			'dimensions' => $dimensions,
+			'options' => $options['retenues'],
 		],
 		'quantite' => $quantite,
 		'prix_unitaire_cents' => $prix['cents'],

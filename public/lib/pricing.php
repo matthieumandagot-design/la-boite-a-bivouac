@@ -88,19 +88,104 @@ function pricingEntier(array $source, string $cle): int
  * de configuration, pas une commande légitime. L'appelant doit refuser la ligne
  * plutôt que facturer un montant que personne n'a décidé.
  */
-function prixBoiteCents(array $dimensions): array
+function prixBoiteCents(array $dimensions, int $optionsCents = 0): array
 {
 	$boite = pricing()['boite'] ?? [];
 
 	$total = pricingEntier($boite, 'prix_base_cents')
 		+ (int) round($dimensions['volume'] * pricingEntier($boite, 'supplement_par_litre_cents'))
-		+ (int) round($dimensions['hauteur'] * pricingEntier($boite, 'supplement_par_cm_hauteur_cents'));
+		+ (int) round($dimensions['hauteur'] * pricingEntier($boite, 'supplement_par_cm_hauteur_cents'))
+		// Les options entrent AVANT le contrôle des bornes : elles font partie du
+		// prix de la boîte configurée, et un cumul aberrant doit être attrapé.
+		+ max(0, $optionsCents);
 
 	$min = pricingEntier($boite, 'total_min_cents');
 	$max = pricingEntier($boite, 'total_max_cents');
 	$horsBornes = $max <= 0 || $total < $min || $total > $max;
 
 	return ['cents' => $total, 'hors_bornes' => $horsBornes];
+}
+
+/**
+ * Options du configurateur, indexées par identifiant (§7, question 6).
+ *
+ * La liste vit dans data/pricing.json et peut être vide — elle l'est tant que
+ * les options ne sont pas arrêtées. Une entrée mal formée est écartée plutôt
+ * que corrigée : mieux vaut une option qui n'apparaît pas qu'une option
+ * facturée à un prix deviné.
+ *
+ * @return array<string, array{id: string, libelle: string, description: string, prix_cents: int}>
+ */
+function pricingOptions(): array
+{
+	$brutes = pricing()['options']['disponibles'] ?? [];
+	if (!is_array($brutes)) {
+		return [];
+	}
+
+	$options = [];
+	foreach ($brutes as $option) {
+		if (!is_array($option)) {
+			continue;
+		}
+		$id = $option['id'] ?? null;
+		$libelle = $option['libelle'] ?? null;
+		$prix = $option['prix_cents'] ?? null;
+
+		if (!is_string($id) || $id === '' || !is_string($libelle) || $libelle === '' || !is_int($prix) || $prix < 0) {
+			continue;
+		}
+
+		$options[$id] = [
+			'id' => $id,
+			'libelle' => $libelle,
+			'description' => is_string($option['description'] ?? null) ? $option['description'] : '',
+			'prix_cents' => $prix,
+		];
+	}
+
+	return $options;
+}
+
+/**
+ * Additionne des options choisies.
+ *
+ * Un identifiant inconnu n'est pas ignoré en silence : il ressort dans
+ * « inconnues », et l'appelant refuse la ligne. Une option retirée du catalogue
+ * entre l'affichage et la commande doit se voir, pas disparaître du total.
+ *
+ * @param mixed $ids ce que le navigateur a transmis, sans confiance
+ * @return array{cents: int, retenues: array<int, array{id: string, libelle: string, prix_cents: int}>, inconnues: string[]}
+ */
+function prixOptionsCents($ids): array
+{
+	$disponibles = pricingOptions();
+	$retenues = [];
+	$inconnues = [];
+	$total = 0;
+	$vues = [];
+
+	foreach (is_array($ids) ? $ids : [] as $id) {
+		if (!is_string($id) || $id === '' || isset($vues[$id])) {
+			// Doublon : une même option ne se facture pas deux fois.
+			continue;
+		}
+		$vues[$id] = true;
+
+		if (!isset($disponibles[$id])) {
+			$inconnues[] = $id;
+			continue;
+		}
+
+		$retenues[] = [
+			'id' => $id,
+			'libelle' => $disponibles[$id]['libelle'],
+			'prix_cents' => $disponibles[$id]['prix_cents'],
+		];
+		$total += $disponibles[$id]['prix_cents'];
+	}
+
+	return ['cents' => $total, 'retenues' => $retenues, 'inconnues' => $inconnues];
 }
 
 /** Forfait de livraison, en centimes. */
