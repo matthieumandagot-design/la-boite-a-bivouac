@@ -3,7 +3,8 @@
 	"provisoire": true,
 	"devise": "EUR",
 	"_note_tva": "Question 4 non tranchée (franchise en base ou non). Les montants ci-dessous sont traités comme TTC, comme le prix de 2 000 € déjà affiché publiquement sur /la-boite. À revoir dès que le régime est connu.",
-	"mention_provisoire": "Prix indicatif, non contractuel",
+	"mention_provisoire": "À DÉFINIR",
+	"explication_provisoire": "Montant factice, affiché uniquement pour que le panier fonctionne. Le modèle de prix de la Boîte n'est pas arrêté (question 1 de docs/SPEC-module-commercial.md). Rien ici n'est contractuel.",
 
 	"boite": {
 		"_note": "Le prix de base reprend les 2 000 € annoncés sur le site pour rester cohérent avec ce qu'un visiteur a déjà pu lire. C'est le seul point de contact avec la réalité ; tout le reste est arbitraire.",

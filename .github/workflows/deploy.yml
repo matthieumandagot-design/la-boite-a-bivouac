@@ -47,6 +47,14 @@ jobs:
       - name: Sync live content into build fallbacks
         run: node scripts/fetch-contenu-live.mjs
 
+      # Recopie les cotes des 28 remorques de src/data/remorques.ts vers le PHP
+      # qui recalcule les dimensions de la Boîte côté serveur. Régénéré à chaque
+      # build : les deux listes ne peuvent pas diverger en silence, ce qui
+      # ferait afficher une cote et en facturer une autre. Le fichier produit
+      # est aussi commité, pour que les tests locaux tournent sans build.
+      - name: Generate PHP trailer data
+        run: node scripts/generer-remorques-php.mjs
+
       - name: Build site
         run: npm run build
 
