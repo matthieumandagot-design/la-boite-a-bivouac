@@ -26,9 +26,11 @@ if (!defined('BAB_ADMIN')) {
 }
 
 const ADMIN_LIENS = [
-	['/admin', '🏠', 'Tableau de bord'],
-	['/admin/subscribers', '📧', 'Abonnés'],
-	['/admin/send-news', '📨', 'Envoyer une news'],
+	// Slash final sur les trois pages Astro, comme dans AdminLayout.astro : sans
+	// lui, Apache répond d'abord une redirection avant de servir la page.
+	['/admin/', '🏠', 'Tableau de bord'],
+	['/admin/subscribers/', '📧', 'Abonnés'],
+	['/admin/send-news/', '📨', 'Envoyer une news'],
 	['/admin/equipements.php', '🧰', 'Équipements'],
 	['/admin/faq.php', '❓', 'FAQ'],
 	['/admin/parametres.php', '⚙️', 'Paramètres'],

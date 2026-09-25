@@ -4,7 +4,19 @@ interface Props {
 }
 
 const { title } = Astro.props;
-const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
+
+/**
+ * Compare deux chemins sans se soucier du slash final.
+ *
+ * Les href de NAV_ITEMS en portent un (« /admin/subscribers/ »), conformément à
+ * la convention du site, alors que le chemin courant était comparé après
+ * suppression du sien. Les deux ne pouvaient donc jamais être égaux, et aucun
+ * lien n'était surligné — sur les trois pages Astro, le menu n'indiquait jamais
+ * où l'on se trouvait. Normaliser les deux côtés est la seule façon d'éviter
+ * que la comparaison dépende d'un détail d'écriture.
+ */
+const normaliseChemin = (chemin: string): string => chemin.replace(/\/+$/, "") || "/";
+const currentPath = normaliseChemin(Astro.url.pathname);
 
 const NAV_ITEMS = [
 	{ href: "/admin/", label: "Tableau de bord", icon: "🏠" },
@@ -84,9 +96,13 @@ const SOCIAL_TOOL_LINKS = [
 		</style>
 	</head>
 	<body>
+		{/* Les deux écrans partent masqués. Le script en ligne plus bas décide
+		    lequel afficher avant le premier rendu : autrement, le navigateur
+		    peignait l'écran de connexion sombre à chaque changement de page,
+		    puis le remplaçait par l'application une fois le réseau revenu. */}
 		<div
 			id="admin-login-gate"
-			style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#122218;padding:1.5rem;"
+			style="min-height:100vh;display:none;align-items:center;justify-content:center;background:#122218;padding:1.5rem;"
 		>
 			<form
 				id="admin-login-form"
@@ -143,10 +159,11 @@ const SOCIAL_TOOL_LINKS = [
 				<nav style="flex:1;overflow-y:auto;padding:1rem 0.75rem;">
 					{
 						NAV_ITEMS.map((item) => {
-							const active = currentPath === item.href;
+							const active = normaliseChemin(item.href) === currentPath;
 							return (
 								<a
 									href={item.href}
+									aria-current={active ? "page" : undefined}
 									style={`display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:${active ? "#0a1610" : "#e8e0c8"};background:${active ? "#e8b428" : "transparent"};`}
 								>
 									<span aria-hidden="true">{item.icon}</span>
@@ -221,6 +238,42 @@ const SOCIAL_TOOL_LINKS = [
 			</div>
 		</div>
 
+		<noscript>
+			<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#122218;color:#e8e0c8;padding:1.5rem;text-align:center;font-family:'Inter',system-ui,sans-serif;">
+				<p>L'administration a besoin de JavaScript pour fonctionner.</p>
+			</div>
+		</noscript>
+
+		{/* En ligne et non bundlé : ces quelques lignes doivent s'exécuter avant
+		    le premier rendu. Un script de module Astro est différé, il ne
+		    s'exécute qu'après l'analyse du document — trop tard, l'écran a déjà
+		    été peint. Même motif que les scripts de thème sombre.
+
+		    La décision est purement locale (sessionStorage), donc instantanée :
+		    aucun aller-retour réseau avant d'afficher quelque chose. La
+		    vérification des identifiants, elle, continue en arrière-plan dans le
+		    script ci-dessous, et referme l'application s'ils ne valent plus rien.
+
+		    Révéler l'interface sans attendre ne divulgue rien : ce HTML est
+		    public de toute façon, et toutes les données passent par adminFetch,
+		    qui exige l'en-tête d'authentification et retombe sur l'écran de
+		    connexion au moindre 401. */}
+		<script is:inline>
+			(function () {
+				var connecte = false;
+				try {
+					connecte = !!sessionStorage.getItem("lbb_admin_credentials");
+				} catch (erreur) {
+					// sessionStorage inaccessible (navigation privée verrouillée,
+					// cookies bloqués) : on montre l'écran de connexion.
+				}
+				var cible = document.getElementById(connecte ? "admin-shell" : "admin-login-gate");
+				if (cible) {
+					cible.style.display = "flex";
+				}
+			})();
+		</script>
+
 		<script>
 			const STORAGE_KEY = "lbb_admin_credentials";
 
@@ -277,6 +330,19 @@ const SOCIAL_TOOL_LINKS = [
 			// Exposé pour les scripts des pages admin (tableau de bord, abonnés, envoi de news).
 			(window as any).adminFetch = adminFetch;
 
+			/**
+			 * Affiche l'écran qui convient, puis vérifie les identifiants.
+			 *
+			 * L'ordre compte : le script en ligne a déjà montré l'application si
+			 * des identifiants dormaient en session, et on ne revient pas
+			 * là-dessus le temps d'un aller-retour réseau. Attendre la réponse
+			 * avant d'afficher quoi que ce soit, c'était garantir un écran sombre
+			 * à chaque navigation entre les pages d'administration.
+			 *
+			 * L'événement admin-authenticated reste émis après la vérification :
+			 * c'est lui qui déclenche le chargement des données de chaque page, et
+			 * rien ne sert de les demander avec des identifiants périmés.
+			 */
 			async function verifyAndReveal() {
 				const creds = getStoredCredentials();
 				if (!creds) {
@@ -284,20 +350,21 @@ const SOCIAL_TOOL_LINKS = [
 					return;
 				}
 
+				showShell();
+
 				try {
 					const response = await fetch("/api/subscribers.php", {
 						headers: { Authorization: "Basic " + btoa(`${creds.username}:${creds.password}`) },
 					});
 					if (response.ok) {
-						showShell();
 						window.dispatchEvent(new CustomEvent("admin-authenticated"));
 					} else {
 						clearStoredCredentials();
 						showLoginGate();
 					}
 				} catch {
-					// Hors-ligne : on garde la session ouverte plutôt que de forcer une reconnexion.
-					showShell();
+					// Hors-ligne : on garde la session ouverte plutôt que de forcer
+					// une reconnexion impossible à réussir sans réseau.
 				}
 			}
 
