@@ -35,7 +35,7 @@ ${SITE_TITLE} conçoit et fabrique à Toulouse, en Haute-Garonne (Occitanie, Fra
 
 - [Accueil](${lien("/")}) : l'entreprise, sa façon de fabriquer et ses partis pris.
 - [La Boîte](${lien("/la-boite/")}) : le produit, la V1 fabriquée à la main en Occitanie, la V2 en préparation, et le prix indicatif.
-- [Compatibilité](${lien("/compatibilite/")}) : outil de calcul. ${REMORQUES.length} modèles de remorques relevés chez ${marques.length} marques (${marques.join(", ")}), avec leurs dimensions intérieures, hauteur de ridelle et PTAC. Donne les dimensions exactes du module qui y logera, son volume et la classe de péage autoroutier de l'attelage.
+- [Configurateur](${lien("/configurateur/")}) : définit la Boîte sur mesure d'une remorque. On choisit parmi ${REMORQUES.length} modèles relevés chez ${marques.length} marques (${marques.join(", ")}) ou on saisit ses propres cotes ; la page donne les dimensions exactes du module, son volume, sa hauteur hors tout et la classe de péage autoroutier de l'attelage.
 - [Équipements](${lien("/equipements/")}) : catalogue d'équipements compatibles, vendus séparément.
 - [FAQ](${lien("/faq/")}) : ${faq.length} questions-réponses sur la compatibilité, l'installation, les dimensions, le poids et les matériaux.
 - [Contact](${lien("/contact/")}) : formulaire de demande.
@@ -50,7 +50,7 @@ ${SITE_TITLE} conçoit et fabrique à Toulouse, en Haute-Garonne (Occitanie, Fra
 
 ## Ce que nous ne faisons pas
 
-- Nous ne vendons pas de remorques. Les marques citées sur la page Compatibilité sont des références de mesure, sans lien commercial.
+- Nous ne vendons pas de remorques. Les marques citées dans le configurateur sont des références de mesure, sans lien commercial.
 - Nous ne vendons pas de fourgon ni de cellule amovible pour pick-up.
 
 ## Contact

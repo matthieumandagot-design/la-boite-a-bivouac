@@ -13,7 +13,7 @@ declare(strict_types=1);
  * src/data/remorques.ts, puis relancer le générateur.
  *
  * La clé de chaque remorque est « marque|modele », exactement la valeur du
- * sélecteur de /compatibilite : c'est elle que le panier transmet.
+ * sélecteur de /configurateur : c'est elle que le panier transmet.
  */
 
 const RQ_HAUTEUR_DEFAUT_CM = 90;

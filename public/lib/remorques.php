@@ -8,7 +8,7 @@ declare(strict_types=1);
  * Portage à l'identique de src/data/remorques.ts. Le serveur ne fait confiance
  * à aucune dimension venue du navigateur : il recalcule tout à partir de la
  * remorque choisie ou des cotes saisies, exactement comme la page
- * /compatibilite l'a affiché au visiteur.
+ * /configurateur l'a affiché au visiteur.
  *
  * Les DONNÉES (les 28 remorques et les constantes) ne sont pas recopiées ici :
  * elles sont générées depuis le TypeScript dans remorques-data.php. Seule la

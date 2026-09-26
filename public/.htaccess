@@ -1,2 +1,5 @@
 RewriteEngine On
 RewriteRule ^produit/?$ /la-boite [R=301,L]
+# Ancienne adresse du configurateur (renommé le 27/09/2026) : les liens
+# existants et le référencement suivent la redirection permanente.
+RewriteRule ^compatibilite/?$ /configurateur/ [R=301,L]
