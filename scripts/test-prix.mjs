@@ -62,7 +62,12 @@ require '${path.join(bac, "lib", "panier.php").replace(/\\/g, "/")}';
 $sortie = [];
 $dims = rqCalculeBoite(155, 115, 90.0, 40);
 
+$sortie['longueur_boite'] = $dims['longueur'];
 $sortie['base'] = prixBoiteCents($dims)['cents'];
+// Modèle du 27/09/2026 : 1 000 € fixes + variable de 200 € (100 cm) à
+// 1 500 € (300 cm), prolongée de part et d'autre, jamais négative.
+$sortie['variable'] = array_map('prixVariableLongueurCents', [100, 200, 300, 350, 80, 50]);
+
 $sortie['options_catalogue'] = array_keys(pricingOptions());
 $sortie['une_option'] = prixBoiteCents($dims, prixOptionsCents(['galerie'])['cents'])['cents'];
 $sortie['deux_options'] = prixBoiteCents($dims, prixOptionsCents(['galerie', 'serrure'])['cents'])['cents'];
@@ -102,15 +107,22 @@ echo json_encode($sortie);
 	verifie("seules les entrées bien formées sont retenues", ["galerie", "serrure"], r.options_catalogue);
 	verifie("prix négatif et prix en chaîne traités comme inconnus", ["negatif", "chaine"], r.mal_formees);
 
+	console.log("\n### prix selon la longueur");
+	verifie("variable : 200 € à 100 cm, 850 € à 200 cm, 1 500 € à 300 cm", [20000, 85000, 150000], r.variable.slice(0, 3));
+	verifie("variable prolongée au-delà de 300 cm", 182500, r.variable[3]);
+	verifie("variable prolongée en dessous de 100 cm", 7000, r.variable[4]);
+	verifie("variable jamais négative", 0, r.variable[5]);
+	const attendu = 100000 + Math.round(20000 + (r.longueur_boite - 100) * 650);
+	verifie(`boîte de ${r.longueur_boite} cm : fixe + variable`, attendu, r.base);
+
 	console.log("\n### addition");
-	verifie("prix de base seul", 200000, r.base);
-	verifie("une option ajoutée", 215000, r.une_option);
-	verifie("deux options ajoutées", 219500, r.deux_options);
+	verifie("une option ajoutée", attendu + 15000, r.une_option);
+	verifie("deux options ajoutées", attendu + 19500, r.deux_options);
 	verifie("même option deux fois comptée une seule", 15000, r.doublon);
 	verifie("option inconnue signalée", ["inexistante"], r.inconnue);
 
 	console.log("\n### panier");
-	verifie("total du panier avec option", 215000, r.panier_total);
+	verifie("total du panier avec option (Erdé Classic 163, même caisse)", attendu + 15000, r.panier_total);
 	verifie("option nommée dans le détail", true, String(r.panier_detail).includes("Galerie de toit"));
 	verifie("option conservée dans la configuration", ["galerie"], r.panier_config_options);
 	verifie("option inconnue fait refuser la ligne", true, r.option_inconnue_refusee);

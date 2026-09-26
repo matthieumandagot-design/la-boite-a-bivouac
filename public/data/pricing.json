@@ -1,16 +1,20 @@
 {
-	"_AVERTISSEMENT": "VALEURS FACTICES — AUCUN PRIX RÉEL. Placeholders autorisés par Matthieu le 25/09/2026 pour débloquer le développement, en attendant la réponse à la question 1 de docs/SPEC-module-commercial.md (modèle de prix de la Boîte : fixe, selon dimensions, ou selon options). Tant que provisoire vaut true, toute interface affichant ces montants doit les signaler comme indicatifs.",
+	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026 (voir boite._note). Livraison, TVA et options restent à trancher. Tant que provisoire vaut true, toute interface affichant ces montants doit les signaler comme indicatifs.",
 	"provisoire": true,
 	"devise": "EUR",
 	"_note_tva": "Question 4 non tranchée (franchise en base ou non). Les montants ci-dessous sont traités comme TTC, comme le prix de 2 000 € déjà affiché publiquement sur /la-boite. À revoir dès que le régime est connu.",
 	"mention_provisoire": "À DÉFINIR",
-	"explication_provisoire": "Montant factice, affiché uniquement pour que le panier fonctionne. Le modèle de prix de la Boîte n'est pas arrêté (question 1 de docs/SPEC-module-commercial.md). Rien ici n'est contractuel.",
+	"explication_provisoire": "Le modèle de prix de la Boîte est arrêté (27/09/2026), mais TVA, livraison et CGV ne le sont pas encore : les montants restent indicatifs tant que provisoire vaut true. Rien ici n'est contractuel.",
 
 	"boite": {
-		"_note": "Le prix de base reprend les 2 000 € annoncés sur le site pour rester cohérent avec ce qu'un visiteur a déjà pu lire. C'est le seul point de contact avec la réalité ; tout le reste est arbitraire.",
-		"prix_base_cents": 200000,
+		"_note": "Modèle de prix décidé par Matthieu le 27/09/2026 : une partie fixe de 1 000 €, plus une partie variable selon la LONGUEUR DE LA BOÎTE (pas celle de la remorque). La variable va de 200 € à 100 cm à 1 500 € à 300 cm, en ligne droite (6,50 € par cm), et se prolonge au-delà de ces longueurs dans les deux sens, sans descendre sous zéro.",
+		"prix_base_cents": 100000,
+		"variable_longueur": {
+			"de": { "longueur_cm": 100, "cents": 20000 },
+			"a": { "longueur_cm": 300, "cents": 150000 }
+		},
 
-		"_note_dimensions": "Composante liée à la taille, à zéro tant que le modèle n'est pas arrêté. Laisser à 0 revient à un prix fixe, ce qui est le comportement le plus prudent : aucun client ne se verra facturer un supplément inventé.",
+		"_note_dimensions": "Composantes au volume et à la hauteur, inutilisées par le modèle actuel : à zéro.",
 		"supplement_par_litre_cents": 0,
 		"supplement_par_cm_hauteur_cents": 0,
 
