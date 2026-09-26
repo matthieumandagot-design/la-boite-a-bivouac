@@ -115,10 +115,10 @@ function renderAdminSidebar(string $actif): void
 				</a>
 			<?php endforeach; ?>
 		</nav>
-		<?php // Pas de bouton de déconnexion : l'authentification est celle du
-		      // navigateur (Basic Auth), qu'une page ne peut pas révoquer. ?>
-		<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);font-size:.75rem;color:#babba8;">
-			Fermez l'onglet pour vous déconnecter (authentification navigateur).
+		<?php // La déconnexion elle-même se fait en POST depuis /admin/ (voir
+		      // AdminLayout.astro) : un simple lien ne doit rien modifier. ?>
+		<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);">
+			<a href="/admin/?deconnexion=1" style="display:block;text-align:center;border:1px solid rgba(232,224,200,0.3);color:#e8e0c8;border-radius:.5rem;padding:.5rem;font-size:.85rem;text-decoration:none;">Déconnexion</a>
 		</div>
 	</aside>
 	<?php
