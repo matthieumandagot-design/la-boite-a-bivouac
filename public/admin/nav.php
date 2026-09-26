@@ -35,6 +35,7 @@ const ADMIN_LIENS = [
 	['/admin/faq.php', '❓', 'FAQ'],
 	['/admin/produits.php', '📦', 'Produits'],
 	['/admin/commandes.php', '🧾', 'Commandes'],
+	['/admin/clients.php', '👥', 'Clients'],
 	['/admin/parametres.php', '⚙️', 'Paramètres'],
 	['/admin/base.php', '🗄️', 'Base de données'],
 ];
