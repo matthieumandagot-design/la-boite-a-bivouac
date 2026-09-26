@@ -6,15 +6,16 @@ declare(strict_types=1);
  * de /admin (voir docs/SPEC-module-commercial.md §5.1, mode aperçu).
  *
  * POURQUOI UNE SESSION EN PLUS DU BASIC AUTH
- * L'administration est protégée par HTTP Basic Auth. Le navigateur ne renvoie
- * ces identifiants qu'aux URL du même espace protégé : `/api/settings.php`,
- * appelé depuis les pages publiques, ne les reçoit pas. Sans un cookie de
- * session, il n'aurait donc aucun moyen de savoir qu'un admin regarde le site,
- * et le mode aperçu serait impossible.
+ * Le mot de passe est vérifié une fois, à la connexion (formulaire de /admin/,
+ * qui l'envoie en Basic Auth). Cette session en garde la trace et ouvre
+ * ensuite toute l'administration — pages PHP, API et mode aperçu du site
+ * public — sans redemander le mot de passe, pendant ADMIN_SESSION_TTL.
  *
- * Le Basic Auth reste seul juge de l'authentification. Cette session n'en est
- * que la trace : elle ne donne accès à rien qu'un mot de passe n'ait ouvert
- * d'abord, et elle expire d'elle-même.
+ * Avant le 27/09/2026, chaque page PHP exigeait le Basic Auth du navigateur :
+ * deux connexions distinctes pour une même administration, et une fenêtre
+ * qu'on annulait par réflexe. Elle ne donne toujours accès à rien qu'un mot de
+ * passe n'ait ouvert d'abord, expire d'elle-même, et se referme par
+ * fermerSessionAdmin().
  */
 
 require_once __DIR__ . '/session.php';
@@ -34,14 +35,42 @@ function demarrerSessionAdmin(): void
 	demarrerSessionSite();
 }
 
-/** Marque la session courante comme authentifiée. À appeler après le Basic Auth. */
+/**
+ * Marque la session courante comme authentifiée. À appeler après vérification
+ * du mot de passe, et seulement là : la date posée ici ouvre toute
+ * l'administration pendant ADMIN_SESSION_TTL, sans prolongation à l'usage.
+ */
 function marquerSessionAdmin(): void
 {
 	if (session_status() !== PHP_SESSION_ACTIVE) {
 		demarrerSessionAdmin();
 	}
 
+	// Nouvel identifiant au passage à l'état admin : un identifiant de session
+	// connu d'avance (fixation) ne doit pas devenir une session admin.
+	if (!isset($_SESSION['bab_admin_depuis'])) {
+		session_regenerate_id(true);
+	}
+
 	$_SESSION['bab_admin_depuis'] = time();
+}
+
+/**
+ * Referme la session admin. La session client éventuelle (test en mode
+ * aperçu) reste ouverte : se déconnecter de l'administration n'a pas à vider
+ * un panier ou déconnecter un compte client.
+ */
+function fermerSessionAdmin(): void
+{
+	if (!sessionSitePresente()) {
+		return;
+	}
+	if (session_status() !== PHP_SESSION_ACTIVE) {
+		demarrerSessionAdmin();
+	}
+
+	unset($_SESSION['bab_admin_depuis'], $_SESSION['csrf_token']);
+	session_regenerate_id(true);
 }
 
 /**

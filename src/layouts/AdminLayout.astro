@@ -252,23 +252,28 @@ const SOCIAL_TOOL_LINKS = [
 		    s'exécute qu'après l'analyse du document — trop tard, l'écran a déjà
 		    été peint. Même motif que les scripts de thème sombre.
 
-		    La décision est purement locale (sessionStorage), donc instantanée :
+		    La décision est purement locale (localStorage), donc instantanée :
 		    aucun aller-retour réseau avant d'afficher quelque chose. La
 		    vérification des identifiants, elle, continue en arrière-plan dans le
 		    script ci-dessous, et referme l'application s'ils ne valent plus rien.
 
 		    Révéler l'interface sans attendre ne divulgue rien : ce HTML est
 		    public de toute façon, et toutes les données passent par adminFetch,
-		    qui exige l'en-tête d'authentification et retombe sur l'écran de
-		    connexion au moindre 401. */}
+		    que le serveur n'honore qu'avec une session admin valide, et qui
+		    retombe sur l'écran de connexion au moindre 401. */}
 		<script is:inline>
 			(function () {
+				// Simple indice d'affichage, pas une preuve : la session réelle est
+				// un cookie HttpOnly que ce script ne peut pas lire. Il évite
+				// seulement de peindre l'écran de connexion à chaque changement de
+				// page ; le script suivant vérifie auprès du serveur.
 				var connecte = false;
 				try {
-					connecte = !!sessionStorage.getItem("lbb_admin_credentials");
+					connecte =
+						localStorage.getItem("lbb_admin_connecte") === "1" &&
+						new URLSearchParams(location.search).get("deconnexion") !== "1";
 				} catch (erreur) {
-					// sessionStorage inaccessible (navigation privée verrouillée,
-					// cookies bloqués) : on montre l'écran de connexion.
+					// Stockage inaccessible : on montre l'écran de connexion.
 				}
 				var cible = document.getElementById(connecte ? "admin-shell" : "admin-login-gate");
 				if (cible) {
@@ -278,31 +283,35 @@ const SOCIAL_TOOL_LINKS = [
 		</script>
 
 		<script>
-			const STORAGE_KEY = "lbb_admin_credentials";
+			/*
+			 * Connexion unique à l'administration (depuis le 27/09/2026).
+			 *
+			 * Le mot de passe part une seule fois, au formulaire, en Basic Auth :
+			 * le serveur ouvre alors une session admin (cookie HttpOnly, 8 h), qui
+			 * vaut pour ces pages, pour les pages PHP (Commandes, Produits, FAQ…)
+			 * et pour le mode aperçu. Le mot de passe n'est plus conservé dans le
+			 * navigateur.
+			 *
+			 * Les requêtes portent l'en-tête X-Admin-Requete : le serveur l'exige
+			 * sur toute écriture authentifiée par session, et un autre site ne
+			 * peut pas l'ajouter (protection CSRF, voir api/lib/admin-auth.php).
+			 */
+			const INDICE = "lbb_admin_connecte";
 
-			type Credentials = { username: string; password: string };
-
-			function getStoredCredentials(): Credentials | null {
+			function marquerConnecte(oui: boolean) {
 				try {
-					const raw = sessionStorage.getItem(STORAGE_KEY);
-					return raw ? (JSON.parse(raw) as Credentials) : null;
+					if (oui) localStorage.setItem(INDICE, "1");
+					else localStorage.removeItem(INDICE);
 				} catch {
-					return null;
+					// Sans stockage, seul l'indice d'affichage est perdu.
 				}
 			}
 
-			function setStoredCredentials(username: string, password: string) {
-				sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ username, password }));
-			}
-
-			function clearStoredCredentials() {
-				sessionStorage.removeItem(STORAGE_KEY);
-			}
-
-			function authHeader(): string | null {
-				const creds = getStoredCredentials();
-				if (!creds) return null;
-				return "Basic " + btoa(`${creds.username}:${creds.password}`);
+			// Ancien stockage du mot de passe en clair (avant le 27/09/2026).
+			try {
+				sessionStorage.removeItem("lbb_admin_credentials");
+			} catch {
+				// Rien à nettoyer.
 			}
 
 			const loginGate = document.getElementById("admin-login-gate")!;
@@ -319,12 +328,11 @@ const SOCIAL_TOOL_LINKS = [
 			}
 
 			async function adminFetch(url: string, options: RequestInit = {}): Promise<Response> {
-				const header = authHeader();
 				const headers = new Headers(options.headers);
-				if (header) headers.set("Authorization", header);
-				const response = await fetch(url, { ...options, headers });
+				headers.set("X-Admin-Requete", "1");
+				const response = await fetch(url, { ...options, headers, credentials: "same-origin" });
 				if (response.status === 401) {
-					clearStoredCredentials();
+					marquerConnecte(false);
 					showLoginGate();
 				}
 				return response;
@@ -334,39 +342,58 @@ const SOCIAL_TOOL_LINKS = [
 			(window as any).adminFetch = adminFetch;
 
 			/**
-			 * Affiche l'écran qui convient, puis vérifie les identifiants.
-			 *
-			 * L'ordre compte : le script en ligne a déjà montré l'application si
-			 * des identifiants dormaient en session, et on ne revient pas
-			 * là-dessus le temps d'un aller-retour réseau. Attendre la réponse
-			 * avant d'afficher quoi que ce soit, c'était garantir un écran sombre
-			 * à chaque navigation entre les pages d'administration.
-			 *
-			 * L'événement admin-authenticated reste émis après la vérification :
-			 * c'est lui qui déclenche le chargement des données de chaque page, et
-			 * rien ne sert de les demander avec des identifiants périmés.
+			 * Page PHP d'où vient l'administrateur, renvoyé ici faute de session.
+			 * Seuls les chemins de /admin/ sont suivis : un paramètre retour
+			 * pointant ailleurs ferait de ce formulaire un tremplin de phishing.
+			 */
+			function retourDemande(): string | null {
+				const retour = new URLSearchParams(location.search).get("retour");
+				return retour && retour.startsWith("/admin/") ? retour : null;
+			}
+
+			async function deconnecter() {
+				try {
+					await fetch("/api/admin-deconnexion.php", {
+						method: "POST",
+						headers: { "X-Admin-Requete": "1" },
+						credentials: "same-origin",
+					});
+				} catch {
+					// Hors-ligne : la session expirera d'elle-même.
+				}
+				marquerConnecte(false);
+				history.replaceState(null, "", "/admin/");
+				showLoginGate();
+			}
+
+			/**
+			 * Vérifie la session auprès du serveur, puis affiche l'écran qui
+			 * convient. L'événement admin-authenticated déclenche le chargement
+			 * des données de chaque page.
 			 */
 			async function verifyAndReveal() {
-				const creds = getStoredCredentials();
-				if (!creds) {
-					showLoginGate();
+				if (new URLSearchParams(location.search).get("deconnexion") === "1") {
+					await deconnecter();
 					return;
 				}
 
-				showShell();
-
 				try {
-					const response = await fetch("/api/subscribers.php", {
-						headers: { Authorization: "Basic " + btoa(`${creds.username}:${creds.password}`) },
-					});
+					const response = await fetch("/api/subscribers.php", { credentials: "same-origin" });
 					if (response.ok) {
+						marquerConnecte(true);
+						const retour = retourDemande();
+						if (retour) {
+							location.replace(retour);
+							return;
+						}
+						showShell();
 						window.dispatchEvent(new CustomEvent("admin-authenticated"));
 					} else {
-						clearStoredCredentials();
+						marquerConnecte(false);
 						showLoginGate();
 					}
 				} catch {
-					// Hors-ligne : on garde la session ouverte plutôt que de forcer
+					// Hors-ligne : on garde l'écran affiché plutôt que de forcer
 					// une reconnexion impossible à réussir sans réseau.
 				}
 			}
@@ -382,12 +409,19 @@ const SOCIAL_TOOL_LINKS = [
 				loginError.style.display = "none";
 
 				try {
+					// Seul envoi du mot de passe : le serveur ouvre la session admin.
 					const response = await fetch("/api/subscribers.php", {
 						headers: { Authorization: "Basic " + btoa(`${username}:${password}`) },
+						credentials: "same-origin",
 					});
 
 					if (response.ok) {
-						setStoredCredentials(username, password);
+						marquerConnecte(true);
+						const retour = retourDemande();
+						if (retour) {
+							location.replace(retour);
+							return;
+						}
 						showShell();
 						window.dispatchEvent(new CustomEvent("admin-authenticated"));
 					} else {
@@ -401,8 +435,7 @@ const SOCIAL_TOOL_LINKS = [
 			});
 
 			document.getElementById("admin-logout")?.addEventListener("click", () => {
-				clearStoredCredentials();
-				showLoginGate();
+				void deconnecter();
 			});
 
 			verifyAndReveal();
