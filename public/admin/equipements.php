@@ -917,6 +917,9 @@ foreach ($equipements as $item) {
 					<a href="/admin/commandes.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
 						<span aria-hidden="true">🧾</span> Commandes
 					</a>
+					<a href="/admin/clients.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
+						<span aria-hidden="true">👥</span> Clients
+					</a>
 					<a href="/admin/parametres.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
 						<span aria-hidden="true">⚙️</span> Paramètres
 					</a>

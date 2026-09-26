@@ -237,3 +237,70 @@ function clientPublic(array $client): array
 		'nom' => (string) $client['nom'],
 	];
 }
+
+/** Clients affichés par page dans l'administration. */
+const CLIENTS_PAR_PAGE = 50;
+
+/**
+ * Liste et recherche des clients, pour l'administration (§6.6, « P1 »).
+ *
+ * La recherche porte sur l'email, le prénom et le nom. LIKE de SQLite ignore
+ * la casse pour les lettres ASCII, ce qui suffit : les emails sont déjà
+ * normalisés en minuscules, et « dupont » trouve « Dupont ». Les jokers % et _
+ * saisis sont échappés : chercher « jean_dupont » ne doit pas trouver
+ * « jean-dupont ».
+ *
+ * Les comptes supprimés restent listés, repérables par anonymise_a : leurs
+ * commandes existent toujours et il faut pouvoir les retrouver.
+ *
+ * @return array{clients: list<array<string, mixed>>, total: int}
+ */
+function clientsRechercher(string $recherche = '', int $page = 1): array
+{
+	$recherche = trim($recherche);
+	$condition = '';
+	$parametres = [];
+
+	if ($recherche !== '') {
+		$motif = '%' . strtr($recherche, ['\\' => '\\\\', '%' => '\\%', '_' => '\\_']) . '%';
+		$condition = " WHERE c.email LIKE :q ESCAPE '\\' OR c.prenom LIKE :q ESCAPE '\\' OR c.nom LIKE :q ESCAPE '\\'
+		               OR (c.prenom || ' ' || c.nom) LIKE :q ESCAPE '\\'";
+		$parametres[':q'] = $motif;
+	}
+
+	$pdo = bdCommerce();
+
+	$compte = $pdo->prepare('SELECT COUNT(*) FROM customers c' . $condition);
+	$compte->execute($parametres);
+	$total = (int) $compte->fetchColumn();
+
+	// Le chiffre d'affaires ne compte que les commandes réellement encaissées
+	// en mode réel : une commande de test ou abandonnée n'est pas une vente.
+	$requete = $pdo->prepare(
+		"SELECT c.id, c.email, c.prenom, c.nom, c.created_at, c.email_verifie_a, c.anonymise_a,
+		        COUNT(o.id) AS nb_commandes,
+		        COALESCE(SUM(CASE WHEN o.payment_mode = 'live' AND o.paid_at IS NOT NULL
+		                          AND o.statut NOT IN ('annulee', 'remboursee')
+		                     THEN o.total_cents END), 0) AS encaisse_cents
+		 FROM customers c LEFT JOIN orders o ON o.customer_id = c.id"
+		. $condition .
+		' GROUP BY c.id ORDER BY c.id DESC LIMIT :limite OFFSET :decalage'
+	);
+	foreach ($parametres as $cle => $valeur) {
+		$requete->bindValue($cle, $valeur);
+	}
+	$requete->bindValue(':limite', CLIENTS_PAR_PAGE, PDO::PARAM_INT);
+	$requete->bindValue(':decalage', (max(1, $page) - 1) * CLIENTS_PAR_PAGE, PDO::PARAM_INT);
+	$requete->execute();
+
+	return ['clients' => $requete->fetchAll(), 'total' => $total];
+}
+
+/** Adresses d'un client, pour l'administration. */
+function clientAdresses(int $clientId): array
+{
+	$requete = bdCommerce()->prepare('SELECT * FROM addresses WHERE customer_id = :id ORDER BY id');
+	$requete->execute([':id' => $clientId]);
+
+	return $requete->fetchAll();
+}

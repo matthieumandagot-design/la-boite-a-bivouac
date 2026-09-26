@@ -4,10 +4,13 @@ declare(strict_types=1);
 /**
  * Emails liés aux commandes (docs/SPEC-module-commercial.md §6.4).
  *
- * Envoyés UNIQUEMENT après confirmation du paiement par le webhook. Une
- * commande en attente n'est pas une vente : annoncer « merci pour votre
- * commande » à quelqu'un dont la carte a été refusée serait faux, et l'inciter
- * à attendre une livraison qui ne viendra pas.
+ * La confirmation de commande part UNIQUEMENT après validation du paiement par
+ * le webhook. Une commande en attente n'est pas une vente : annoncer « merci
+ * pour votre commande » à quelqu'un dont la carte a été refusée serait faux, et
+ * l'inciter à attendre une livraison qui ne viendra pas.
+ *
+ * Les changements de statut suivants (fabrication, expédition, annulation…)
+ * sont annoncés au client depuis l'administration (§6.6).
  *
  * Un échec d'envoi ne doit jamais faire échouer le webhook : Stripe réémettrait
  * l'événement, et la commande repasserait au statut payée en boucle. Les
@@ -103,57 +106,137 @@ function emailNotificationAtelier(array $commande, array $lignes, string $client
 }
 
 /**
- * Envoie les deux emails d'une commande payée.
+ * Envoie un email par le SMTP du site. Retourne false au lieu de lever.
  *
- * @return array{client: bool, atelier: bool} ce qui est effectivement parti
+ * Une connexion par message : les envois sont rares, et une session SMTP
+ * partagée ferait qu'un premier échec emporte les suivants.
  */
-function envoyerEmailsCommandePayee(array $commande, array $lignes, array $client): array
+function emailEnvoyer(string $destinataire, string $sujet, string $html, string $contexte): bool
 {
-	$resultat = ['client' => false, 'atelier' => false];
-
 	$config = __DIR__ . '/../api/config.php';
 	if (!is_file($config)) {
 		// Absent en développement local : rien ne part, et c'est normal.
-		error_log('[emails-commande] config.php absent, aucun email envoyé pour ' . $commande['numero']);
+		error_log('[emails-commande] config.php absent, aucun email envoyé (' . $contexte . ')');
 
-		return $resultat;
+		return false;
 	}
 
 	require_once $config;
 	require_once __DIR__ . '/../api/lib/smtp.php';
 
+	try {
+		$smtp = new SimpleSmtp(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS);
+		$smtp->connect();
+		$smtp->sendMail($destinataire, $sujet, $html);
+		$smtp->quit();
+
+		return true;
+	} catch (Throwable $e) {
+		error_log('[emails-commande] envoi impossible (' . $contexte . ') : ' . $e->getMessage());
+
+		return false;
+	}
+}
+
+/**
+ * Envoie les deux emails d'une commande payée.
+ *
+ * Deux envois séparés : l'échec de la notification interne ne doit pas priver
+ * le client de sa confirmation, et inversement.
+ *
+ * @return array{client: bool, atelier: bool} ce qui est effectivement parti
+ */
+function envoyerEmailsCommandePayee(array $commande, array $lignes, array $client): array
+{
 	$nom = trim(((string) $client['prenom']) . ' ' . ((string) $client['nom']));
 	$numero = (string) $commande['numero'];
 
-	// Deux envois séparés, chacun dans son try : l'échec de la notification
-	// interne ne doit pas priver le client de sa confirmation, et inversement.
-	try {
-		$smtp = new SimpleSmtp(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS);
-		$smtp->connect();
-		$smtp->sendMail(
+	return [
+		'client' => emailEnvoyer(
 			(string) $client['email'],
 			'Votre commande ' . $numero . ' — La Boîte à Bivouac',
-			emailConfirmationClient($commande, $lignes, (string) $client['prenom'])
-		);
-		$smtp->quit();
-		$resultat['client'] = true;
-	} catch (Throwable $e) {
-		error_log('[emails-commande] confirmation client impossible (' . $numero . ') : ' . $e->getMessage());
-	}
-
-	try {
-		$smtp = new SimpleSmtp(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS);
-		$smtp->connect();
-		$smtp->sendMail(
+			emailConfirmationClient($commande, $lignes, (string) $client['prenom']),
+			'confirmation client ' . $numero
+		),
+		'atelier' => emailEnvoyer(
 			EMAIL_ATELIER,
 			'Commande ' . $numero . ' payée',
-			emailNotificationAtelier($commande, $lignes, $nom, (string) $client['email'])
-		);
-		$smtp->quit();
-		$resultat['atelier'] = true;
-	} catch (Throwable $e) {
-		error_log('[emails-commande] notification atelier impossible (' . $numero . ') : ' . $e->getMessage());
+			emailNotificationAtelier($commande, $lignes, $nom, (string) $client['email']),
+			'notification atelier ' . $numero
+		),
+	];
+}
+
+/**
+ * Message affiché au client pour chaque statut (§6.6, « P1 »).
+ *
+ * « En attente de paiement » n'en a pas : c'est l'état de départ, jamais une
+ * nouvelle à annoncer. « Payée » non plus : ce passage-là est annoncé par la
+ * confirmation de commande, qui porte le récapitulatif complet.
+ *
+ * @return array<string, string>
+ */
+function emailMessagesStatut(): array
+{
+	return [
+		'en_fabrication' => 'Votre Boîte est en cours de fabrication à l\'atelier.',
+		'prete' => 'Votre commande est prête. Nous revenons vers vous pour convenir de la livraison ou du retrait.',
+		'expediee' => 'Votre commande vient d\'être expédiée.',
+		'livree' => 'Votre commande est indiquée comme livrée. Bons bivouacs !',
+		'annulee' => 'Votre commande a été annulée. Si un paiement avait été encaissé, il vous sera remboursé.',
+		'remboursee' => 'Votre commande a été remboursée. Le montant apparaîtra sur votre compte sous quelques jours, selon votre banque.',
+	];
+}
+
+/** Ce statut donne-t-il lieu à un email au client ? */
+function statutANotifier(string $statut): bool
+{
+	return array_key_exists($statut, emailMessagesStatut());
+}
+
+/** Corps du message de changement de statut. */
+function emailChangementStatut(array $commande, string $prenom): string
+{
+	$statut = (string) $commande['statut'];
+	$bonjour = $prenom === '' ? 'Bonjour,' : 'Bonjour ' . emailH($prenom) . ',';
+	$numero = emailH((string) $commande['numero']);
+	$libelle = emailH(commandeStatutLibelle($statut));
+	$message = emailH(emailMessagesStatut()[$statut] ?? '');
+
+	$avertissementTest = $commande['payment_mode'] === 'test'
+		? '<p style="color:#8c2020;"><strong>Commande de test : aucun paiement réel n\'a été effectué.</strong></p>'
+		: '';
+
+	return <<<HTML
+	<p>{$bonjour}</p>
+	{$avertissementTest}
+	<p>Le statut de votre commande <strong>{$numero}</strong> a changé : <strong>{$libelle}</strong>.</p>
+	<p>{$message}</p>
+	<p>Vous retrouvez le détail de votre commande dans votre <a href="https://laboiteabivouac.fr/compte/">espace client</a>. Une question ? Répondez simplement à cet email.</p>
+	<p>— La Boîte à Bivouac</p>
+	HTML;
+}
+
+/**
+ * Prévient le client que sa commande a changé de statut.
+ *
+ * Rien ne part vers un compte supprimé : son adresse est une adresse .invalid,
+ * et la personne a demandé qu'on l'oublie.
+ *
+ * @return bool true si l'email est parti
+ */
+function envoyerEmailChangementStatut(array $commande, array $client): bool
+{
+	if (!statutANotifier((string) $commande['statut']) || $client['anonymise_a'] !== null) {
+		return false;
 	}
 
-	return $resultat;
+	$numero = (string) $commande['numero'];
+
+	return emailEnvoyer(
+		(string) $client['email'],
+		'Commande ' . $numero . ' : ' . commandeStatutLibelle((string) $commande['statut']) . ' — La Boîte à Bivouac',
+		emailChangementStatut($commande, (string) $client['prenom']),
+		'changement de statut ' . $numero
+	);
 }
