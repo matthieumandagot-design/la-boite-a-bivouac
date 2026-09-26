@@ -117,6 +117,43 @@ import PageCommerce from "../components/PageCommerce.astro";
 		return bloc;
 	}
 
+	/**
+	 * Étape 2 bis : l'adresse email n'est pas confirmée.
+	 *
+	 * Le panier est conservé — rien n'est perdu, il suffit de cliquer le lien
+	 * reçu puis de revenir.
+	 */
+	function etapeEmailNonVerifie(): HTMLElement {
+		const bloc = carte("Confirmez votre adresse email");
+		bloc.append(
+			el(
+				"p",
+				"t-corps mt-4 text-brun-500",
+				"Votre panier est conservé. Avant de commander, nous avons besoin d'une adresse email " +
+					"confirmée : une Boîte est fabriquée sur mesure, et nous devons pouvoir vous joindre.",
+			),
+			el("p", "t-petit mt-2 text-brun-400", "Le lien vous a été envoyé à l'inscription. Pensez à regarder dans les indésirables."),
+		);
+
+		const message = el("p", "t-petit mt-4 text-brun-500");
+		message.setAttribute("role", "status");
+		message.hidden = true;
+
+		const renvoyer = bouton("Renvoyer le lien");
+		renvoyer.addEventListener("click", async () => {
+			renvoyer.disabled = true;
+			const reponse = await envoyer("/api/compte-verification-renvoyer.php", "POST", {});
+			message.textContent = reponse.ok
+				? "Lien renvoyé. Revenez ici une fois votre adresse confirmée."
+				: (reponse.donnees.error ?? "Envoi impossible pour le moment.");
+			message.hidden = false;
+			if (!reponse.ok) renvoyer.disabled = false;
+		});
+
+		bloc.append(renvoyer, message);
+		return bloc;
+	}
+
 	/** Étape 3 : choix de l'adresse de livraison. */
 	function etapeAdresse(adresses: Adresse[], surChoix: (id: number) => void): HTMLElement {
 		const bloc = carte("Adresse de livraison");
@@ -393,6 +430,13 @@ import PageCommerce from "../components/PageCommerce.astro";
 		const etat = await envoyer("/api/compte.php", "GET");
 		if (!etat.ok || etat.donnees.connecte !== true) {
 			zone.replaceChildren(etapeConnexion());
+			return;
+		}
+
+		// Adresse non confirmée : on le dit ici plutôt que de laisser découvrir le
+		// refus après avoir saisi une adresse, coché les CGV et cliqué.
+		if (etat.donnees.email_verifie !== true) {
+			zone.replaceChildren(etapeEmailNonVerifie());
 			return;
 		}
 

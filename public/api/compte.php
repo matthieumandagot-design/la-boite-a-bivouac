@@ -14,6 +14,7 @@ require_once __DIR__ . '/../lib/commerce-guard.php';
 exigerCommerceActif();
 
 require_once __DIR__ . '/lib/commerce-api.php';
+require_once __DIR__ . '/../lib/verification-email.php';
 
 apiExigerMethode('GET');
 
@@ -22,6 +23,8 @@ apiExigerMethode('GET');
 $csrf = jetonCsrfClient();
 
 $client = null;
+/** Adresse confirmée ? Conditionne le passage de commande, pas la connexion. */
+$verifie = false;
 $id = clientConnecteId();
 
 if ($id !== null) {
@@ -33,6 +36,7 @@ if ($id !== null) {
 	$ligne = clientParId($id);
 	if ($ligne !== null && $ligne['anonymise_a'] === null) {
 		$client = clientPublic($ligne);
+		$verifie = emailVerifie($ligne);
 	} else {
 		// Compte supprimé ou anonymisé pendant que la session vivait.
 		deconnecterClient();
@@ -44,4 +48,5 @@ apiJson(200, [
 	'connecte' => $client !== null,
 	'csrf' => $csrf,
 	'client' => $client,
+	'email_verifie' => $verifie,
 ]);

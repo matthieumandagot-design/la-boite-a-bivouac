@@ -21,8 +21,20 @@ require_once __DIR__ . '/../../lib/clients.php';
 require_once __DIR__ . '/../../lib/client-session.php';
 require_once __DIR__ . '/../../lib/rate-limit.php';
 
-/** Réponse JSON, puis fin de la requête. */
-function apiJson(int $code, array $donnees): void
+/**
+ * Réponse JSON, puis fin de la requête.
+ *
+ * $apres permet d'exécuter un traitement lent APRÈS avoir rendu la main au
+ * navigateur — un envoi d'email, typiquement. Ce n'est pas qu'un confort : si
+ * l'inscription attendait le serveur SMTP, une adresse déjà prise répondrait
+ * nettement plus vite qu'une adresse libre, et l'énumération des comptes se
+ * ferait au chronomètre malgré des réponses identiques.
+ *
+ * fastcgi_finish_request() n'existe que sous PHP-FPM/FastCGI, ce qu'utilise
+ * l'hébergement OVH. Ailleurs, le traitement se fait avant la fin de la
+ * requête : plus lent, mais jamais omis.
+ */
+function apiJson(int $code, array $donnees, ?callable $apres = null): void
 {
 	http_response_code($code);
 	header('Content-Type: application/json; charset=utf-8');
@@ -33,6 +45,19 @@ function apiJson(int $code, array $donnees): void
 	header('X-Robots-Tag: noindex, nofollow', true);
 
 	echo json_encode($donnees, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+	if ($apres !== null) {
+		if (function_exists('fastcgi_finish_request')) {
+			fastcgi_finish_request();
+		}
+		try {
+			$apres();
+		} catch (Throwable $e) {
+			// La réponse est déjà partie : il ne reste qu'à laisser une trace.
+			error_log('[apiJson] traitement différé en échec : ' . $e->getMessage());
+		}
+	}
+
 	exit;
 }
 

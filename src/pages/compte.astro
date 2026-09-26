@@ -272,8 +272,74 @@ import PageCommerce from "../components/PageCommerce.astro";
 		created_at: string;
 	};
 
-	function ecranClient(client: Client, adresses: Adresse[], commandes: Commande[]): HTMLElement {
+	/**
+	 * Écran affiché en arrivant depuis le lien reçu par email.
+	 *
+	 * Le jeton est posté, pas suivi en GET : un aperçu de lien ou un anti-virus
+	 * de messagerie le consommerait avant que le client ne clique.
+	 */
+	function ecranVerification(jetonVerif: string): HTMLElement {
+		const bloc = carte("Confirmation de votre adresse");
+		const etat = el("p", "t-corps mt-4 text-brun-500", "Vérification en cours…");
+		etat.setAttribute("role", "status");
+		bloc.append(etat);
+
+		void (async () => {
+			const reponse = await envoyer("/api/compte-verifier-email.php", "POST", { jeton: jetonVerif });
+			// Le jeton disparaît de l'URL : il ne sert plus, et n'a rien à faire
+			// dans l'historique du navigateur.
+			history.replaceState(null, "", "/compte/");
+
+			if (reponse.ok) {
+				etat.className = "t-corps mt-4 text-brun-700";
+				etat.textContent = "Adresse confirmée. Vous pouvez maintenant passer commande.";
+				window.setTimeout(() => void afficher(), 1500);
+			} else {
+				etat.className = "t-petit mt-4 text-rouille-500";
+				etat.textContent = reponse.donnees.error ?? "Lien invalide.";
+			}
+		})();
+
+		return bloc;
+	}
+
+	/** Bandeau tant que l'adresse n'est pas confirmée. */
+	function bandeauVerification(): HTMLElement {
+		const bloc = el("div", "mb-6 rounded-2xl border border-rouille-500/40 bg-rouille-500/5 p-5");
+		bloc.append(
+			el("p", "t-petit font-semibold text-rouille-500", "Adresse email non confirmée"),
+			el(
+				"p",
+				"t-petit mt-1 text-brun-500",
+				"Vous pouvez parcourir la boutique et remplir votre panier, mais pas passer commande : " +
+					"nous devons pouvoir vous joindre au sujet d'une boîte fabriquée sur mesure. " +
+					"Un lien vous a été envoyé à l'inscription.",
+			),
+		);
+
+		const message = el("p", "t-petit mt-3 text-brun-500");
+		message.setAttribute("role", "status");
+		message.hidden = true;
+
+		const renvoyer = lienBouton("Renvoyer le lien");
+		renvoyer.className += " mt-3 block";
+		renvoyer.addEventListener("click", async () => {
+			renvoyer.disabled = true;
+			const reponse = await envoyer("/api/compte-verification-renvoyer.php", "POST", {});
+			message.textContent = reponse.ok
+				? "Lien renvoyé. Pensez à regarder dans les indésirables."
+				: (reponse.donnees.error ?? "Envoi impossible pour le moment.");
+			message.hidden = false;
+			if (!reponse.ok) renvoyer.disabled = false;
+		});
+
+		bloc.append(renvoyer, message);
+		return bloc;
+	}
+
+	function ecranClient(client: Client, adresses: Adresse[], commandes: Commande[], verifie: boolean): HTMLElement {
 		const bloc = el("div");
+		if (!verifie) bloc.append(bandeauVerification());
 
 		// Coordonnées
 		const identite = carte("Coordonnées");
@@ -425,9 +491,17 @@ import PageCommerce from "../components/PageCommerce.astro";
 			return;
 		}
 
-		const reinit = new URLSearchParams(window.location.search).get("reinit");
+		const parametres = new URLSearchParams(window.location.search);
+
+		const reinit = parametres.get("reinit");
 		if (reinit) {
 			zone.replaceChildren(ecranReinitialisation(reinit));
+			return;
+		}
+
+		const verif = parametres.get("verif");
+		if (verif) {
+			zone.replaceChildren(ecranVerification(verif));
 			return;
 		}
 
@@ -454,6 +528,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 				etat.donnees.client as Client,
 				(carnet.donnees.adresses ?? []) as Adresse[],
 				(historique.donnees.commandes ?? []) as Commande[],
+				etat.donnees.email_verifie === true,
 			),
 		);
 	}

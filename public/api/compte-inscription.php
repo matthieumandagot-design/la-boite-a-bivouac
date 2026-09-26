@@ -26,6 +26,7 @@ require_once __DIR__ . '/../lib/commerce-guard.php';
 exigerCommerceActif();
 
 require_once __DIR__ . '/lib/commerce-api.php';
+require_once __DIR__ . '/../lib/verification-email.php';
 
 apiExigerMethode('POST');
 apiExigerBase();
@@ -45,13 +46,36 @@ if ($erreurs !== []) {
 }
 
 // validerInscription() a déjà garanti le type et la forme de chaque champ.
-creerClient(
+$nouveauId = creerClient(
 	(string) $donnees['email'],
 	(string) $donnees['motdepasse'],
 	(string) $donnees['prenom'],
 	(string) $donnees['nom']
 );
 
-// Volontairement aveugle au retour de creerClient() : null (adresse déjà prise)
-// et un identifiant donnent la même réponse, au même moment.
-apiJson(200, ['ok' => true]);
+/*
+ * Lien de vérification de l'adresse (§6.1, « P1 »).
+ *
+ * Envoyé APRÈS la réponse, via le rappel d'apiJson : attendre le serveur SMTP
+ * ferait répondre une adresse libre nettement plus lentement qu'une adresse
+ * déjà prise, et l'énumération se ferait au chronomètre malgré des corps de
+ * réponse identiques.
+ *
+ * Une adresse déjà prise mais pas encore vérifiée reçoit un NOUVEAU lien. C'est
+ * le bon comportement produit — quelqu'un qui se réinscrit a le plus souvent
+ * perdu le premier message — et cela rend les deux chemins équivalents. Un
+ * compte déjà vérifié, lui, ne reçoit rien : il n'y a rien à confirmer, et
+ * prévenir « quelqu'un a tenté de s'inscrire avec votre adresse » est un autre
+ * sujet, à traiter s'il se pose.
+ */
+$aNotifier = $nouveauId !== null
+	? clientParId($nouveauId)
+	: clientParEmail((string) $donnees['email']);
+
+apiJson(200, ['ok' => true], static function () use ($aNotifier): void {
+	if ($aNotifier === null || $aNotifier['anonymise_a'] !== null || emailVerifie($aNotifier)) {
+		return;
+	}
+
+	verifEnvoyerLien($aNotifier, verifCreerJeton((int) $aNotifier['id']));
+});

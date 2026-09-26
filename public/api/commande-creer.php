@@ -24,11 +24,27 @@ exigerCommerceActif();
 
 require_once __DIR__ . '/lib/commerce-api.php';
 require_once __DIR__ . '/../lib/commandes.php';
+require_once __DIR__ . '/../lib/verification-email.php';
 
 apiExigerMethode('POST');
 apiExigerBase();
 
 $client = apiExigerClient();
+
+/*
+ * Adresse email confirmée exigée (§6.1, « P1 »).
+ *
+ * C'est ici, et nulle part avant, que la vérification bloque : on peut se
+ * connecter et remplir un panier sans, mais pas s'engager. Une boîte est
+ * fabriquée sur mesure — sans moyen de joindre le client, ni l'atelier ni lui
+ * ne s'en sortent.
+ */
+if (!emailVerifie($client)) {
+	apiJson(403, [
+		'error' => 'Confirmez votre adresse email avant de commander. Le lien vous a été envoyé à l\'inscription ; vous pouvez en demander un nouveau depuis votre compte.',
+		'email_a_verifier' => true,
+	]);
+}
 
 // Une commande par minute en moyenne sur une heure : très au-dessus d'un usage
 // normal, très en dessous de ce qu'il faudrait pour inonder la base.
