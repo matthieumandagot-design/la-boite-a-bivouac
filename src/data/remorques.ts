@@ -1,5 +1,5 @@
 /**
- * Catalogue de remorques pour la page /compatibilite.
+ * Catalogue de remorques pour la page /configurateur.
  *
  * Les cotes sont les dimensions INTÉRIEURES de la caisse, en centimètres,
  * relevées une par une sur la fiche citée en source. Un même nom de modèle peut

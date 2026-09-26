@@ -9,11 +9,8 @@ import {
 	HAUTEUR_TOTALE_MAX_CM,
 	TENTE_DEFAUT_CM,
 	JEU_PAR_COTE_CM,
-	calculeBoite,
 	type Remorque,
 } from "../data/remorques";
-import { toJsonLd } from "../utils/jsonld";
-import { SITE_TITLE } from "../consts";
 import pricing from "../../public/data/pricing.json";
 
 /**
@@ -31,7 +28,7 @@ const OPTIONS: { id: string; libelle: string; description?: string }[] =
 	Array.isArray(pricing.options?.disponibles) ? pricing.options.disponibles : [];
 
 const PAGE_DESCRIPTION =
-	"Votre remorque est-elle compatible ? Choisissez votre modèle ou saisissez vos cotes : nous calculons les dimensions exactes de la Boîte à Bivouac qui s'y logera.";
+	"Configurez votre Boîte à Bivouac sur mesure : choisissez votre remorque ou saisissez vos cotes, réglez la hauteur, et obtenez les dimensions exactes, le volume et le schéma de votre Boîte.";
 
 /** Regroupement par marque pour les <optgroup> du sélecteur. */
 const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
@@ -39,78 +36,22 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 	return acc;
 }, {});
 
-const LIGNES = REMORQUES.map((r) => ({ ...r, boite: calculeBoite(r.longueur, r.largeur) }));
-
-const fmt = (n: number) => n.toLocaleString("fr-FR");
-
-/**
- * Le relevé des remorques est la donnée la plus singulière du site : des cotes
- * intérieures réelles, marque par marque, que peu de sources publient en
- * France. Déclarée en Dataset, elle devient exploitable et citable par les
- * moteurs de réponse, au lieu de rester un tableau que seul un humain peut
- * lire. On n'y met que ce qui est réellement mesuré, et on signale les fiches
- * non vérifiées plutôt que de les présenter comme certaines.
- */
-const datasetSchema = {
-	"@context": "https://schema.org",
-	"@type": "Dataset",
-	name: "Dimensions intérieures des remorques utilitaires courantes en France",
-	description:
-		`Relevé de ${REMORQUES.length} modèles de remorques de ${new Set(REMORQUES.map((r) => r.marque)).size} marques : ` +
-		"longueur et largeur intérieures de caisse, hauteur de ridelle et PTAC. " +
-		`${REMORQUES.filter((r) => !r.verifie).length} fiches proviennent d'une source tierce et sont signalées « cotes à confirmer ».`,
-	url: new URL("/compatibilite/", Astro.site).href,
-	inLanguage: "fr",
-	isAccessibleForFree: true,
-	creator: { "@type": "Organization", name: SITE_TITLE, url: Astro.site?.origin },
-	variableMeasured: [
-		{ "@type": "PropertyValue", name: "Longueur intérieure", unitCode: "CMT" },
-		{ "@type": "PropertyValue", name: "Largeur intérieure", unitCode: "CMT" },
-		{ "@type": "PropertyValue", name: "Hauteur de ridelle", unitCode: "CMT" },
-		{ "@type": "PropertyValue", name: "PTAC", unitCode: "KGM" },
-	],
-	hasPart: {
-		"@type": "ItemList",
-		numberOfItems: REMORQUES.length,
-		itemListElement: REMORQUES.map((r, i) => ({
-			"@type": "ListItem",
-			position: i + 1,
-			item: {
-				"@type": "Product",
-				name: `${r.marque} ${r.modele}`,
-				brand: { "@type": "Brand", name: r.marque },
-				additionalProperty: [
-					{ "@type": "PropertyValue", name: "Longueur intérieure", value: r.longueur, unitCode: "CMT" },
-					{ "@type": "PropertyValue", name: "Largeur intérieure", value: r.largeur, unitCode: "CMT" },
-					...(r.ridelle === null
-						? []
-						: [{ "@type": "PropertyValue", name: "Hauteur de ridelle", value: r.ridelle, unitCode: "CMT" }]),
-					...(r.ptac === null
-						? []
-						: [{ "@type": "PropertyValue", name: "PTAC", value: r.ptac, unitCode: "KGM" }]),
-					{ "@type": "PropertyValue", name: "Cotes vérifiées", value: r.verifie ? "oui" : "à confirmer" },
-				],
-			},
-		})),
-	},
-};
 ---
 
-<Layout title="Compatibilité" description={PAGE_DESCRIPTION}>
-	<script type="application/ld+json" set:html={toJsonLd(datasetSchema)} />
+<Layout title="Configurateur" description={PAGE_DESCRIPTION}>
 
 	<ScrollReveal />
 
 	<section class="border-b border-ardoise/30 bg-sable/50 px-6 py-16 sm:px-8 lg:px-12">
 		<p class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>
-			Compatibilité
+			Configurateur
 		</p>
 		<h1
 			class="mt-3 t-hero font-display font-semibold text-brun-700"
 			data-reveal
 			style="--reveal-delay: 60ms"
 		>
-			Quelle Boîte pour votre remorque&nbsp;?
+			Configurez votre Boîte à Bivouac
 		</h1>
 		{/* Seule contrainte de largeur de la page : une ligne de prose au-delà de
 		    ~80 caractères devient pénible à lire. Le reste suit la fenêtre. */}
@@ -119,17 +60,29 @@ const datasetSchema = {
 			data-reveal
 			style="--reveal-delay: 120ms"
 		>
-			Chaque Boîte est fabriquée sur mesure pour s’adapter à l’intérieur de votre remorque. Un jeu
-			de {JEU_PAR_COTE_CM}&nbsp;cm de chaque côté facilite sa mise en place et son retrait.
+			Chaque Boîte est fabriquée sur mesure pour votre remorque. Choisissez votre modèle ou
+			saisissez vos cotes, réglez la hauteur, indiquez si vous posez une tente de toit&nbsp;:
+			dimensions, volume et hauteur hors tout s'affichent aussitôt, avec un schéma à l'échelle.
 		</p>
 		<p
 			class="t-corps mt-4 max-w-[80ch] text-brun-500"
 			data-reveal
 			style="--reveal-delay: 160ms"
 		>
-			Sa hauteur standard est de {HAUTEUR_DEFAUT_CM}&nbsp;cm, ajustable selon vos besoins&nbsp;:
-			elle ne peut être inférieure à la hauteur des ridelles ni dépasser la longueur intérieure de
-			la caisse.
+			La Boîte reprend l'intérieur de votre caisse, moins {JEU_PAR_COTE_CM}&nbsp;cm de jeu de chaque
+			côté pour la poser et la retirer facilement. Sa hauteur standard est de {HAUTEUR_DEFAUT_CM}&nbsp;cm,
+			ajustable entre la hauteur des ridelles et la longueur intérieure
+			de la caisse.
+		</p>
+		{/* Seulement quand la boutique est ouverte (ou en mode aperçu) : sans elle,
+		    annoncer une commande en ligne serait faux. */}
+		<p
+			data-feature="commerce"
+			hidden
+			class="t-corps mt-4 max-w-[80ch] font-medium text-brun-600"
+		>
+			Votre Boîte est prête&nbsp;? Ajoutez-la au panier pour la commander&nbsp;: elle sera fabriquée
+			à ces dimensions.
 		</p>
 	</section>
 
@@ -310,8 +263,8 @@ const datasetSchema = {
 
 				{/* Étape 2 du configurateur (SPEC §7). Masquée avec le reste du
 				    module commercial : sans boutique, choisir des options n'aurait
-				    nulle part où mener, et la page doit rester exactement l'outil de
-				    compatibilité qu'elle est aujourd'hui. */}
+				    nulle part où mener : la page reste alors un outil de
+				    dimensionnement, sans rien à commander. */}
 				<div
 					data-feature="commerce"
 					hidden
@@ -375,77 +328,6 @@ const datasetSchema = {
 					Ajouter au panier
 				</button>
 				<p id="achat-message" class="t-petit mt-3 text-brun-500" role="status" hidden></p>
-			</div>
-		</div>
-	</section>
-
-	<section class="border-t border-ardoise/30 bg-ecru-100 px-6 py-16 sm:px-8 lg:px-12">
-		<div>
-			<h2 class="t-titre font-display font-semibold text-brun-700" data-reveal>
-				Les modèles déjà relevés
-			</h2>
-			<p class="mt-3 max-w-2xl text-brun-500" data-reveal style="--reveal-delay: 60ms">
-				Cotes intérieures relevées sur les fiches constructeur ou revendeur, et boîte
-				correspondante. Un même modèle peut changer de cotes selon l'année et la finition&nbsp;:
-				vérifiez toujours au mètre avant de commander. Les modèles marqués «&nbsp;cotes à
-				confirmer&nbsp;» viennent d'un vendeur dont la fiche n'est pas consultable
-				automatiquement.
-			</p>
-
-			<div class="mt-8 overflow-x-auto" data-reveal style="--reveal-delay: 120ms">
-				<table class="w-full min-w-[46rem] border-collapse text-left text-sm">
-					<thead>
-						<tr class="border-b border-ardoise/40 text-brun-600">
-							<th scope="col" class="py-3 pr-4 font-medium">Remorque</th>
-							<th scope="col" class="py-3 pr-4 font-medium">Intérieur caisse</th>
-							<th scope="col" class="py-3 pr-4 font-medium">
-								Boîte correspondante
-								<span class="block text-xs font-normal text-brun-400">hauteur {HAUTEUR_DEFAUT_CM} cm</span>
-							</th>
-							<th scope="col" class="py-3 pr-4 font-medium">Volume</th>
-							<th scope="col" class="py-3 font-medium">Source</th>
-						</tr>
-					</thead>
-					<tbody>
-						{
-							LIGNES.map((r) => (
-								<tr class="border-b border-ardoise/25 align-top">
-									<th scope="row" class="py-3 pr-4 font-display font-semibold text-brun-700">
-										{r.marque} {r.modele}
-										{
-											!r.verifie && (
-												<span class="mt-1 block text-xs font-normal text-rouille-500">
-													cotes à confirmer
-												</span>
-											)
-										}
-									</th>
-									<td class="py-3 pr-4 tabular-nums text-brun-500">
-										{r.longueur} × {r.largeur} cm
-										{r.ridelle !== null && <span class="block text-xs text-brun-400">ridelles {r.ridelle} cm</span>}
-									</td>
-									<td class="py-3 pr-4 tabular-nums text-brun-700">
-										{r.boite.longueur} × {r.boite.largeur} × {r.boite.hauteur} cm
-									</td>
-									<td class="py-3 pr-4 tabular-nums font-semibold text-rouille-500">
-										{fmt(r.boite.volume)} L
-									</td>
-									<td class="py-3">
-										<a
-											href={r.source}
-											target="_blank"
-											rel="noopener noreferrer"
-											class="inline-flex items-center gap-1 text-rouille-500 underline-offset-4 hover:underline"
-										>
-											Fiche
-											<Icon name="tabler:arrow-up-right" class="h-4 w-4" />
-										</a>
-									</td>
-								</tr>
-							))
-						}
-					</tbody>
-				</table>
 			</div>
 		</div>
 	</section>
