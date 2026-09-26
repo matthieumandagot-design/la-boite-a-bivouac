@@ -7,7 +7,7 @@
  * prix unitaires, total. Un prix trafiqué dans le stockage du navigateur n'a
  * donc aucun effet — il n'y a même pas de champ prix à trafiquer.
  *
- * Le bouton « Commander » attend le tunnel de commande (§6.4), livré plus tard.
+ * Le bouton « Commander » mène au tunnel de commande (§6.4), /commande/.
  */
 
 import PageCommerce from "../components/PageCommerce.astro";
@@ -164,7 +164,23 @@ import PageCommerce from "../components/PageCommerce.astro";
 			(panier.provisoire
 				? `<p class="t-petit mt-2 text-rouille-500">${panier.mention} — montants factices, aucun engagement.</p>`
 				: "") +
-			`<p class="t-petit mt-4 text-brun-400">Le tunnel de commande et le paiement arrivent prochainement.</p>`;
+			"";
+
+		// Pas de bouton tant qu'une ligne est écartée : le tunnel la refuserait
+		// (409), autant le dire ici, où le client peut la retirer.
+		if (panier.lignes.length > 0 && panier.refusees.length === 0) {
+			const commander = document.createElement("a");
+			commander.href = "/commande/";
+			commander.className =
+				"mt-6 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 font-semibold text-ecru-50 transition-colors hover:bg-rouille-400";
+			commander.textContent = "Commander";
+			pied.append(commander);
+		} else if (panier.refusees.length > 0) {
+			const note = document.createElement("p");
+			note.className = "t-petit mt-4 text-brun-400";
+			note.textContent = "Retirez les lignes écartées pour pouvoir commander.";
+			pied.append(note);
+		}
 		fragments.push(pied);
 
 		const vider_ = document.createElement("button");
