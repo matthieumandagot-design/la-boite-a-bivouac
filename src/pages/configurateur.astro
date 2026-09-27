@@ -214,8 +214,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 					/>
 				</div>
 				<p class="mt-2 text-sm text-brun-400" id="hauteur-aide">
-					{HAUTEUR_DEFAUT_CM}&nbsp;cm par défaut&nbsp;: de quoi ranger le matériel debout sous la
-					tente de toit.
+					Choisissez la hauteur de votre Boîte, dans les limites compatibles avec votre remorque.
 				</p>
 
 				<div class="mt-6 border-t border-ardoise/30 pt-6">
@@ -534,10 +533,10 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			if (v > plafond) inputHauteur!.value = String(plafond);
 			curseurHauteur!.value = inputHauteur!.value;
 
+			// Texte fixe (demande de Matthieu, 27/09/2026) : les bornes, elles,
+			// sont appliquées au curseur et au champ ci-dessus.
 			aideHauteur!.textContent =
-				plafond < Math.round(longueur)
-					? `De ${mini} cm, la hauteur des ridelles, à ${plafond} cm, la hauteur maximale d'une Boîte.`
-					: `De ${mini} cm, la hauteur des ridelles, à ${plafond} cm, la longueur de la caisse.`;
+				"Choisissez la hauteur de votre Boîte, dans les limites compatibles avec votre remorque.";
 		}
 
 		/* Cotes de principe pour le train roulant : elles ne figurent pas sur les
