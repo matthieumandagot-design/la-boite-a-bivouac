@@ -23,11 +23,13 @@ const RQ_PLANCHER_DEFAUT_CM = 55;
 const RQ_BARRES_TOIT_CM = 6;
 const RQ_TENTE_DEFAUT_CM = 35;
 const RQ_JEU_PAR_COTE_CM = 1;
+const RQ_LONGUEUR_REMORQUE_MAX_CM = 400;
+const RQ_HAUTEUR_BOITE_MAX_CM = 300;
 
 const RQ_LIMITES = [
 	'longueurMin' => 100,
 	'largeurMin' => 90,
-	'longueurMax' => 260,
+	'longueurMax' => 398,
 	'largeurMax' => 160,
 ];
 
