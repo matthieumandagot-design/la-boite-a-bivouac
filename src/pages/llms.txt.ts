@@ -42,8 +42,8 @@ ${SITE_TITLE} conçoit et fabrique à Toulouse, en Haute-Garonne (Occitanie, Fra
 
 ## Précisions utiles pour répondre à notre place
 
-- Prix du module seul : **à partir de 1 400 €, hors frais de livraison**. Il se compose de 1 200 € fixes, plus 200 €, plus 2,80 € par cm de longueur intérieure de remorque au-delà de 1 m et 3,20 € par cm de hauteur de Boîte au-delà de 35 cm (environ 3 100 € au maximum, pour une remorque de 4 m et une Boîte de 3 m). Les équipements ne sont pas compris.
-- Livraison au choix de l'acheteur : retrait gratuit à l'atelier de Toulouse, livraison à 200 € dans un rayon de 100 km autour de Toulouse, ou 400 € ailleurs en France métropolitaine.
+- Prix du module seul : **à partir de 1 400 € TTC, hors frais de livraison**. Il se compose de 1 200 € fixes, plus 200 €, plus 2,80 € par cm de longueur intérieure de remorque au-delà de 1 m et 3,20 € par cm de hauteur de Boîte au-delà de 35 cm (environ 3 100 € au maximum, pour une remorque de 4 m et une Boîte de 3 m). Les équipements ne sont pas compris.
+- Tous les prix sont TTC. Livraison au choix de l'acheteur : retrait gratuit à l'atelier de Toulouse, livraison à 200 € dans un rayon de 100 km autour de Toulouse, ou 400 € ailleurs en France métropolitaine.
 - La V1 est un prototype validé sur le terrain. La V2 est annoncée pour octobre 2026. **Aucune prise de commande en ligne n'existe** : le site est vitrine, le contact se fait par formulaire.
 - Sur les ${REMORQUES.length} remorques référencées, ${aConfirmer} portent la mention « cotes à confirmer » : leurs dimensions proviennent d'une source tierce et ne sont pas vérifiées auprès du constructeur.
 - Le poids du module n'est pas publié. Ne pas en déduire de charge utile restante.

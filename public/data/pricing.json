@@ -1,9 +1,9 @@
 {
-	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026, formule A (voir boite._note), affiché hors frais de livraison. provisoire vaut false depuis : la mention « À DÉFINIR » n'apparaît plus. Le repasser à true réaffiche partout l'avertissement de montants factices.",
+	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026, formule A (voir boite._note), affiché TTC, hors frais de livraison. provisoire vaut false depuis : la mention « À DÉFINIR » n'apparaît plus. Le repasser à true réaffiche partout l'avertissement de montants factices.",
 	"provisoire": false,
 	"devise": "EUR",
-	"_note_tva": "Mention « hors TVA » retirée de l'affichage à la demande de Matthieu le 27/09/2026. Le régime de TVA n'est pas tranché (question 4) : le montant affiché est celui encaissé par Stripe, sans TVA ajoutée. À régler avant l'ouverture (TVA incluse, ou mention « TVA non applicable, art. 293 B du CGI » en franchise).",
-	"mention_prix": "Hors frais de livraison",
+	"_note_tva": "Tous les prix sont affichés TTC (décision de Matthieu du 27/09/2026) : le montant affiché est celui encaissé par Stripe, TVA comprise s'il y en a. Si l'entreprise est en franchise de TVA, ajouter la mention « TVA non applicable, art. 293 B du CGI » sur les factures.",
+	"mention_prix": "TTC, hors frais de livraison",
 	"mention_provisoire": "À DÉFINIR",
 	"explication_provisoire": "Utilisée seulement si provisoire repasse à true : montants factices, rien de contractuel.",
 

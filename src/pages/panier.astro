@@ -159,7 +159,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 		const pied = document.createElement("div");
 		pied.className = "mt-8 rounded-2xl border border-ardoise/30 bg-ecru-50 p-6";
 		pied.innerHTML =
-			`<div class="flex items-baseline justify-between"><span class="t-corps text-brun-600">Total</span>` +
+			`<div class="flex items-baseline justify-between"><span class="t-corps text-brun-600">Total TTC</span>` +
 			`<span class="t-sous font-display font-semibold text-brun-700">${formaterCents(panier.total_cents)}</span></div>` +
 			(panier.provisoire
 				? `<p class="t-petit mt-2 text-rouille-500">${panier.mention} — montants factices, aucun engagement.</p>`

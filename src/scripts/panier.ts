@@ -63,7 +63,7 @@ export type PanierCalcule = {
 	total_cents: number;
 	provisoire: boolean;
 	mention: string;
-	/** « Hors frais de livraison » : à afficher près d'un total qui ne la comprend pas. */
+	/** « TTC, hors frais de livraison » : à afficher près d'un total qui ne la comprend pas. */
 	mention_prix: string;
 };
 

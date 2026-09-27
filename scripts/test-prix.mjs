@@ -137,8 +137,8 @@ echo json_encode($sortie);
 	console.log("\n### mentions de prix");
 	verifie("montants définitifs depuis le 27/09/2026", false, r.provisoire);
 	verifie("mention d'avertissement toujours disponible si besoin", "À DÉFINIR", r.mention);
-	verifie("mention de prix", "Hors frais de livraison", r.mention_prix);
-	verifie("mention de prix transmise par le panier", "Hors frais de livraison", r.panier_mention_prix);
+	verifie("mention de prix", "TTC, hors frais de livraison", r.mention_prix);
+	verifie("mention de prix transmise par le panier", "TTC, hors frais de livraison", r.panier_mention_prix);
 
 	// Livraison (27/09/2026) : modes, garde-fous d'adresse, total, et ligne
 	// ajoutée à la commande. La base est créée dans le bac, jamais ailleurs.

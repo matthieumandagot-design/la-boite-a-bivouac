@@ -228,7 +228,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 			label.append(radio, texte, prix);
 			liste.append(label);
 		});
-		bloc.append(liste);
+		bloc.append(liste, el("p", "t-petit mt-3 text-brun-400", "Prix TTC."));
 		return bloc;
 	}
 
@@ -267,7 +267,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 
 		const total = el("div", "mt-4 flex items-baseline justify-between border-t border-ardoise/30 pt-4");
 		total.append(
-			el("span", "t-corps text-brun-600", "Total"),
+			el("span", "t-corps text-brun-600", "Total TTC"),
 			el("span", "t-sous font-display font-semibold text-brun-700", formaterCents(panier.total_cents)),
 		);
 		bloc.append(total);
@@ -355,7 +355,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 		bloc.id = "bloc-confirmation";
 		bloc.append(
 			el("p", "t-corps mt-4 text-brun-700", `Votre commande porte le numéro ${numero}.`),
-			el("p", "t-petit mt-2 text-brun-500", `Montant : ${formaterCents(totalCents)}.`),
+			el("p", "t-petit mt-2 text-brun-500", `Montant : ${formaterCents(totalCents)} TTC.`),
 		);
 		if (panier.provisoire) {
 			bloc.append(el("p", "t-petit mt-2 text-rouille-500", `${panier.mention} — montants factices.`));
