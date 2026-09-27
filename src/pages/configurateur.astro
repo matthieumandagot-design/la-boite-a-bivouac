@@ -10,8 +10,6 @@ import {
 	HAUTEUR_TOTALE_MAX_CM,
 	TENTE_DEFAUT_CM,
 	JEU_PAR_COTE_CM,
-	HAUTEUR_BOITE_MAX_CM,
-	LONGUEUR_REMORQUE_MAX_CM,
 	LARGEUR_REMORQUE_MIN_CM,
 	type Remorque,
 } from "../data/remorques";
@@ -77,11 +75,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			style="--reveal-delay: 160ms"
 		>
 			La Boîte reprend l'intérieur de votre caisse, moins {JEU_PAR_COTE_CM}&nbsp;cm de jeu de chaque
-			côté pour la poser et la retirer facilement. Sa hauteur standard est de {HAUTEUR_DEFAUT_CM}&nbsp;cm,
-			ajustable entre la hauteur des ridelles et la longueur intérieure
-			de la caisse, dans la limite de {HAUTEUR_BOITE_MAX_CM / 100}&nbsp;m. Les remorques acceptées
-			mesurent au moins {LARGEUR_REMORQUE_MIN_CM}&nbsp;cm de large et jusqu'à {LONGUEUR_REMORQUE_MAX_CM / 100}&nbsp;m
-			de long.
+			côté pour la poser et la retirer facilement. Sa hauteur standard est de {HAUTEUR_DEFAUT_CM}&nbsp;cm.
 		</p>
 		{/* Seulement quand la boutique est ouverte (ou en mode aperçu) : sans elle,
 		    annoncer une commande en ligne serait faux. */}
