@@ -62,15 +62,18 @@ require '${path.join(bac, "lib", "panier.php").replace(/\\/g, "/")}';
 $sortie = [];
 $dims = rqCalculeBoite(155, 115, 90.0, 40);
 
-$sortie['longueur_boite'] = $dims['longueur'];
-$sortie['base'] = prixBoiteCents($dims)['cents'];
-// Modèle du 27/09/2026 : 1 000 € fixes + variable de 200 € (100 cm) à
-// 1 500 € (300 cm), prolongée de part et d'autre, jamais négative.
-$sortie['variable'] = array_map('prixVariableLongueurCents', [100, 200, 300, 350, 80, 50]);
-
+$sortie['hauteur_boite'] = $dims['hauteur'];
+$sortie['base'] = prixBoiteCents($dims, 155)['cents'];
+// Formule A (27/09/2026) : 1 200 € fixes + 200 € + 2,80 €/cm de remorque
+// au-delà de 100 cm + 3,20 €/cm de hauteur au-delà de 35 cm, chaque partie
+// plancher à zéro. [longueur de remorque, hauteur de boîte] => variable.
+$sortie['variable'] = array_map(
+	static fn (array $c): int => prixVariableCents($c[0], $c[1]),
+	[[100, 35], [200, 35], [100, 135], [400, 300], [80, 30], [120, 90]]
+);
 $sortie['options_catalogue'] = array_keys(pricingOptions());
-$sortie['une_option'] = prixBoiteCents($dims, prixOptionsCents(['galerie'])['cents'])['cents'];
-$sortie['deux_options'] = prixBoiteCents($dims, prixOptionsCents(['galerie', 'serrure'])['cents'])['cents'];
+$sortie['une_option'] = prixBoiteCents($dims, 155, prixOptionsCents(['galerie'])['cents'])['cents'];
+$sortie['deux_options'] = prixBoiteCents($dims, 155, prixOptionsCents(['galerie', 'serrure'])['cents'])['cents'];
 $sortie['doublon'] = prixOptionsCents(['galerie', 'galerie'])['cents'];
 $sortie['inconnue'] = prixOptionsCents(['galerie', 'inexistante'])['inconnues'];
 $sortie['mal_formees'] = prixOptionsCents(['negatif', 'chaine'])['inconnues'];
@@ -109,13 +112,15 @@ echo json_encode($sortie);
 	verifie("seules les entrées bien formées sont retenues", ["galerie", "serrure"], r.options_catalogue);
 	verifie("prix négatif et prix en chaîne traités comme inconnus", ["negatif", "chaine"], r.mal_formees);
 
-	console.log("\n### prix selon la longueur");
-	verifie("variable : 200 € à 100 cm, 850 € à 200 cm, 1 500 € à 300 cm", [20000, 85000, 150000], r.variable.slice(0, 3));
-	verifie("variable prolongée au-delà de 300 cm", 182500, r.variable[3]);
-	verifie("variable prolongée en dessous de 100 cm", 7000, r.variable[4]);
-	verifie("variable jamais négative", 0, r.variable[5]);
-	const attendu = 100000 + Math.round(20000 + (r.longueur_boite - 100) * 650);
-	verifie(`boîte de ${r.longueur_boite} cm : fixe + variable`, attendu, r.base);
+	console.log("\n### formule A : longueur de remorque et hauteur de boîte");
+	verifie("minimum : 200 € à 100 cm × 35 cm", 20000, r.variable[0]);
+	verifie("+ 2,80 € par cm de remorque (100 cm de plus : 480 €)", 48000, r.variable[1]);
+	verifie("+ 3,20 € par cm de hauteur (100 cm de plus : 520 €)", 52000, r.variable[2]);
+	verifie("maximum : 4 m × 3 m → 1 888 €", 188800, r.variable[3]);
+	verifie("sous les seuils : jamais moins que la base", 20000, r.variable[4]);
+	verifie("Erdé Classic 122, 90 cm : 432 €", 43200, r.variable[5]);
+	const attendu = 120000 + 20000 + (155 - 100) * 280 + (r.hauteur_boite - 35) * 320;
+	verifie(`remorque de 155 cm, boîte de ${r.hauteur_boite} cm : fixe + variable`, attendu, r.base);
 
 	console.log("\n### addition");
 	verifie("une option ajoutée", attendu + 15000, r.une_option);

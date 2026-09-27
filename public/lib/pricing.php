@@ -90,57 +90,61 @@ function pricingEntier(array $source, string $cle): int
 }
 
 /**
- * Partie variable du prix selon la longueur de la Boîte (modèle du 27/09/2026).
+ * Partie variable du prix (formule A, décidée le 27/09/2026).
  *
- * Droite passant par les deux points de data/pricing.json (200 € à 100 cm,
- * 1 500 € à 300 cm), prolongée au-delà dans les deux sens comme demandé. Jamais
- * négative : très en dessous de 100 cm, la droite passerait sous zéro, et une
- * Boîte ne coûte pas moins que sa partie fixe.
+ *   base + (longueur de remorque − seuil) × tarif + (hauteur de boîte − seuil) × tarif
  *
- * Calcul en entiers de centimes : 1 300 € sur 200 cm font 650 centimes par cm,
- * sans arrondi. Un point mal renseigné annule la partie variable plutôt que de
- * facturer un montant deviné.
+ * Avec data/pricing.json : 200 € + 2,80 €/cm au-delà de 100 cm de remorque
+ * + 3,20 €/cm au-delà de 35 cm de hauteur. Chaque partie est plancher à zéro :
+ * une remorque plus courte ou des ridelles plus basses que le seuil ne font
+ * pas baisser le prix sous la base. Centimes entiers, sans arrondi : les
+ * tarifs sont des centimes par cm entier.
+ *
+ * Une règle mal renseignée annule la partie concernée plutôt que de facturer
+ * un montant deviné.
  */
-function prixVariableLongueurCents(int $longueurCm): int
+function prixVariableCents(int $longueurRemorqueCm, int $hauteurBoiteCm): int
 {
-	$regle = pricing()['boite']['variable_longueur'] ?? null;
-	$de = is_array($regle) ? ($regle['de'] ?? null) : null;
-	$a = is_array($regle) ? ($regle['a'] ?? null) : null;
-
-	if (!is_array($de) || !is_array($a)) {
+	$regle = pricing()['boite']['variable'] ?? null;
+	if (!is_array($regle)) {
 		return 0;
 	}
 
-	$l1 = $de['longueur_cm'] ?? null;
-	$p1 = $de['cents'] ?? null;
-	$l2 = $a['longueur_cm'] ?? null;
-	$p2 = $a['cents'] ?? null;
+	$partie = static function ($source, int $valeurCm): int {
+		if (!is_array($source)) {
+			return 0;
+		}
+		$seuil = $source['a_partir_de_cm'] ?? null;
+		$tarif = $source['cents_par_cm'] ?? null;
+		if (!is_int($seuil) || !is_int($tarif) || $tarif < 0) {
+			return 0;
+		}
 
-	if (!is_int($l1) || !is_int($p1) || !is_int($l2) || !is_int($p2) || $l1 === $l2) {
-		return 0;
-	}
+		return max(0, $valeurCm - $seuil) * $tarif;
+	};
 
-	$variable = $p1 + ($longueurCm - $l1) * ($p2 - $p1) / ($l2 - $l1);
-
-	return max(0, (int) round($variable));
+	return pricingEntier($regle, 'base_cents')
+		+ $partie($regle['longueur_remorque'] ?? null, $longueurRemorqueCm)
+		+ $partie($regle['hauteur_boite'] ?? null, $hauteurBoiteCm);
 }
 
 /**
  * Prix d'une Boîte à partir de ses dimensions calculées.
  *
  * @param array{longueur: int, largeur: int, hauteur: int, volume: int} $dimensions
+ * @param int $longueurRemorqueCm longueur INTÉRIEURE de la remorque, base du prix
  * @return array{cents: int, hors_bornes: bool}
  *
  * Les bornes ne sont pas cosmétiques : un total qui en sort signale une erreur
  * de configuration, pas une commande légitime. L'appelant doit refuser la ligne
  * plutôt que facturer un montant que personne n'a décidé.
  */
-function prixBoiteCents(array $dimensions, int $optionsCents = 0): array
+function prixBoiteCents(array $dimensions, int $longueurRemorqueCm, int $optionsCents = 0): array
 {
 	$boite = pricing()['boite'] ?? [];
 
 	$total = pricingEntier($boite, 'prix_base_cents')
-		+ prixVariableLongueurCents((int) $dimensions['longueur'])
+		+ prixVariableCents($longueurRemorqueCm, (int) $dimensions['hauteur'])
 		+ (int) round($dimensions['volume'] * pricingEntier($boite, 'supplement_par_litre_cents'))
 		+ (int) round($dimensions['hauteur'] * pricingEntier($boite, 'supplement_par_cm_hauteur_cents'))
 		// Les options entrent AVANT le contrôle des bornes : elles font partie du

@@ -1,7 +1,8 @@
 ---
 /**
- * Petite voiture sous le menu principal, avec la remorque attelée : la Boîte
- * et sa tente de toit repliée. Elle roule sur le trait bas de l'en-tête et se
+ * Petit SUV gris clair sous le menu principal, avec la remorque grise attelée :
+ * la Boîte couleur bois et sa tente de toit noire repliée (dessin revu le
+ * 27/09/2026). Elle roule sur le trait bas de l'en-tête et se
  * gare sous la page affichée (demande de Matthieu, 27/09/2026).
  *
  * Le site change de page par un vrai chargement : rien ne survit d'une page à
@@ -17,37 +18,50 @@
 ---
 
 <div class="convoi" id="convoi-nav" aria-hidden="true">
-	<svg viewBox="0 0 80 26" width="80" height="26" focusable="false">
-		{/* Remorque : la Boîte, la tente repliée dessus, le châssis et sa roue. */}
+	<svg viewBox="0 0 84 28" width="84" height="28" focusable="false">
+		{/* Remorque grise : la Boîte en bois posée dans la caisse, la tente de
+		    toit noire repliée dessus, le garde-boue, le timon et la roue. */}
 		<g class="caisse">
-			<rect x="7" y="4" width="22" height="4.5" rx="1.5" class="tente" />
-			<rect x="5" y="8" width="26" height="10" rx="1" class="boite" />
-			<line x1="9" y1="11" x2="27" y2="11" class="boite-trait" />
-			<rect x="3" y="17.5" width="30" height="2" rx="0.6" class="chassis" />
-			<line x1="33" y1="18.5" x2="41" y2="18.5" class="timon" />
+			<rect x="7.5" y="2.3" width="21" height="3.9" rx="1.3" class="tente" />
+			<line x1="9" y1="3.6" x2="27" y2="3.6" class="tente-reflet" />
+			<rect x="6" y="6.2" width="24" height="12.5" rx="0.6" class="boite" />
+			<line x1="6.6" y1="9.8" x2="29.4" y2="9.8" class="boite-planche" />
+			<line x1="6.6" y1="13.4" x2="29.4" y2="13.4" class="boite-planche" />
+			<rect x="4" y="15.6" width="28" height="5.4" rx="0.8" class="remorque" />
+			<path d="M13.4 21 A4.6 4.6 0 0 1 22.6 21" class="garde-boue" />
+			<line x1="32" y1="19.6" x2="42" y2="20.4" class="timon" />
 		</g>
 		<g class="roue">
-			<circle cx="18" cy="22.5" r="3.5" class="pneu" />
-			<circle cx="18" cy="22.5" r="1.3" class="jante" />
-			<line x1="18" y1="19.8" x2="18" y2="25.2" class="rayon" />
+			<circle cx="18" cy="24.6" r="3.4" class="pneu" />
+			<circle cx="18" cy="24.6" r="1.3" class="jante" />
+			<line x1="18" y1="22" x2="18" y2="27.2" class="rayon" />
 		</g>
 
-		{/* Voiture, tournée vers la droite. */}
+		{/* Petit SUV gris clair, tourné vers la droite : caisse haute, lunette
+		    arrière droite, barres de toit, bas de caisse protégé. */}
 		<g class="caisse">
-			<path d="M41 20 V13.5 Q41 12 42.5 12 H45 L50 5.5 Q50.6 5 51.4 5 H66 Q67 5 67.6 5.8 L72.5 12 H76 Q78 12 78 14 V20 Z" class="carrosserie" />
-			<path d="M47 12 L51.2 7 H57.5 V12 Z" class="vitre" />
-			<path d="M59.5 7 H65.6 L69.6 12 H59.5 Z" class="vitre" />
-			<rect x="76.3" y="13.3" width="1.7" height="2" rx="0.5" class="phare" />
+			<line x1="45.5" y1="4.1" x2="63" y2="4.1" class="barres-toit" />
+			<line x1="47" y1="4.1" x2="47" y2="5.4" class="barres-pied" />
+			<line x1="61.5" y1="4.1" x2="61.5" y2="5.4" class="barres-pied" />
+			<path d="M42 21.2 V7 Q42 5.2 43.8 5.2 H65.4 Q66.5 5.2 67.1 6 L71.3 12 H78 Q80.2 12.2 80.2 14.4 V20.2 Q80.2 21.2 79.2 21.2 Z" class="suv" />
+			<path d="M44.2 7 H52.2 V11.6 H44.2 Z" class="vitre" />
+			<path d="M54 7 H61.4 V11.6 H54 Z" class="vitre" />
+			<path d="M63.2 7 H65.6 L68.9 11.6 H63.2 Z" class="vitre" />
+			<line x1="53.1" y1="12.3" x2="53.1" y2="18.4" class="portiere" />
+			<line x1="62.3" y1="12.3" x2="62.3" y2="18.4" class="portiere" />
+			<rect x="42" y="18.6" width="38.2" height="2.6" class="bas-de-caisse" />
+			<rect x="78.7" y="13.4" width="1.5" height="1.9" rx="0.4" class="phare" />
+			<rect x="42" y="12.4" width="1.1" height="2.4" rx="0.3" class="feu" />
 		</g>
 		<g class="roue">
-			<circle cx="48" cy="22.5" r="3.5" class="pneu" />
-			<circle cx="48" cy="22.5" r="1.3" class="jante" />
-			<line x1="48" y1="19.8" x2="48" y2="25.2" class="rayon" />
+			<circle cx="49" cy="24.2" r="3.8" class="pneu" />
+			<circle cx="49" cy="24.2" r="1.5" class="jante" />
+			<line x1="49" y1="21.2" x2="49" y2="27.2" class="rayon" />
 		</g>
 		<g class="roue">
-			<circle cx="70" cy="22.5" r="3.5" class="pneu" />
-			<circle cx="70" cy="22.5" r="1.3" class="jante" />
-			<line x1="70" y1="19.8" x2="70" y2="25.2" class="rayon" />
+			<circle cx="73" cy="24.2" r="3.8" class="pneu" />
+			<circle cx="73" cy="24.2" r="1.5" class="jante" />
+			<line x1="73" y1="21.2" x2="73" y2="27.2" class="rayon" />
 		</g>
 	</svg>
 </div>
@@ -76,35 +90,70 @@
 		overflow: visible;
 	}
 
-	/* Couleurs de la marque, en dur : les variables du thème Tailwind ne sont
-	   émises que si une classe les utilise. */
+	/* Couleurs en dur : les variables du thème Tailwind ne sont émises que si
+	   une classe les utilise. Fines bordures sur le gris clair, pour qu'il se
+	   détache du fond crème de l'en-tête. */
 	.tente {
-		fill: #b85438;
+		fill: #1c1c1c;
+	}
+	.tente-reflet {
+		stroke: #3d3d3d;
+		stroke-width: 0.7;
 	}
 	.boite {
-		fill: #1e3a28;
+		fill: #c8955a;
+		stroke: #9c6b35;
+		stroke-width: 0.6;
 	}
-	.boite-trait {
-		stroke: #b88a18;
-		stroke-width: 0.8;
+	.boite-planche {
+		stroke: #a8763f;
+		stroke-width: 0.55;
 	}
-	.chassis,
+	.remorque {
+		fill: #8a9196;
+	}
+	.garde-boue {
+		fill: none;
+		stroke: #6b7378;
+		stroke-width: 1.2;
+	}
 	.timon {
-		fill: #122218;
-		stroke: #122218;
-		stroke-width: 1;
+		stroke: #6b7378;
+		stroke-width: 1.3;
+		stroke-linecap: round;
 	}
-	.carrosserie {
-		fill: #b88a18;
+	.suv {
+		fill: #d5d9dc;
+		stroke: #8e969b;
+		stroke-width: 0.6;
 	}
 	.vitre {
-		fill: #f9f4e8;
+		fill: #4b565e;
+	}
+	.portiere {
+		stroke: #a9b0b4;
+		stroke-width: 0.5;
+	}
+	.barres-toit {
+		stroke: #7d858a;
+		stroke-width: 1;
+		stroke-linecap: round;
+	}
+	.barres-pied {
+		stroke: #7d858a;
+		stroke-width: 0.8;
+	}
+	.bas-de-caisse {
+		fill: #7d858a;
 	}
 	.phare {
 		fill: #f2d878;
 	}
+	.feu {
+		fill: #b85438;
+	}
 	.pneu {
-		fill: #0a1610;
+		fill: #1e2326;
 	}
 	.jante {
 		fill: #c0c8c8;

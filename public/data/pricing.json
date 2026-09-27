@@ -1,5 +1,5 @@
 {
-	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026 (voir boite._note), affiché HORS TVA et frais de livraison (décision du 27/09/2026). provisoire vaut false depuis : la mention « À DÉFINIR » n'apparaît plus. Le repasser à true réaffiche partout l'avertissement de montants factices.",
+	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026, formule A (voir boite._note), affiché HORS TVA et frais de livraison (décision du 27/09/2026). provisoire vaut false depuis : la mention « À DÉFINIR » n'apparaît plus. Le repasser à true réaffiche partout l'avertissement de montants factices.",
 	"provisoire": false,
 	"devise": "EUR",
 	"_note_tva": "Montants HORS TVA (décision de Matthieu du 27/09/2026). Le régime de TVA n'est pas encore tranché (question 4) : aujourd'hui, rien n'ajoute de TVA au paiement Stripe. À régler avant l'ouverture — soit la TVA est ajoutée au paiement, soit la mention « TVA non applicable, art. 293 B du CGI » remplace celle-ci si l'entreprise est en franchise.",
@@ -8,11 +8,12 @@
 	"explication_provisoire": "Utilisée seulement si provisoire repasse à true : montants factices, rien de contractuel.",
 
 	"boite": {
-		"_note": "Modèle de prix décidé par Matthieu le 27/09/2026 : une partie fixe de 1 000 €, plus une partie variable selon la LONGUEUR DE LA BOÎTE (pas celle de la remorque). La variable va de 200 € à 100 cm à 1 500 € à 300 cm, en ligne droite (6,50 € par cm), et se prolonge au-delà de ces longueurs dans les deux sens, sans descendre sous zéro.",
-		"prix_base_cents": 100000,
-		"variable_longueur": {
-			"de": { "longueur_cm": 100, "cents": 20000 },
-			"a": { "longueur_cm": 300, "cents": 150000 }
+		"_note": "Modèle de prix décidé par Matthieu le 27/09/2026 (formule A) : 1 200 € fixes + 200 € + 2,80 € par cm de LONGUEUR INTÉRIEURE DE LA REMORQUE au-delà de 100 cm + 3,20 € par cm de HAUTEUR DE LA BOÎTE au-delà de 35 cm. Aucune des deux parties ne descend sous zéro. Soit 1 400 € pour 1 m × 35 cm et 3 088 € pour le maximum (4 m × 3 m). Remplace le modèle du matin (1 000 € + variable sur la longueur de la Boîte).",
+		"prix_base_cents": 120000,
+		"variable": {
+			"base_cents": 20000,
+			"longueur_remorque": { "a_partir_de_cm": 100, "cents_par_cm": 280 },
+			"hauteur_boite": { "a_partir_de_cm": 35, "cents_par_cm": 320 }
 		},
 
 		"_note_dimensions": "Composantes au volume et à la hauteur, inutilisées par le modèle actuel : à zéro.",
