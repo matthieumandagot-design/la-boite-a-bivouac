@@ -76,6 +76,8 @@ $sortie['inconnue'] = prixOptionsCents(['galerie', 'inexistante'])['inconnues'];
 $sortie['mal_formees'] = prixOptionsCents(['negatif', 'chaine'])['inconnues'];
 $sortie['mention'] = pricingMention();
 $sortie['provisoire'] = pricingProvisoire();
+$sortie['mention_prix'] = pricingMentionPrix();
+$sortie['panier_mention_prix'] = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']])['mention_prix'] ?? null;
 
 // Le panier complet : c'est lui qui refuse une option inconnue.
 $avecOption = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163', 'options' => ['galerie']]]);
@@ -127,9 +129,11 @@ echo json_encode($sortie);
 	verifie("option conservée dans la configuration", ["galerie"], r.panier_config_options);
 	verifie("option inconnue fait refuser la ligne", true, r.option_inconnue_refusee);
 
-	console.log("\n### montants provisoires");
-	verifie("mention affichable", "À DÉFINIR", r.mention);
-	verifie("drapeau provisoire", true, r.provisoire);
+	console.log("\n### mentions de prix");
+	verifie("montants définitifs depuis le 27/09/2026", false, r.provisoire);
+	verifie("mention d'avertissement toujours disponible si besoin", "À DÉFINIR", r.mention);
+	verifie("mention de prix", "Hors TVA et frais de livraison", r.mention_prix);
+	verifie("mention de prix transmise par le panier", "Hors TVA et frais de livraison", r.panier_mention_prix);
 
 	// Bornes : un plafond bas doit faire refuser la configuration plutôt que
 	// facturer un montant que personne n'a décidé.

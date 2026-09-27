@@ -224,6 +224,8 @@ import PageCommerce from "../components/PageCommerce.astro";
 			bloc.append(
 				el("p", "t-petit mt-2 text-rouille-500", `${panier.mention} — montants factices, aucun engagement.`),
 			);
+		} else if (panier.mention_prix) {
+			bloc.append(el("p", "t-petit mt-2 text-brun-400", panier.mention_prix));
 		}
 
 		// Case obligatoire. Tant que les CGV ne sont pas publiées, on le dit :

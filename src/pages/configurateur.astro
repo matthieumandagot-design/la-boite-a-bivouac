@@ -943,6 +943,8 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 						if (champMention) {
 							champMention.textContent = donnees.refusees?.[0]?.motif ?? "Configuration non chiffrable.";
 							champMention.hidden = false;
+							champMention.classList.add("text-rouille-400");
+							champMention.classList.remove("text-ecru-200");
 						}
 						return;
 					}
@@ -950,8 +952,12 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 					champPrix.textContent = formaterCents(ligne.total_cents);
 					boutonAjouter.disabled = false;
 					if (champMention) {
-						champMention.textContent = donnees.provisoire ? donnees.mention : "";
-						champMention.hidden = !donnees.provisoire;
+						// Montants factices : la mention d'avertissement prime. Sinon,
+						// « Hors TVA et frais de livraison », qui accompagne tout prix.
+						champMention.textContent = donnees.provisoire ? donnees.mention : (donnees.mention_prix ?? "");
+						champMention.hidden = champMention.textContent === "";
+						champMention.classList.toggle("text-rouille-400", donnees.provisoire);
+						champMention.classList.toggle("text-ecru-200", !donnees.provisoire);
 					}
 				} catch {
 					champPrix.textContent = "—";

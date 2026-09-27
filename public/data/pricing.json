@@ -1,10 +1,11 @@
 {
-	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026 (voir boite._note). Livraison, TVA et options restent à trancher. Tant que provisoire vaut true, toute interface affichant ces montants doit les signaler comme indicatifs.",
-	"provisoire": true,
+	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026 (voir boite._note), affiché HORS TVA et frais de livraison (décision du 27/09/2026). provisoire vaut false depuis : la mention « À DÉFINIR » n'apparaît plus. Le repasser à true réaffiche partout l'avertissement de montants factices.",
+	"provisoire": false,
 	"devise": "EUR",
-	"_note_tva": "Question 4 non tranchée (franchise en base ou non). Les montants ci-dessous sont traités comme TTC, comme le prix de 2 000 € déjà affiché publiquement sur /la-boite. À revoir dès que le régime est connu.",
+	"_note_tva": "Montants HORS TVA (décision de Matthieu du 27/09/2026). Le régime de TVA n'est pas encore tranché (question 4) : aujourd'hui, rien n'ajoute de TVA au paiement Stripe. À régler avant l'ouverture — soit la TVA est ajoutée au paiement, soit la mention « TVA non applicable, art. 293 B du CGI » remplace celle-ci si l'entreprise est en franchise.",
+	"mention_prix": "Hors TVA et frais de livraison",
 	"mention_provisoire": "À DÉFINIR",
-	"explication_provisoire": "Le modèle de prix de la Boîte est arrêté (27/09/2026), mais TVA, livraison et CGV ne le sont pas encore : les montants restent indicatifs tant que provisoire vaut true. Rien ici n'est contractuel.",
+	"explication_provisoire": "Utilisée seulement si provisoire repasse à true : montants factices, rien de contractuel.",
 
 	"boite": {
 		"_note": "Modèle de prix décidé par Matthieu le 27/09/2026 : une partie fixe de 1 000 €, plus une partie variable selon la LONGUEUR DE LA BOÎTE (pas celle de la remorque). La variable va de 200 € à 100 cm à 1 500 € à 300 cm, en ligne droite (6,50 € par cm), et se prolonge au-delà de ces longueurs dans les deux sens, sans descendre sous zéro.",

@@ -13,7 +13,7 @@ import canoe from "../components/icons/canoe.svg?raw";
 import { toJsonLd } from "../utils/jsonld";
 
 const PAGE_DESCRIPTION =
-	"La Boîte à Bivouac : caisse modulaire en acier et OSB qui s'installe dans votre remorque standard. Tente de toit, vélos, matériel. V2 en septembre 2026.";
+	"La Boîte à Bivouac : caisse modulaire en acier et OSB qui s'installe dans votre remorque standard. Tente de toit, vélos, matériel. V2 en octobre 2026.";
 
 // Les six points clés du produit, rendus en blocs identiques. Trois s'appuient
 // sur une icône Tabler (`icon`), trois sur nos pictogrammes maison inlinés
@@ -126,11 +126,17 @@ const productSchema = {
 	},
 	offers: {
 		"@type": "Offer",
-		// Prix indicatif, cf. l'astérisque "Prix de vente indicatif, susceptible
-		// de varier selon la configuration et les options choisies." affiché sur
-		// la section prix du site (voir src/pages/index.astro).
-		price: "2000",
+		// Prix d'entrée : 1 000 € fixes + 200 € de variable pour une Boîte de
+		// 100 cm (modèle du 27/09/2026, data/pricing.json), hors TVA et frais de
+		// livraison, comme l'indique la section prix de la page.
+		price: "1200",
 		priceCurrency: "EUR",
+		priceSpecification: {
+			"@type": "PriceSpecification",
+			minPrice: "1200",
+			priceCurrency: "EUR",
+			valueAddedTaxIncluded: false,
+		},
 		// Tant que le prix reste indicatif, on borne sa validité : sans cette
 		// date, Google considère l'offre comme périmée au bout de quelques mois
 		// et peut cesser d'afficher le résultat enrichi.
@@ -306,10 +312,10 @@ const productSchema = {
 			</div>
 			<div class="lg:order-1" data-reveal="left" style="--reveal-delay: 120ms">
 				<span class="inline-block rounded-full bg-rouille-500 px-4 py-1 t-menu font-medium uppercase tracking-widest text-ecru-50">
-					Septembre 2026
+					Octobre 2026
 				</span>
 				<h2 class="mt-4 t-titre font-display font-semibold text-brun-700">
-					V2 — Ce qui arrive en septembre
+					V2 — Ce qui arrive en octobre
 				</h2>
 				<p class="t-corps mt-4 max-w-[70ch] text-brun-500">
 					La V2 intègre les retours des tests terrain. Plus légère, plus aérodynamique, avec un vrai
@@ -337,7 +343,7 @@ const productSchema = {
 				data-reveal
 				style="--reveal-delay: 90ms"
 			>
-				2&nbsp;000&nbsp;€.
+				À partir de 1&nbsp;200&nbsp;€.
 			</p>
 			<p class="t-corps mt-4 max-w-[70ch] text-brun-500" data-reveal style="--reveal-delay: 180ms">
 				Nous voulons que partir à quatre ou cinq reste accessible. C'est ce qui guide nos
@@ -345,8 +351,8 @@ const productSchema = {
 				bas que nous puissions tenir sans rogner sur la solidité.
 			</p>
 			<p class="t-petit mt-6 text-brun-400" data-reveal style="--reveal-delay: 240ms">
-				*Prix de vente indicatif, susceptible de varier selon la configuration et les options
-				choisies. Les équipements ne sont pas compris.
+				*Prix de la Boîte seule, calculé selon sa longueur, hors TVA et frais de livraison. Les
+				équipements ne sont pas compris.
 			</p>
 		</div>
 	</section>

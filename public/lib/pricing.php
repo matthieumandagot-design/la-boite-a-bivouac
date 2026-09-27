@@ -70,6 +70,17 @@ function pricingMention(): string
 	return is_string($mention) && $mention !== '' ? $mention : 'À DÉFINIR';
 }
 
+/**
+ * Mention affichée à côté du prix de la Boîte : « Hors TVA et frais de
+ * livraison » (décision du 27/09/2026). Chaîne vide si elle manque au fichier.
+ */
+function pricingMentionPrix(): string
+{
+	$mention = pricing()['mention_prix'] ?? '';
+
+	return is_string($mention) ? $mention : '';
+}
+
 /** Entier de centimes lu dans la configuration, 0 si la valeur est douteuse. */
 function pricingEntier(array $source, string $cle): int
 {
