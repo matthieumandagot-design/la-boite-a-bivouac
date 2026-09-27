@@ -73,7 +73,7 @@ function emailConfirmationClient(array $commande, array $lignes, string $prenom)
 	{$avertissementTest}
 	<p>Nous avons bien reçu votre paiement pour la commande <strong>{$numero}</strong>. Merci de votre confiance.</p>
 	<table style="width:100%;border-collapse:collapse;">{$corpsLignes}
-		<tr><td style="padding:10px 0;border-top:1px solid #ddd;"><strong>Total</strong></td>
+		<tr><td style="padding:10px 0;border-top:1px solid #ddd;"><strong>Total TTC</strong></td>
 			<td style="padding:10px 0;border-top:1px solid #ddd;text-align:right;"><strong>{$total}</strong></td></tr>
 	</table>
 	{$mentionPrix}
@@ -97,7 +97,7 @@ function emailNotificationAtelier(array $commande, array $lignes, string $client
 	<p><strong>Commande {$numero} payée{$mode}</strong></p>
 	<p>{$client} &lt;{$email}&gt;</p>
 	<table style="width:100%;border-collapse:collapse;">{$corpsLignes}
-		<tr><td style="padding:10px 0;border-top:1px solid #ddd;"><strong>Total</strong></td>
+		<tr><td style="padding:10px 0;border-top:1px solid #ddd;"><strong>Total TTC</strong></td>
 			<td style="padding:10px 0;border-top:1px solid #ddd;text-align:right;"><strong>{$total}</strong></td></tr>
 	</table>
 	<p><strong>Adresse</strong><br />{$adresse}</p>

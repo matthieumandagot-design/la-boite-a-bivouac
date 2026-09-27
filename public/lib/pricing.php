@@ -71,8 +71,8 @@ function pricingMention(): string
 }
 
 /**
- * Mention affichée à côté du prix de la Boîte : « Hors frais de livraison »
- * (décision du 27/09/2026). Chaîne vide si elle manque au fichier.
+ * Mention affichée à côté du prix de la Boîte : « TTC, hors frais de
+ * livraison » (décision du 27/09/2026). Chaîne vide si elle manque au fichier.
  */
 function pricingMentionPrix(): string
 {

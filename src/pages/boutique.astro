@@ -173,7 +173,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, typeof REMORQUES>>((acc, remo
 				}
 
 				const mention = donnees.provisoire ? ` — ${donnees.mention}` : "";
-				apercu!.textContent = `${ligne.detail} · ${formaterCents(ligne.total_cents)}${mention}`;
+				apercu!.textContent = `${ligne.detail} · ${formaterCents(ligne.total_cents)} TTC${mention}`;
 				bouton!.disabled = false;
 			} catch {
 				apercu!.textContent = "Configuration indisponible pour le moment.";
@@ -261,7 +261,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, typeof REMORQUES>>((acc, remo
 
 		const prix = document.createElement("p");
 		prix.className = "mt-4 font-semibold text-brun-700";
-		prix.textContent = formaterCents(produit.prix_cents);
+		prix.textContent = `${formaterCents(produit.prix_cents)} TTC`;
 		carte.append(prix);
 
 		if (provisoire) {
