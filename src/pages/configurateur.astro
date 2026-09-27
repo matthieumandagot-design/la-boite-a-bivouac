@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
 import { Icon } from "astro-icon/components";
+import SuggestionAccessoires from "../components/SuggestionAccessoires.astro";
 import {
 	REMORQUES,
 	HAUTEUR_DEFAUT_CM,
@@ -42,6 +43,9 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 ---
 
 <Layout title="Configurateur" description={PAGE_DESCRIPTION}>
+	{/* Proposée après l'ajout d'une Boîte au panier : jamais visible autrement,
+	    puisque le bouton d'ajout n'existe que boutique ouverte ou en aperçu. */}
+	<SuggestionAccessoires />
 
 	<ScrollReveal />
 
@@ -975,6 +979,8 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 
 		boutonAjouter?.addEventListener("click", () => {
 			ajouter(configurationCourante());
+			// Propose les accessoires : voir SuggestionAccessoires.astro.
+			window.dispatchEvent(new CustomEvent("bab:boite-ajoutee"));
 			if (messageAchat) {
 				messageAchat.textContent = "Ajouté au panier.";
 				messageAchat.hidden = false;

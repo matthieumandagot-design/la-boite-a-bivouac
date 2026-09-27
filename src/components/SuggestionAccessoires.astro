@@ -1,0 +1,356 @@
+---
+/**
+ * Fenêtre affichée quand une Boîte vient d'être ajoutée au panier : elle
+ * propose trois accessoires en vignettes et un lien vers la page Équipements
+ * (demande de Matthieu, 27/09/2026).
+ *
+ * Les accessoires viennent du catalogue Équipements, le seul où ils existent
+ * avec photo et prix : la tente de toit, l'antivol de remorque et le porte-vélo.
+ * Chacun est retrouvé par son identifiant, puis, si l'identifiant a changé
+ * (fiche recréée dans l'admin), par un mot-clé de son titre. Les vignettes sont
+ * rendues au build depuis equipements.default.json, puis rafraîchies à la
+ * première ouverture depuis /data/equipements.json, le catalogue en ligne.
+ *
+ * Ouverture : l'événement « bab:boite-ajoutee », émis par le configurateur.
+ */
+import { Icon } from "astro-icon/components";
+import equipementsData from "../../public/data/equipements.default.json";
+
+type Equipement = {
+	id: string;
+	domaine: string;
+	titre: string;
+	prix: string;
+	medias?: { type: string; url: string }[];
+	image?: string;
+};
+
+/** Les trois accessoires proposés, dans l'ordre d'affichage. */
+const SUGGESTIONS = [
+	{ nom: "Tente de toit", id: "5c61b61d450ac98b", motif: "tente de toit", icone: "tabler:tent" },
+	{ nom: "Antivol de remorque", id: "8b3c57d6de01547e", motif: "antivol", icone: "tabler:lock" },
+	{ nom: "Porte-vélo", id: "13bd43acc90fda32", motif: "vélo", icone: "tabler:bike" },
+];
+
+function trouver(items: Equipement[], s: (typeof SUGGESTIONS)[number]): Equipement | undefined {
+	return items.find((e) => e.id === s.id) ?? items.find((e) => e.titre.toLowerCase().includes(s.motif));
+}
+
+function photo(e: Equipement | undefined): string {
+	const media = e?.medias?.find((m) => m.type === "image" && m.url);
+	return media?.url ?? e?.image ?? "";
+}
+
+const vignettes = SUGGESTIONS.map((s) => {
+	const e = trouver(equipementsData as Equipement[], s);
+	return { ...s, titre: e?.titre ?? s.nom, prix: e?.prix ?? "", photo: photo(e), domaine: e?.domaine ?? "" };
+});
+---
+
+<dialog id="suggestion-accessoires" class="suggestion" aria-labelledby="suggestion-titre">
+	<div class="suggestion__cadre">
+		<button type="button" class="suggestion__fermer" data-fermer aria-label="Fermer">
+			<Icon name="tabler:x" class="h-5 w-5" />
+		</button>
+
+		<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">
+			<Icon name="tabler:circle-check" class="mr-1 inline h-4 w-4 align-[-2px]" />
+			Ajoutée au panier
+		</p>
+		<h2 id="suggestion-titre" class="mt-2 t-sous font-display font-semibold text-brun-700">
+			Complétez votre Boîte
+		</h2>
+		<p class="t-petit mt-1 text-brun-500">Trois accessoires pensés pour partir l'esprit tranquille.</p>
+
+		<ul class="suggestion__grille">
+			{
+				vignettes.map((v) => (
+					<li>
+						<a
+							href={v.domaine ? `/equipements/#${v.domaine}` : "/equipements/"}
+							class="suggestion__vignette"
+							data-suggestion={v.id}
+							data-motif={v.motif}
+							title={v.titre}
+						>
+							<span class="suggestion__image">
+								<Icon name={v.icone} class="suggestion__repli" aria-hidden="true" />
+								{v.photo && <img src={v.photo} alt="" loading="lazy" data-photo />}
+							</span>
+							<span class="suggestion__nom">{v.nom}</span>
+							<span class="suggestion__prix" data-prix>{v.prix}</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+
+		<div class="suggestion__actions">
+			<a href="/equipements/" class="suggestion__principal" autofocus>
+				Voir les accessoires
+				<Icon name="tabler:arrow-right" class="h-4 w-4" />
+			</a>
+			<a href="/panier/" class="suggestion__lien">Voir mon panier</a>
+			<button type="button" class="suggestion__lien" data-fermer>Continuer</button>
+		</div>
+	</div>
+</dialog>
+
+<style>
+	.suggestion {
+		/* Le reset de Tailwind met margin: 0 partout : sans ce auto, la fenêtre
+		   se colle en haut à gauche au lieu d'être centrée. */
+		margin: auto;
+		width: min(40rem, calc(100% - 2rem));
+		max-height: calc(100% - 2rem);
+		padding: 0;
+		border: 0;
+		border-radius: 1rem;
+		background: #f9f4e8;
+		color: #0a1610;
+		box-shadow: 0 24px 60px rgb(10 22 16 / 0.35);
+	}
+	.suggestion::backdrop {
+		background: rgb(10 22 16 / 0.55);
+		backdrop-filter: blur(2px);
+	}
+	.suggestion[open] {
+		animation: apparaitre 180ms ease-out;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.suggestion[open] {
+			animation: none;
+		}
+	}
+	@keyframes apparaitre {
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+	}
+
+	.suggestion__cadre {
+		position: relative;
+		padding: 1.5rem;
+	}
+	@media (min-width: 640px) {
+		.suggestion__cadre {
+			padding: 2rem;
+		}
+	}
+
+	.suggestion__fermer {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		display: flex;
+		height: 2.25rem;
+		width: 2.25rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		color: #1e3a28;
+	}
+	.suggestion__fermer:hover {
+		background: #e8e0c8;
+	}
+
+	.suggestion__grille {
+		display: grid;
+		gap: 0.75rem;
+		margin-top: 1.25rem;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.suggestion__vignette {
+		display: flex;
+		height: 100%;
+		flex-direction: column;
+		overflow: hidden;
+		border: 1px solid rgb(192 200 200 / 0.6);
+		border-radius: 0.75rem;
+		background: #fff;
+		text-decoration: none;
+		transition:
+			border-color 150ms,
+			transform 150ms;
+	}
+	.suggestion__vignette:hover,
+	.suggestion__vignette:focus-visible {
+		border-color: #b85438;
+		transform: translateY(-2px);
+	}
+
+	.suggestion__image {
+		position: relative;
+		display: flex;
+		aspect-ratio: 1 / 1;
+		align-items: center;
+		justify-content: center;
+		background: #f5ecd8;
+	}
+	.suggestion__image img {
+		position: absolute;
+		inset: 0;
+		height: 100%;
+		width: 100%;
+		object-fit: cover;
+	}
+	.suggestion__repli {
+		height: 2.25rem;
+		width: 2.25rem;
+		color: #b88a18;
+	}
+
+	.suggestion__nom {
+		padding: 0.6rem 0.7rem 0;
+		font-size: 0.85rem;
+		font-weight: 600;
+		line-height: 1.3;
+		color: #0a1610;
+	}
+	.suggestion__prix {
+		padding: 0.15rem 0.7rem 0.7rem;
+		font-size: 0.78rem;
+		color: #546754;
+	}
+
+	.suggestion__actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem 1.25rem;
+		margin-top: 1.5rem;
+	}
+	.suggestion__principal {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		border-radius: 999px;
+		background: #b85438;
+		padding: 0.75rem 1.4rem;
+		font-weight: 600;
+		color: #f9f4e8;
+		text-decoration: none;
+		transition: background 150ms;
+	}
+	.suggestion__principal:hover {
+		background: #d47050;
+	}
+	.suggestion__lien {
+		font-size: 0.9rem;
+		color: #1e3a28;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	.suggestion__lien:hover {
+		color: #b85438;
+	}
+
+	/* Sur petit écran, une vignette par ligne, photo à gauche. */
+	@media (max-width: 479px) {
+		.suggestion__grille {
+			grid-template-columns: 1fr;
+		}
+		.suggestion__vignette {
+			display: grid;
+			grid-template-columns: 4.5rem 1fr;
+			grid-template-rows: auto auto;
+			align-items: center;
+		}
+		.suggestion__image {
+			grid-row: span 2;
+		}
+		.suggestion__nom {
+			padding-top: 0.4rem;
+		}
+		.suggestion__prix {
+			padding-bottom: 0.4rem;
+		}
+	}
+</style>
+
+<script>
+	type Equipement = {
+		id: string;
+		domaine: string;
+		titre: string;
+		prix: string;
+		medias?: { type: string; url: string }[];
+		image?: string;
+	};
+
+	const fenetre = document.getElementById("suggestion-accessoires") as HTMLDialogElement | null;
+	let rafraichie = false;
+
+	/** Une photo manquante laisse voir l'icône de repli plutôt qu'une image cassée. */
+	function surveillerPhotos() {
+		fenetre?.querySelectorAll<HTMLImageElement>("img[data-photo]").forEach((img) => {
+			img.addEventListener("error", () => img.remove(), { once: true });
+		});
+	}
+
+	/**
+	 * Met les vignettes au diapason du catalogue en ligne (prix ou photo
+	 * modifiés dans l'admin). En cas d'échec, celles du build restent.
+	 */
+	async function rafraichir() {
+		if (rafraichie || !fenetre) return;
+		rafraichie = true;
+		try {
+			const reponse = await fetch("/data/equipements.json", { cache: "no-store" });
+			if (!reponse.ok) return;
+			const items = (await reponse.json()) as Equipement[];
+			if (!Array.isArray(items)) return;
+
+			fenetre.querySelectorAll<HTMLAnchorElement>("[data-suggestion]").forEach((lien) => {
+				const motif = lien.dataset.motif ?? "";
+				const e =
+					items.find((i) => i.id === lien.dataset.suggestion) ??
+					items.find((i) => typeof i.titre === "string" && i.titre.toLowerCase().includes(motif));
+				if (!e) return;
+
+				lien.title = e.titre;
+				if (e.domaine) lien.href = `/equipements/#${e.domaine}`;
+				const prix = lien.querySelector("[data-prix]");
+				if (prix) prix.textContent = e.prix ?? "";
+
+				const url = e.medias?.find((m) => m.type === "image" && m.url)?.url ?? e.image;
+				if (url) {
+					const cadre = lien.querySelector(".suggestion__image");
+					let img = cadre?.querySelector<HTMLImageElement>("img[data-photo]") ?? null;
+					if (!img && cadre) {
+						img = document.createElement("img");
+						img.alt = "";
+						img.dataset.photo = "";
+						cadre.append(img);
+					}
+					if (img && img.getAttribute("src") !== url) {
+						img.src = url;
+						img.addEventListener("error", () => img?.remove(), { once: true });
+					}
+				}
+			});
+		} catch {
+			// Catalogue en ligne indisponible : les vignettes du build suffisent.
+		}
+	}
+
+	if (fenetre) {
+		surveillerPhotos();
+
+		fenetre.querySelectorAll("[data-fermer]").forEach((bouton) => {
+			bouton.addEventListener("click", () => fenetre.close());
+		});
+
+		// Un clic sur le voile, hors du cadre, referme la fenêtre.
+		fenetre.addEventListener("click", (event) => {
+			if (event.target === fenetre) fenetre.close();
+		});
+
+		window.addEventListener("bab:boite-ajoutee", () => {
+			void rafraichir();
+			if (!fenetre.open) fenetre.showModal();
+		});
+	}
+</script>
