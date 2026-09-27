@@ -264,22 +264,13 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 				</div>
 
 				{/* Étape 2 du configurateur (SPEC §7). Masquée avec le reste du
-				    module commercial : sans boutique, choisir des options n'aurait
-				    nulle part où mener : la page reste alors un outil de
-				    dimensionnement, sans rien à commander. */}
-				<div
-					data-feature="commerce"
-					hidden
-					class="mt-8 border-t border-ardoise/30 pt-6"
-				>
-					<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">Options</p>
-					{
-						OPTIONS.length === 0 ? (
-							<p class="t-petit mt-3 text-brun-400">
-								Aucune option n'est encore proposée. La Boîte est livrée dans sa
-								configuration standard.
-							</p>
-						) : (
+				    module commercial, et absente tant qu'aucune option n'est
+				    proposée dans data/pricing.json (27/09/2026) : un bloc vide
+				    n'apprend rien au visiteur. */}
+				{
+					OPTIONS.length > 0 && (
+						<div data-feature="commerce" hidden class="mt-8 border-t border-ardoise/30 pt-6">
+							<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">Options</p>
 							<div class="mt-3 grid gap-2">
 								{OPTIONS.map((option) => (
 									<label class="flex cursor-pointer items-start gap-3">
@@ -293,9 +284,9 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 									</label>
 								))}
 							</div>
-						)
-					}
-				</div>
+						</div>
+					)
+				}
 
 			</div>
 		</div>
