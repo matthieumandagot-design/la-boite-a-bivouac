@@ -24,6 +24,58 @@ require $configPath;
 // Mot de passe ou session admin ouverte ; sinon, retour au formulaire de
 // connexion de /admin/ (voir api/lib/admin-auth.php).
 require_once __DIR__ . '/../api/lib/admin-auth.php';
+// Prix de vente, marge et lecture des anciens prix en texte (27/09/2026).
+require_once __DIR__ . '/../lib/equipements.php';
+
+/**
+ * Montant saisi en euros (« 29,99 », « 1249 », « 8.5 ») → centimes. Null si
+ * vide ou illisible : le champ n'est alors pas renseigné.
+ */
+function eurosEnCentimes(string $saisie): ?int
+{
+	$propre = str_replace([',', ' ', "\u{00A0}", "\u{202F}", '€'], ['.', '', '', '', ''], trim($saisie));
+	if ($propre === '' || !is_numeric($propre) || (float) $propre < 0) {
+		return null;
+	}
+
+	return (int) round((float) $propre * 100);
+}
+
+/**
+ * Coupe un texte à $octets sans laisser de caractère UTF-8 à moitié : mbstring
+ * n'est pas garantie sur l'hébergement. Le champ HTML limite déjà la saisie.
+ */
+function couperUtf8(string $texte, int $octets): string
+{
+	$coupe = substr($texte, 0, $octets);
+	while ($coupe !== '' && preg_match('//u', $coupe) !== 1) {
+		$coupe = substr($coupe, 0, -1);
+	}
+
+	return $coupe;
+}
+
+/** 2999 → « 29,99 », pour préremplir un champ. */
+function centimesEnEuros(?int $cents): string
+{
+	return $cents === null ? '' : number_format($cents / 100, 2, ',', '');
+}
+
+/**
+ * Champs de prix d'une fiche, lus dans le formulaire. Le prix d'achat estimé
+ * et les frais de port ne sont jamais publiés ; seul le prix de vente
+ * (estimé + marge) l'est, par /api/accessoires.php.
+ *
+ * @return array{prix_estime_cents: ?int, frais_port_cents: int, precision: string}
+ */
+function champsPrixPostes(): array
+{
+	return [
+		'prix_estime_cents' => eurosEnCentimes((string) ($_POST['prix_estime'] ?? '')),
+		'frais_port_cents' => eurosEnCentimes((string) ($_POST['frais_port'] ?? '')) ?? 0,
+		'precision' => couperUtf8(trim((string) ($_POST['precision'] ?? '')), 120),
+	];
+}
 exigerAdminPage();
 
 if (empty($_SESSION['csrf_token'])) {
@@ -633,7 +685,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['C
 	} elseif ($action === 'ajouter') {
 		$domaine = (string) ($_POST['domaine'] ?? '');
 		$titre = trim((string) ($_POST['titre'] ?? ''));
-		$prix = trim((string) ($_POST['prix'] ?? ''));
 		$description = trim((string) ($_POST['description'] ?? ''));
 
 		if (!isset(DOMAINES[$domaine]) || $titre === '' || $description === '') {
@@ -646,7 +697,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['C
 				'id' => bin2hex(random_bytes(8)),
 				'domaine' => $domaine,
 				'titre' => $titre,
-				'prix' => $prix,
+				...champsPrixPostes(),
 				'description' => $description,
 				'medias' => $medias,
 			];
@@ -758,7 +809,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['C
 				'id' => $id,
 				'domaine' => $domaine,
 				'titre' => $titre,
-				'prix' => trim((string) ($_POST['prix'] ?? '')),
+				...champsPrixPostes(),
 				'description' => $description,
 				'medias' => array_merge($medias, $nouveaux),
 			];
@@ -994,10 +1045,23 @@ foreach ($equipements as $item) {
 							</label>
 
 							<label style="display:block;">
-								<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Prix</span>
-								<input type="text" name="prix" maxlength="60" placeholder="1 200 € ou À partir de 900 €"
+								<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Prix estimé (€)</span>
+								<input type="text" name="prix_estime" inputmode="decimal" maxlength="12" placeholder="29,99"
 									style="width:100%;padding:.55rem .65rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.95rem;" />
-								<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">Texte libre. Laissez vide pour ne rien afficher.</span>
+								<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">Votre coût, jamais affiché. Prix de vente = + <?= equipementMargePourcent() ?> %. Vide : pas de vente en ligne.</span>
+							</label>
+
+							<label style="display:block;">
+								<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Frais de port estimés (€)</span>
+								<input type="text" name="frais_port" inputmode="decimal" maxlength="12" placeholder="8,50"
+									style="width:100%;padding:.55rem .65rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.95rem;" />
+								<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">Par exemplaire, facturés à part au client, sans marge.</span>
+							</label>
+
+							<label style="display:block;">
+								<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Précision (facultatif)</span>
+								<input type="text" name="precision" maxlength="40" placeholder="la paire, l'unité…"
+									style="width:100%;padding:.55rem .65rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.95rem;" />
 							</label>
 						</div>
 
@@ -1134,9 +1198,32 @@ foreach ($equipements as $item) {
 													style="width:100%;padding:.5rem .6rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.92rem;" />
 											</label>
 
+											<?php
+											$estimeItem = equipementPrixEstimeCents($item);
+											$portItem = equipementPortCents($item);
+											?>
 											<label style="display:block;">
-												<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Prix</span>
-												<input type="text" name="prix" maxlength="60" value="<?= e((string) ($item['prix'] ?? '')) ?>"
+												<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Prix estimé (€)</span>
+												<input type="text" name="prix_estime" inputmode="decimal" maxlength="12" value="<?= e(centimesEnEuros($estimeItem)) ?>"
+													style="width:100%;padding:.5rem .6rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.92rem;" />
+												<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">
+													<?php if ($estimeItem !== null) : ?>
+														Vendu <?= e(formaterCents(equipementPrixVenteCents($estimeItem))) ?> TTC (+ <?= equipementMargePourcent() ?> %)<?= $portItem > 0 ? ' + ' . e(formaterCents($portItem)) . ' de port' : '' ?>.
+													<?php else : ?>
+														Pas de prix : non vendu en ligne.
+													<?php endif; ?>
+												</span>
+											</label>
+
+											<label style="display:block;">
+												<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Frais de port estimés (€)</span>
+												<input type="text" name="frais_port" inputmode="decimal" maxlength="12" value="<?= e($portItem > 0 ? centimesEnEuros($portItem) : '') ?>"
+													style="width:100%;padding:.5rem .6rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.92rem;" />
+											</label>
+
+											<label style="display:block;">
+												<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Précision</span>
+												<input type="text" name="precision" maxlength="40" value="<?= e(equipementPrecision($item)) ?>" placeholder="la paire, l'unité…"
 													style="width:100%;padding:.5rem .6rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.92rem;" />
 											</label>
 

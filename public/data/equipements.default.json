@@ -3,7 +3,9 @@
     "id": "8b3c57d6de01547e",
     "domaine": "remorque",
     "titre": "Antivol universel de tête d’attelage",
-    "prix": "À partir de 29,99 €",
+    "prix_estime_cents": 2999,
+    "frais_port_cents": 0,
+    "precision": "",
     "description": "Antivol pour sécuriser la tête d’attelage de la remorque, qu’elle soit attelée au véhicule ou stationnée seule.\r\nLe caisson protège également la boulonnerie de la tête d’attelage et se verrouille avec un cadenas. Installation simple, sans outil spécifique.",
     "medias": [
       {
@@ -20,7 +22,9 @@
     "id": "c2e68964c0d49a6e",
     "domaine": "remorque",
     "titre": "Sabot antivol de roue universel",
-    "prix": "À partir de 22,99 €",
+    "prix_estime_cents": 2299,
+    "frais_port_cents": 0,
+    "precision": "",
     "description": "Sabot antivol réglable pour sécuriser la remorque lors du stationnement.\r\nIl bloque directement la roue et constitue un bon complément à l’antivol de tête d’attelage.\r\nInstallation rapide, structure acier, forte visibilité grâce au coloris jaune et rouge.",
     "medias": [
       {
@@ -37,7 +41,9 @@
     "id": "fe0233296d8b1494",
     "domaine": "remorque",
     "titre": "Lot de 2 cales de roue",
-    "prix": "À partir de 9,99 €",
+    "prix_estime_cents": 999,
+    "frais_port_cents": 0,
+    "precision": "",
     "description": "Lot de deux cales permettant d’immobiliser la remorque lors du stationnement, notamment sur terrain légèrement en pente ou irrégulier.\r\nCompactes et légères, elles se glissent facilement dans la remorque et se placent simplement devant ou derrière les roues.",
     "medias": [
       {
@@ -50,7 +56,9 @@
     "id": "53c94875d02564cd",
     "domaine": "remorque",
     "titre": "Béquilles stabilisatrices pour remorque",
-    "prix": "À partir de 79,99 € la paire",
+    "prix_estime_cents": 7999,
+    "frais_port_cents": 0,
+    "precision": "la paire",
     "description": "Paire de béquilles stabilisatrices permettant de maintenir la remorque bien à niveau et d’éviter les mouvements lorsqu’elle est dételée.\r\nParticulièrement utiles avec La Boîte à Bivouac lorsque la tente de toit est installée ou lorsqu’on monte et descend de la remorque.\r\nRéglage rapide en hauteur et appui au sol large pour améliorer la stabilité sur terrain irrégulier.",
     "medias": [
       {
@@ -63,7 +71,9 @@
     "id": "5c61b61d450ac98b",
     "domaine": "toit",
     "titre": "Tente de toit Swisskings Série 160L — 2 à 3 places",
-    "prix": "1 249 € TTC",
+    "prix_estime_cents": 124900,
+    "frais_port_cents": 0,
+    "precision": "",
     "description": "Tente de toit portefeuille familiale, conçue pour 2 à 3 personnes.\r\nElle offre un couchage de 155 × 230 cm, une ouverture rapide en 90 secondes et un matelas mémoire de forme de 5 cm.\r\nStructure et plateau en aluminium, toile respirante et imperméable, échelle télescopique, bâche de protection et système de fixation pour barres de toit inclus.\r\nPoids : 65 kg. Charge annoncée : 300 kg. Dimensions repliée : 160 × 120 × 31 cm.",
     "medias": [
       {
@@ -76,7 +86,9 @@
     "id": "13bd43acc90fda32",
     "domaine": "boite",
     "titre": "Supports de fourche pour vélos",
-    "prix": "À partir de 20 € l’unité",
+    "prix_estime_cents": 2000,
+    "frais_port_cents": 0,
+    "precision": "l’unité",
     "description": "Support permettant de fixer solidement un vélo par la fourche après démontage de la roue avant.\r\nIdéal pour transporter les vélos à l’intérieur de La Boîte à Bivouac tout en optimisant l’espace disponible.\r\nFixation possible sur une planche amovible ou directement sur un support intérieur. Selon le modèle choisi, compatibilité avec serrage rapide et différents standards d’axes traversants.",
     "medias": [
       {

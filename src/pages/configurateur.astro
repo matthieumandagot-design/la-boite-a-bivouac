@@ -313,14 +313,15 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			</div>
 
 			{/* Étape 3 : le prix et la mise au panier. Hors de #resultat, que le
-			    script réécrit entièrement à chaque frappe — un bloc réinjecté
-			    resterait masqué, features.ts ne révélant qu'une fois au chargement.
+			    script réécrit entièrement à chaque frappe.
+
+			    Visible de tous depuis le 27/09/2026, boutique fermée comprise :
+			    l'ajout au panier fonctionne, et la fenêtre qui suit annonce
+			    l'ouverture des commandes (voir SuggestionAccessoires.astro).
 
 			    Aucun prix n'est calculé ici : le montant affiché vient de
 			    /api/panier.php, exactement celui qui sera facturé. */}
 			<div
-				data-feature="commerce"
-				hidden
 				class="mt-6 rounded-2xl bg-brun-600 p-6 text-ecru-50 shadow-lg ring-1 ring-mousse/40 sm:p-8"
 			>
 				{/* Fond vert forêt de la marque : c'est l'aboutissement de la page, il
@@ -444,7 +445,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 	// Le panier et le formatage des montants sont déjà chargés partout par
 	// features.ts : les réutiliser ne coûte rien et évite une seconde façon
 	// d'écrire un prix.
-	import { ajouter, jetonCsrf, formaterCents } from "../scripts/panier";
+	import { ajouter, formaterCents, commandesOuvertes } from "../scripts/panier";
 
 	const donnees = document.getElementById("donnees-remorques");
 	const sortie = document.getElementById("resultat");
@@ -921,9 +922,8 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 		 * Demande le prix au serveur.
 		 *
 		 * Différé : `rendu()` s'exécute à chaque frappe, et un aller-retour par
-		 * caractère saturerait le serveur pour rien. Le bloc reste masqué tant que
-		 * le module commercial n'est pas ouvert, auquel cas l'appel échoue en 404
-		 * et le prix affiche un tiret — sans bruit.
+		 * caractère saturerait le serveur pour rien. Public depuis le 27/09/2026 :
+		 * le prix s'affiche même boutique fermée ; seule la commande attend.
 		 */
 		let minuteurPrix: number | undefined;
 
@@ -932,15 +932,12 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 
 			window.clearTimeout(minuteurPrix);
 			minuteurPrix = window.setTimeout(async () => {
-				const jeton = await jetonCsrf();
-				if (!jeton) return;
-
 				try {
 					const reponse = await fetch("/api/panier.php", {
 						method: "POST",
 						cache: "no-store",
 						credentials: "same-origin",
-						headers: { "Content-Type": "application/json", "X-CSRF-Token": jeton },
+						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ lignes: [configurationCourante()] }),
 					});
 					if (!reponse.ok) throw new Error(String(reponse.status));
@@ -979,8 +976,11 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 
 		boutonAjouter?.addEventListener("click", () => {
 			ajouter(configurationCourante());
-			// Propose les accessoires : voir SuggestionAccessoires.astro.
-			window.dispatchEvent(new CustomEvent("bab:boite-ajoutee"));
+			// Propose les accessoires, et annonce l'ouverture des commandes tant
+			// que la boutique est fermée : voir SuggestionAccessoires.astro.
+			void commandesOuvertes().then((ouvert) =>
+				window.dispatchEvent(new CustomEvent("bab:boite-ajoutee", { detail: { ouvert } })),
+			);
 			if (messageAchat) {
 				messageAchat.textContent = "Ajouté au panier.";
 				messageAchat.hidden = false;
