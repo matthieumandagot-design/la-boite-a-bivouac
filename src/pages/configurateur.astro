@@ -9,6 +9,8 @@ import {
 	HAUTEUR_TOTALE_MAX_CM,
 	TENTE_DEFAUT_CM,
 	JEU_PAR_COTE_CM,
+	HAUTEUR_BOITE_MAX_CM,
+	LONGUEUR_REMORQUE_MAX_CM,
 	type Remorque,
 } from "../data/remorques";
 import pricing from "../../public/data/pricing.json";
@@ -72,7 +74,8 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			La Boîte reprend l'intérieur de votre caisse, moins {JEU_PAR_COTE_CM}&nbsp;cm de jeu de chaque
 			côté pour la poser et la retirer facilement. Sa hauteur standard est de {HAUTEUR_DEFAUT_CM}&nbsp;cm,
 			ajustable entre la hauteur des ridelles et la longueur intérieure
-			de la caisse.
+			de la caisse, dans la limite de {HAUTEUR_BOITE_MAX_CM / 100}&nbsp;m. Les remorques acceptées
+			mesurent jusqu'à {LONGUEUR_REMORQUE_MAX_CM / 100}&nbsp;m de long.
 		</p>
 		{/* Seulement quand la boutique est ouverte (ou en mode aperçu) : sans elle,
 		    annoncer une commande en ligne serait faux. */}
@@ -531,7 +534,9 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			curseurHauteur!.value = inputHauteur!.value;
 
 			aideHauteur!.textContent =
-				`De ${mini} cm, la hauteur des ridelles, à ${plafond} cm, la longueur de la caisse.`;
+				plafond < Math.round(longueur)
+					? `De ${mini} cm, la hauteur des ridelles, à ${plafond} cm, la hauteur maximale d'une Boîte.`
+					: `De ${mini} cm, la hauteur des ridelles, à ${plafond} cm, la longueur de la caisse.`;
 		}
 
 		/* Cotes de principe pour le train roulant : elles ne figurent pas sur les
@@ -1001,6 +1006,12 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 		/* Les bornes ne bougent qu'une fois la saisie des ridelles terminée :
 		   sinon un « 4 » en cours de frappe remonterait la hauteur à 4 cm. */
 		inputRidelle.addEventListener("blur", () => {
+			majBornes();
+			rendu();
+		});
+		/* Même logique pour la longueur, qui fixe le plafond de hauteur : sans
+		   cela, le curseur gardait celui de la cote précédente. */
+		inputLongueur.addEventListener("blur", () => {
 			majBornes();
 			rendu();
 		});

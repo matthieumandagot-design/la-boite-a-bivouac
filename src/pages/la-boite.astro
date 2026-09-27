@@ -126,14 +126,15 @@ const productSchema = {
 	},
 	offers: {
 		"@type": "Offer",
-		// Prix d'entrée : 1 000 € fixes + 200 € de variable pour une Boîte de
-		// 100 cm (modèle du 27/09/2026, data/pricing.json), hors TVA et frais de
-		// livraison, comme l'indique la section prix de la page.
-		price: "1200",
+		// Prix d'entrée : 1 200 € fixes + 200 € de variable pour une remorque de
+		// 100 cm et une Boîte de 35 cm (formule A du 27/09/2026,
+		// data/pricing.json), hors TVA et frais de livraison, comme l'indique la
+		// section prix de la page.
+		price: "1400",
 		priceCurrency: "EUR",
 		priceSpecification: {
 			"@type": "PriceSpecification",
-			minPrice: "1200",
+			minPrice: "1400",
 			priceCurrency: "EUR",
 			valueAddedTaxIncluded: false,
 		},
@@ -343,7 +344,7 @@ const productSchema = {
 				data-reveal
 				style="--reveal-delay: 90ms"
 			>
-				À partir de 1&nbsp;200&nbsp;€.
+				À partir de 1&nbsp;400&nbsp;€.
 			</p>
 			<p class="t-corps mt-4 max-w-[70ch] text-brun-500" data-reveal style="--reveal-delay: 180ms">
 				Nous voulons que partir à quatre ou cinq reste accessible. C'est ce qui guide nos
@@ -351,8 +352,8 @@ const productSchema = {
 				bas que nous puissions tenir sans rogner sur la solidité.
 			</p>
 			<p class="t-petit mt-6 text-brun-400" data-reveal style="--reveal-delay: 240ms">
-				*Prix de la Boîte seule, calculé selon sa longueur, hors TVA et frais de livraison. Les
-				équipements ne sont pas compris.
+				*Prix de la Boîte seule, calculé selon la longueur de la remorque et la hauteur de la
+				Boîte, hors TVA et frais de livraison. Les équipements ne sont pas compris.
 			</p>
 		</div>
 	</section>

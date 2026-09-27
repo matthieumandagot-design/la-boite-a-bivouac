@@ -40,13 +40,13 @@ function rqHauteurMini(?int $ridelle): int
 }
 
 /**
- * Hauteur maximale de la boîte : elle ne peut pas être plus haute que la caisse
- * n'est longue. Les 2 m hors tout ne bornent rien, ils ne servent qu'à situer
- * l'ensemble dans les classes de péage.
+ * Hauteur maximale de la boîte : jamais plus haute que la caisse n'est longue,
+ * et jamais plus de RQ_HAUTEUR_BOITE_MAX_CM (3 m). Les 2 m hors tout ne bornent
+ * rien, ils ne servent qu'à situer l'ensemble dans les classes de péage.
  */
 function rqHauteurMaxi(int $longueurInterieure): int
 {
-	return max(1, (int) round($longueurInterieure));
+	return max(1, min((int) round($longueurInterieure), RQ_HAUTEUR_BOITE_MAX_CM));
 }
 
 /**
@@ -101,7 +101,7 @@ function rqCalculeBoite(
 		$horsGabarit[] = 'longueur trop courte';
 	}
 	if ($longueur > RQ_LIMITES['longueurMax']) {
-		$horsGabarit[] = 'longueur trop grande';
+		$horsGabarit[] = 'remorque de plus de ' . (RQ_LONGUEUR_REMORQUE_MAX_CM / 100) . ' m de long';
 	}
 	if ($largeur < RQ_LIMITES['largeurMin']) {
 		$horsGabarit[] = 'largeur trop étroite';

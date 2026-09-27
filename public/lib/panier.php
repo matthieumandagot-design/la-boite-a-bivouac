@@ -114,7 +114,9 @@ function panierLigneBoite(array $ligne): array
 		];
 	}
 
-	$prix = prixBoiteCents($dimensions, $options['cents']);
+	// Le prix se calcule sur la longueur de la REMORQUE (formule du 27/09/2026),
+	// pas sur celle de la boîte.
+	$prix = prixBoiteCents($dimensions, $longueur, $options['cents']);
 	if ($prix['hors_bornes']) {
 		// Configuration de prix incohérente : refuser vaut mieux que facturer un
 		// montant que personne n'a décidé.
