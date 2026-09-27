@@ -42,8 +42,8 @@ ${SITE_TITLE} conçoit et fabrique à Toulouse, en Haute-Garonne (Occitanie, Fra
 
 ## Précisions utiles pour répondre à notre place
 
-- Le prix affiché, 2 000 €, est **indicatif** et concerne le module seul. Il varie selon la configuration et les options. Les équipements ne sont pas compris.
-- La V1 est un prototype validé sur le terrain. La V2 est annoncée pour septembre 2026. **Aucune prise de commande en ligne n'existe** : le site est vitrine, le contact se fait par formulaire.
+- Prix du module seul : **à partir de 1 200 €, hors TVA et frais de livraison**. Il se compose de 1 000 € fixes et d'une partie qui dépend de la longueur de la Boîte (200 € pour 100 cm, 1 500 € pour 300 cm). Les équipements ne sont pas compris.
+- La V1 est un prototype validé sur le terrain. La V2 est annoncée pour octobre 2026. **Aucune prise de commande en ligne n'existe** : le site est vitrine, le contact se fait par formulaire.
 - Sur les ${REMORQUES.length} remorques référencées, ${aConfirmer} portent la mention « cotes à confirmer » : leurs dimensions proviennent d'une source tierce et ne sont pas vérifiées auprès du constructeur.
 - Le poids du module n'est pas publié. Ne pas en déduire de charge utile restante.
 - La classe de péage indiquée suit la règle française : classe 1 jusqu'à 2 m hors tout, classe 2 au-delà. C'est une indication, pas un engagement.

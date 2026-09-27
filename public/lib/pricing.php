@@ -70,12 +70,59 @@ function pricingMention(): string
 	return is_string($mention) && $mention !== '' ? $mention : 'À DÉFINIR';
 }
 
+/**
+ * Mention affichée à côté du prix de la Boîte : « Hors TVA et frais de
+ * livraison » (décision du 27/09/2026). Chaîne vide si elle manque au fichier.
+ */
+function pricingMentionPrix(): string
+{
+	$mention = pricing()['mention_prix'] ?? '';
+
+	return is_string($mention) ? $mention : '';
+}
+
 /** Entier de centimes lu dans la configuration, 0 si la valeur est douteuse. */
 function pricingEntier(array $source, string $cle): int
 {
 	$valeur = $source[$cle] ?? 0;
 
 	return is_int($valeur) && $valeur >= 0 ? $valeur : 0;
+}
+
+/**
+ * Partie variable du prix selon la longueur de la Boîte (modèle du 27/09/2026).
+ *
+ * Droite passant par les deux points de data/pricing.json (200 € à 100 cm,
+ * 1 500 € à 300 cm), prolongée au-delà dans les deux sens comme demandé. Jamais
+ * négative : très en dessous de 100 cm, la droite passerait sous zéro, et une
+ * Boîte ne coûte pas moins que sa partie fixe.
+ *
+ * Calcul en entiers de centimes : 1 300 € sur 200 cm font 650 centimes par cm,
+ * sans arrondi. Un point mal renseigné annule la partie variable plutôt que de
+ * facturer un montant deviné.
+ */
+function prixVariableLongueurCents(int $longueurCm): int
+{
+	$regle = pricing()['boite']['variable_longueur'] ?? null;
+	$de = is_array($regle) ? ($regle['de'] ?? null) : null;
+	$a = is_array($regle) ? ($regle['a'] ?? null) : null;
+
+	if (!is_array($de) || !is_array($a)) {
+		return 0;
+	}
+
+	$l1 = $de['longueur_cm'] ?? null;
+	$p1 = $de['cents'] ?? null;
+	$l2 = $a['longueur_cm'] ?? null;
+	$p2 = $a['cents'] ?? null;
+
+	if (!is_int($l1) || !is_int($p1) || !is_int($l2) || !is_int($p2) || $l1 === $l2) {
+		return 0;
+	}
+
+	$variable = $p1 + ($longueurCm - $l1) * ($p2 - $p1) / ($l2 - $l1);
+
+	return max(0, (int) round($variable));
 }
 
 /**
@@ -93,6 +140,7 @@ function prixBoiteCents(array $dimensions, int $optionsCents = 0): array
 	$boite = pricing()['boite'] ?? [];
 
 	$total = pricingEntier($boite, 'prix_base_cents')
+		+ prixVariableLongueurCents((int) $dimensions['longueur'])
 		+ (int) round($dimensions['volume'] * pricingEntier($boite, 'supplement_par_litre_cents'))
 		+ (int) round($dimensions['hauteur'] * pricingEntier($boite, 'supplement_par_cm_hauteur_cents'))
 		// Les options entrent AVANT le contrôle des bornes : elles font partie du

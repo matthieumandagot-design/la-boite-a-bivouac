@@ -194,7 +194,7 @@ function panierLigneAccessoire(array $ligne): array
  * Recalcule un panier entier.
  *
  * @param mixed $brut le contenu du localStorage, tel quel
- * @return array{lignes: array, refusees: array, sous_total_cents: int, livraison_cents: int, total_cents: int, provisoire: bool, mention: string}
+ * @return array{lignes: array, refusees: array, sous_total_cents: int, livraison_cents: int, total_cents: int, provisoire: bool, mention: string, mention_prix: string}
  */
 function panierRecalcule($brut): array
 {
@@ -245,5 +245,6 @@ function panierRecalcule($brut): array
 		'total_cents' => $sousTotal + $livraison,
 		'provisoire' => pricingProvisoire(),
 		'mention' => pricingMention(),
+		'mention_prix' => pricingMentionPrix(),
 	];
 }

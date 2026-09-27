@@ -1,0 +1,241 @@
+---
+/**
+ * Petite voiture sous le menu principal, avec la remorque attelée : la Boîte
+ * et sa tente de toit repliée. Elle roule sur le trait bas de l'en-tête et se
+ * gare sous la page affichée (demande de Matthieu, 27/09/2026).
+ *
+ * Le site change de page par un vrai chargement : rien ne survit d'une page à
+ * l'autre, sauf ce qu'on garde dans sessionStorage. On y note la dernière page
+ * du menu visitée ; à l'arrivée, le convoi part de sous cette entrée et roule
+ * jusqu'à la nouvelle. La voiture regarde vers la droite : vers la droite, elle
+ * avance ; vers la gauche, elle recule, la remorque en tête.
+ *
+ * Décoratif uniquement : aria-hidden, aucun clic intercepté, masqué sous md où
+ * le menu devient un bouton. Mouvement réduit demandé : le convoi se pose
+ * directement à sa place, sans rouler.
+ */
+---
+
+<div class="convoi" id="convoi-nav" aria-hidden="true">
+	<svg viewBox="0 0 80 26" width="80" height="26" focusable="false">
+		{/* Remorque : la Boîte, la tente repliée dessus, le châssis et sa roue. */}
+		<g class="caisse">
+			<rect x="7" y="4" width="22" height="4.5" rx="1.5" class="tente" />
+			<rect x="5" y="8" width="26" height="10" rx="1" class="boite" />
+			<line x1="9" y1="11" x2="27" y2="11" class="boite-trait" />
+			<rect x="3" y="17.5" width="30" height="2" rx="0.6" class="chassis" />
+			<line x1="33" y1="18.5" x2="41" y2="18.5" class="timon" />
+		</g>
+		<g class="roue">
+			<circle cx="18" cy="22.5" r="3.5" class="pneu" />
+			<circle cx="18" cy="22.5" r="1.3" class="jante" />
+			<line x1="18" y1="19.8" x2="18" y2="25.2" class="rayon" />
+		</g>
+
+		{/* Voiture, tournée vers la droite. */}
+		<g class="caisse">
+			<path d="M41 20 V13.5 Q41 12 42.5 12 H45 L50 5.5 Q50.6 5 51.4 5 H66 Q67 5 67.6 5.8 L72.5 12 H76 Q78 12 78 14 V20 Z" class="carrosserie" />
+			<path d="M47 12 L51.2 7 H57.5 V12 Z" class="vitre" />
+			<path d="M59.5 7 H65.6 L69.6 12 H59.5 Z" class="vitre" />
+			<rect x="76.3" y="13.3" width="1.7" height="2" rx="0.5" class="phare" />
+		</g>
+		<g class="roue">
+			<circle cx="48" cy="22.5" r="3.5" class="pneu" />
+			<circle cx="48" cy="22.5" r="1.3" class="jante" />
+			<line x1="48" y1="19.8" x2="48" y2="25.2" class="rayon" />
+		</g>
+		<g class="roue">
+			<circle cx="70" cy="22.5" r="3.5" class="pneu" />
+			<circle cx="70" cy="22.5" r="1.3" class="jante" />
+			<line x1="70" y1="19.8" x2="70" y2="25.2" class="rayon" />
+		</g>
+	</svg>
+</div>
+
+<style>
+	.convoi {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		display: none;
+		pointer-events: none;
+		/* Invisible tant que le script ne l'a pas placé : sans cela, il
+		   apparaîtrait un instant contre le bord gauche. */
+		visibility: hidden;
+		will-change: transform;
+	}
+
+	@media (min-width: 768px) {
+		.convoi {
+			display: block;
+		}
+	}
+
+	.convoi svg {
+		display: block;
+		overflow: visible;
+	}
+
+	/* Couleurs de la marque, en dur : les variables du thème Tailwind ne sont
+	   émises que si une classe les utilise. */
+	.tente {
+		fill: #b85438;
+	}
+	.boite {
+		fill: #1e3a28;
+	}
+	.boite-trait {
+		stroke: #b88a18;
+		stroke-width: 0.8;
+	}
+	.chassis,
+	.timon {
+		fill: #122218;
+		stroke: #122218;
+		stroke-width: 1;
+	}
+	.carrosserie {
+		fill: #b88a18;
+	}
+	.vitre {
+		fill: #f9f4e8;
+	}
+	.phare {
+		fill: #f2d878;
+	}
+	.pneu {
+		fill: #0a1610;
+	}
+	.jante {
+		fill: #c0c8c8;
+	}
+	.rayon {
+		stroke: #c0c8c8;
+		stroke-width: 0.9;
+	}
+
+	/* Chaque roue tourne autour de son propre centre. */
+	.roue {
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+
+	.convoi.roule .roue {
+		animation: rouler 0.45s linear infinite;
+	}
+	.convoi.recule .roue {
+		animation-direction: reverse;
+	}
+	/* Un léger tangage de la carrosserie pendant le trajet. */
+	.convoi.roule .caisse {
+		animation: tanguer 0.3s ease-in-out infinite alternate;
+	}
+
+	@keyframes rouler {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	@keyframes tanguer {
+		to {
+			transform: translateY(-0.6px);
+		}
+	}
+</style>
+
+<script>
+	const CLE = "bab_convoi_page";
+	const convoi = document.getElementById("convoi-nav");
+	const nav = document.querySelector<HTMLElement>('nav[aria-label="Navigation principale"]');
+	const entete = convoi?.parentElement;
+
+	function lienActif(): HTMLAnchorElement | null {
+		return nav?.querySelector<HTMLAnchorElement>('a[aria-current="page"]') ?? null;
+	}
+
+	/** Abscisse du convoi, dans l'en-tête, pour qu'il soit centré sous le lien. */
+	function abscisseSous(lien: HTMLElement): number {
+		if (!convoi || !entete) return 0;
+		const cadre = entete.getBoundingClientRect();
+		const cible = lien.getBoundingClientRect();
+		return cible.left + cible.width / 2 - cadre.left - convoi.offsetWidth / 2;
+	}
+
+	function lire(): string | null {
+		try {
+			return sessionStorage.getItem(CLE);
+		} catch {
+			return null;
+		}
+	}
+
+	function noter(href: string) {
+		try {
+			sessionStorage.setItem(CLE, href);
+		} catch {
+			// Sans stockage, le convoi apparaîtra simplement à sa place.
+		}
+	}
+
+	function poser(x: number) {
+		if (!convoi) return;
+		convoi.style.transition = "none";
+		convoi.style.transform = `translateX(${x}px)`;
+	}
+
+	function demarrer() {
+		const actif = lienActif();
+		if (!convoi || !actif) return;
+
+		const href = actif.getAttribute("href") ?? "";
+		const precedent = lire();
+		noter(href);
+
+		const arrivee = abscisseSous(actif);
+		const lienDepart =
+			precedent && precedent !== href
+				? nav?.querySelector<HTMLAnchorElement>(`a[href="${CSS.escape(precedent)}"]`)
+				: null;
+		const mouvementReduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+		if (!lienDepart || mouvementReduit) {
+			poser(arrivee);
+			convoi.style.visibility = "visible";
+			return;
+		}
+
+		const depart = abscisseSous(lienDepart);
+		poser(depart);
+		convoi.style.visibility = "visible";
+
+		// Lecture forcée de la mise en page : sans elle, le navigateur fusionne
+		// la pose et le déplacement, et le convoi apparaît déjà arrivé.
+		void convoi.offsetWidth;
+
+		const distance = Math.abs(arrivee - depart);
+		const duree = Math.min(1400, Math.max(500, 250 + distance * 1.6));
+		convoi.classList.add("roule");
+		convoi.classList.toggle("recule", arrivee < depart);
+		convoi.style.transition = `transform ${duree}ms cubic-bezier(0.45, 0.05, 0.35, 1)`;
+		convoi.style.transform = `translateX(${arrivee}px)`;
+
+		convoi.addEventListener(
+			"transitionend",
+			() => convoi.classList.remove("roule", "recule"),
+			{ once: true },
+		);
+	}
+
+	// Attendre les polices : la largeur des liens du menu en dépend, et un
+	// convoi calculé avant se garerait à côté de sa page.
+	const pret = document.fonts?.ready ?? Promise.resolve();
+	pret.then(demarrer, demarrer);
+
+	// Redimensionnement : le convoi se recale sans rouler.
+	window.addEventListener("resize", () => {
+		const actif = lienActif();
+		if (actif && convoi?.style.visibility === "visible" && !convoi.classList.contains("roule")) {
+			poser(abscisseSous(actif));
+		}
+	});
+</script>

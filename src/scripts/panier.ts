@@ -58,6 +58,8 @@ export type PanierCalcule = {
 	total_cents: number;
 	provisoire: boolean;
 	mention: string;
+	/** « Hors TVA et frais de livraison » : à afficher près de tout total. */
+	mention_prix: string;
 };
 
 export function lire(): Ligne[] {

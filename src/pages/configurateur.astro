@@ -312,22 +312,27 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			<div
 				data-feature="commerce"
 				hidden
-				class="mt-6 rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm sm:p-8"
+				class="mt-6 rounded-2xl bg-brun-600 p-6 text-ecru-50 shadow-lg ring-1 ring-mousse/40 sm:p-8"
 			>
-				<div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-					<p class="t-corps text-brun-600">Prix de cette configuration</p>
-					<p id="prix-configuration" class="t-sous font-display font-semibold text-brun-700">—</p>
-				</div>
-				<p id="prix-mention" class="t-petit mt-1 text-rouille-500" hidden></p>
+				{/* Fond vert forêt de la marque : c'est l'aboutissement de la page, il
+				    doit se détacher des cartes crème qui l'entourent. Prix en doré,
+				    bouton rouille : les deux seules couleurs vives du site. */}
+				<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+					<div>
+						<p class="t-menu font-medium uppercase tracking-widest text-ecru-200">Prix de votre Boîte</p>
+						<p id="prix-configuration" class="mt-1 font-display text-4xl font-semibold text-[#e8b428] tabular-nums sm:text-5xl">—</p>
+						<p id="prix-mention" class="t-petit mt-1 text-rouille-400" hidden></p>
+					</div>
 
-				<button
-					id="ajouter-configuration"
-					type="button"
-					class="mt-5 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-5 py-2.5 font-semibold text-ecru-50 transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					Ajouter au panier
-				</button>
-				<p id="achat-message" class="t-petit mt-3 text-brun-500" role="status" hidden></p>
+					<button
+						id="ajouter-configuration"
+						type="button"
+						class="inline-flex items-center gap-2 rounded-full bg-rouille-500 px-7 py-3.5 text-base font-semibold text-ecru-50 shadow-md transition-colors hover:bg-rouille-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ecru-50 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						Ajouter au panier
+					</button>
+				</div>
+				<p id="achat-message" class="t-petit mt-3 text-ecru-200" role="status" hidden></p>
 			</div>
 		</div>
 	</section>
@@ -938,6 +943,8 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 						if (champMention) {
 							champMention.textContent = donnees.refusees?.[0]?.motif ?? "Configuration non chiffrable.";
 							champMention.hidden = false;
+							champMention.classList.add("text-rouille-400");
+							champMention.classList.remove("text-ecru-200");
 						}
 						return;
 					}
@@ -945,8 +952,12 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 					champPrix.textContent = formaterCents(ligne.total_cents);
 					boutonAjouter.disabled = false;
 					if (champMention) {
-						champMention.textContent = donnees.provisoire ? donnees.mention : "";
-						champMention.hidden = !donnees.provisoire;
+						// Montants factices : la mention d'avertissement prime. Sinon,
+						// « Hors TVA et frais de livraison », qui accompagne tout prix.
+						champMention.textContent = donnees.provisoire ? donnees.mention : (donnees.mention_prix ?? "");
+						champMention.hidden = champMention.textContent === "";
+						champMention.classList.toggle("text-rouille-400", donnees.provisoire);
+						champMention.classList.toggle("text-ecru-200", !donnees.provisoire);
 					}
 				} catch {
 					champPrix.textContent = "—";

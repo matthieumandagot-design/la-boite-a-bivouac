@@ -163,7 +163,9 @@ import PageCommerce from "../components/PageCommerce.astro";
 			`<span class="t-sous font-display font-semibold text-brun-700">${formaterCents(panier.total_cents)}</span></div>` +
 			(panier.provisoire
 				? `<p class="t-petit mt-2 text-rouille-500">${panier.mention} — montants factices, aucun engagement.</p>`
-				: "") +
+				: panier.mention_prix
+					? `<p class="t-petit mt-2 text-brun-400">${panier.mention_prix}</p>`
+					: "") +
 			"";
 
 		// Pas de bouton tant qu'une ligne est écartée : le tunnel la refuserait
