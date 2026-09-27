@@ -35,4 +35,8 @@ apiExigerCsrf();
 
 $donnees = apiCorpsJson();
 
-apiJson(200, panierRecalcule($donnees['lignes'] ?? []));
+// Mode de livraison facultatif : le tunnel l'envoie pour afficher le total
+// livraison comprise, le panier et le configurateur non.
+$livraison = is_string($donnees['livraison'] ?? null) ? $donnees['livraison'] : null;
+
+apiJson(200, panierRecalcule($donnees['lignes'] ?? [], $livraison));

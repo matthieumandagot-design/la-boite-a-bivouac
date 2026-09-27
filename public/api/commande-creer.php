@@ -5,7 +5,7 @@ declare(strict_types=1);
  * Validation d'une commande (docs/SPEC-module-commercial.md §6.4).
  *
  *   POST /api/commande-creer.php
- *   { "lignes": [...], "adresse_id": 3, "cgv": true }
+ *   { "lignes": [...], "adresse_id": 3, "livraison": "retrait-toulouse", "cgv": true }
  *   → 201 {"ok": true, "numero": "BAB-2026-0001", "total_cents": 204900}
  *   → 409 {"error": "…", "refusees": [...]}  — le panier a changé
  *
@@ -80,7 +80,21 @@ if ($adresse === false) {
 	apiJson(422, ['error' => 'Adresse introuvable.', 'champs' => ['adresse_id' => 'Adresse introuvable.']]);
 }
 
-$panier = panierRecalcule($donnees['lignes'] ?? []);
+// Mode de livraison obligatoire, et il doit desservir l'adresse choisie.
+$idLivraison = is_string($donnees['livraison'] ?? null) ? $donnees['livraison'] : '';
+$modeLivraison = livraisonMode($idLivraison);
+if ($modeLivraison === null) {
+	apiJson(422, [
+		'error' => 'Choisissez un mode de livraison.',
+		'champs' => ['livraison' => 'Mode manquant ou inconnu.'],
+	]);
+}
+$refusLivraison = livraisonRefus($modeLivraison, $adresse);
+if ($refusLivraison !== null) {
+	apiJson(422, ['error' => $refusLivraison, 'champs' => ['livraison' => $refusLivraison]]);
+}
+
+$panier = panierRecalcule($donnees['lignes'] ?? [], $idLivraison);
 
 if ($panier['lignes'] === []) {
 	apiJson(409, ['error' => 'Votre panier est vide.', 'refusees' => $panier['refusees']]);

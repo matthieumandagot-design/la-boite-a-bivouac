@@ -1,9 +1,9 @@
 {
-	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026, formule A (voir boite._note), affiché HORS TVA et frais de livraison (décision du 27/09/2026). provisoire vaut false depuis : la mention « À DÉFINIR » n'apparaît plus. Le repasser à true réaffiche partout l'avertissement de montants factices.",
+	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026, formule A (voir boite._note), affiché hors frais de livraison. provisoire vaut false depuis : la mention « À DÉFINIR » n'apparaît plus. Le repasser à true réaffiche partout l'avertissement de montants factices.",
 	"provisoire": false,
 	"devise": "EUR",
-	"_note_tva": "Montants HORS TVA (décision de Matthieu du 27/09/2026). Le régime de TVA n'est pas encore tranché (question 4) : aujourd'hui, rien n'ajoute de TVA au paiement Stripe. À régler avant l'ouverture — soit la TVA est ajoutée au paiement, soit la mention « TVA non applicable, art. 293 B du CGI » remplace celle-ci si l'entreprise est en franchise.",
-	"mention_prix": "Hors TVA et frais de livraison",
+	"_note_tva": "Mention « hors TVA » retirée de l'affichage à la demande de Matthieu le 27/09/2026. Le régime de TVA n'est pas tranché (question 4) : le montant affiché est celui encaissé par Stripe, sans TVA ajoutée. À régler avant l'ouverture (TVA incluse, ou mention « TVA non applicable, art. 293 B du CGI » en franchise).",
+	"mention_prix": "Hors frais de livraison",
 	"mention_provisoire": "À DÉFINIR",
 	"explication_provisoire": "Utilisée seulement si provisoire repasse à true : montants factices, rien de contractuel.",
 
@@ -32,8 +32,31 @@
 	},
 
 	"livraison": {
-		"_note": "Question 3 non tranchée (livraison, retrait à l'atelier, frais de port). Zéro en attendant — ne facturer aucun port est le choix le moins risqué face à un client.",
-		"forfait_cents": 0,
-		"retrait_atelier_possible": true
+		"_note": "Modes de livraison décidés par Matthieu le 27/09/2026. L'acheteur choisit dans le tunnel de commande ; le retrait est proposé par défaut. Le montant s'ajoute à la commande comme une ligne à part. « departements » : deux premiers chiffres du code postal acceptés pour ce mode (garde-fou, à ajuster au besoin) ; « pays » : codes pays acceptés ; « codes_postaux_exclus » : préfixes refusés.",
+		"modes": [
+			{
+				"id": "retrait-toulouse",
+				"libelle": "Retrait à l'atelier, à Toulouse",
+				"description": "Vous venez chercher votre Boîte ; nous convenons ensemble du rendez-vous.",
+				"prix_cents": 0
+			},
+			{
+				"id": "livraison-toulouse",
+				"libelle": "Livraison autour de Toulouse",
+				"description": "À 100 km maximum de Toulouse.",
+				"prix_cents": 20000,
+				"pays": ["FR"],
+				"departements": ["09", "11", "31", "32", "81", "82"]
+			},
+			{
+				"id": "livraison-france",
+				"libelle": "Livraison en France métropolitaine",
+				"description": "Partout en France métropolitaine, Corse comprise.",
+				"prix_cents": 40000,
+				"pays": ["FR"],
+				"codes_postaux_exclus": ["97", "98"]
+			}
+		]
 	}
+
 }

@@ -50,15 +50,20 @@ export type LigneCalculee = {
 	photo: string;
 };
 
+export type ModeLivraison = { id: string; libelle: string; description: string; prix_cents: number };
+
 export type PanierCalcule = {
 	lignes: LigneCalculee[];
 	refusees: { index: number; type: string; motif: string }[];
 	sous_total_cents: number;
+	/** Mode retenu, quand le tunnel en a transmis un ; null sinon. */
+	livraison: { id: string; libelle: string; prix_cents: number } | null;
 	livraison_cents: number;
+	livraison_modes: ModeLivraison[];
 	total_cents: number;
 	provisoire: boolean;
 	mention: string;
-	/** « Hors TVA et frais de livraison » : à afficher près de tout total. */
+	/** « Hors frais de livraison » : à afficher près d'un total qui ne la comprend pas. */
 	mention_prix: string;
 };
 
@@ -174,8 +179,11 @@ export function jetonCsrf(forcer = false): Promise<string | null> {
  *
  * Retourne null si l'appel échoue : l'appelant affiche alors un message plutôt
  * qu'un total inventé. Aucun prix n'est jamais calculé dans le navigateur.
+ *
+ * `livraison` : identifiant du mode choisi dans le tunnel ; le total renvoyé
+ * le comprend alors.
  */
-export async function recalculer(): Promise<PanierCalcule | null> {
+export async function recalculer(livraison?: string): Promise<PanierCalcule | null> {
 	const jeton = await jetonCsrf();
 	if (!jeton) return null;
 
@@ -185,7 +193,7 @@ export async function recalculer(): Promise<PanierCalcule | null> {
 			cache: "no-store",
 			credentials: "same-origin",
 			headers: { "Content-Type": "application/json", "X-CSRF-Token": jeton },
-			body: JSON.stringify({ lignes: lire() }),
+			body: JSON.stringify(livraison ? { lignes: lire(), livraison } : { lignes: lire() }),
 		});
 		if (!reponse.ok) return null;
 		return (await reponse.json()) as PanierCalcule;
