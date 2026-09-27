@@ -77,7 +77,7 @@ function emailConfirmationClient(array $commande, array $lignes, string $prenom)
 			<td style="padding:10px 0;border-top:1px solid #ddd;text-align:right;"><strong>{$total}</strong></td></tr>
 	</table>
 	{$mentionPrix}
-	<p><strong>Livraison</strong><br />{$adresse}</p>
+	<p><strong>Adresse</strong><br />{$adresse}</p>
 	<p>Conditions générales de vente applicables : {$cgv}.</p>
 	<p>Nous vous tiendrons informé de l'avancement de la fabrication. Vous retrouvez à tout moment le statut de votre commande dans votre espace client.</p>
 	<p>— La Boîte à Bivouac</p>
@@ -100,7 +100,7 @@ function emailNotificationAtelier(array $commande, array $lignes, string $client
 		<tr><td style="padding:10px 0;border-top:1px solid #ddd;"><strong>Total</strong></td>
 			<td style="padding:10px 0;border-top:1px solid #ddd;text-align:right;"><strong>{$total}</strong></td></tr>
 	</table>
-	<p><strong>Livraison</strong><br />{$adresse}</p>
+	<p><strong>Adresse</strong><br />{$adresse}</p>
 	<p><a href="https://laboiteabivouac.fr/admin/commandes.php">Ouvrir dans l'administration</a></p>
 	HTML;
 }

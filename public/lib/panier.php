@@ -196,9 +196,11 @@ function panierLigneAccessoire(array $ligne): array
  * Recalcule un panier entier.
  *
  * @param mixed $brut le contenu du localStorage, tel quel
- * @return array{lignes: array, refusees: array, sous_total_cents: int, livraison_cents: int, total_cents: int, provisoire: bool, mention: string, mention_prix: string}
+ * @param ?string $livraison identifiant du mode de livraison choisi ; null tant
+ *                          que l'acheteur n'a pas choisi (panier, configurateur)
+ * @return array{lignes: array, refusees: array, sous_total_cents: int, livraison: ?array, livraison_cents: int, livraison_modes: array, total_cents: int, provisoire: bool, mention: string, mention_prix: string}
  */
-function panierRecalcule($brut): array
+function panierRecalcule($brut, ?string $livraison = null): array
 {
 	$lignes = [];
 	$refusees = [];
@@ -235,16 +237,23 @@ function panierRecalcule($brut): array
 	}
 
 	$sousTotal = array_sum(array_column($lignes, 'total_cents'));
-	// Livraison : question 3 non tranchée, le forfait vaut 0 pour l'instant.
-	// Ne rien facturer est le choix le moins risqué face à un client.
-	$livraison = $lignes === [] ? 0 : prixLivraisonCents();
+	// Livraison (27/09/2026) : au choix de l'acheteur, dans le tunnel. Tant qu'il
+	// n'a pas choisi, rien n'est compté ; un identifiant inconnu non plus.
+	$mode = ($livraison === null || $lignes === []) ? null : livraisonMode($livraison);
+	$livraisonCents = $mode['prix_cents'] ?? 0;
 
 	return [
 		'lignes' => $lignes,
 		'refusees' => $refusees,
 		'sous_total_cents' => $sousTotal,
-		'livraison_cents' => $livraison,
-		'total_cents' => $sousTotal + $livraison,
+		'livraison' => $mode === null ? null : [
+			'id' => $mode['id'],
+			'libelle' => $mode['libelle'],
+			'prix_cents' => $mode['prix_cents'],
+		],
+		'livraison_cents' => $livraisonCents,
+		'livraison_modes' => livraisonModesPublics(),
+		'total_cents' => $sousTotal + $livraisonCents,
 		'provisoire' => pricingProvisoire(),
 		'mention' => pricingMention(),
 		'mention_prix' => pricingMentionPrix(),

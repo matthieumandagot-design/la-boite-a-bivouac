@@ -81,6 +81,11 @@ $parametres = [
 ];
 
 foreach ($lignes as $ligne) {
+	// Une ligne à 0 € (retrait à l'atelier) n'a rien à encaisser : on ne la
+	// transmet pas, le total Stripe reste celui de la commande.
+	if ((int) $ligne['prix_unitaire_cents'] === 0) {
+		continue;
+	}
 	$parametres['line_items'][] = [
 		'quantity' => (int) $ligne['quantite'],
 		'price_data' => [

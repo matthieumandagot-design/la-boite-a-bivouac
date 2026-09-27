@@ -137,8 +137,55 @@ echo json_encode($sortie);
 	console.log("\n### mentions de prix");
 	verifie("montants définitifs depuis le 27/09/2026", false, r.provisoire);
 	verifie("mention d'avertissement toujours disponible si besoin", "À DÉFINIR", r.mention);
-	verifie("mention de prix", "Hors TVA et frais de livraison", r.mention_prix);
-	verifie("mention de prix transmise par le panier", "Hors TVA et frais de livraison", r.panier_mention_prix);
+	verifie("mention de prix", "Hors frais de livraison", r.mention_prix);
+	verifie("mention de prix transmise par le panier", "Hors frais de livraison", r.panier_mention_prix);
+
+	// Livraison (27/09/2026) : modes, garde-fous d'adresse, total, et ligne
+	// ajoutée à la commande. La base est créée dans le bac, jamais ailleurs.
+	const PHP_LIVRAISON = `
+require '${path.join(bac, "lib", "commandes.php").replace(/\\/g, "/")}';
+require '${path.join(bac, "lib", "clients.php").replace(/\\/g, "/")}';
+bdMigrer();
+$s = [];
+$s['modes'] = array_map(fn ($m) => [$m['id'], $m['prix_cents']], livraisonModesPublics());
+$toulouse = livraisonMode('livraison-toulouse');
+$france = livraisonMode('livraison-france');
+$s['toulouse_31'] = livraisonRefus($toulouse, ['pays' => 'FR', 'code_postal' => '31000']);
+$s['toulouse_59'] = livraisonRefus($toulouse, ['pays' => 'FR', 'code_postal' => '59000']) !== null;
+$s['france_corse'] = livraisonRefus($france, ['pays' => 'FR', 'code_postal' => '20000']);
+$s['france_reunion'] = livraisonRefus($france, ['pays' => 'FR', 'code_postal' => '97400']) !== null;
+$s['france_belgique'] = livraisonRefus($france, ['pays' => 'BE', 'code_postal' => '1000']) !== null;
+$sans = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']]);
+$avec = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']], 'livraison-france');
+$inconnu = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']], 'teleportation');
+$s['sans'] = [$sans['livraison'], $sans['livraison_cents'], $sans['total_cents']];
+$s['avec'] = [$avec['livraison']['id'] ?? null, $avec['livraison_cents'], $avec['total_cents'] - $avec['sous_total_cents']];
+$s['inconnu'] = [$inconnu['livraison'], $inconnu['livraison_cents']];
+$client = creerClient('test@exemple.fr', 'motdepasse123', 'A', 'B');
+$adresse = ['ligne1' => '1 rue', 'code_postal' => '31000', 'ville' => 'Toulouse', 'pays' => 'FR'];
+$cmd = commandeCreer($client, $avec, $adresse);
+$lignes = commandeLignes($cmd['id']);
+$s['commande_lignes'] = array_map(fn ($l) => [$l['libelle'], (int) $l['total_cents']], $lignes);
+$s['commande_total'] = [(int) commandeParId($cmd['id'])['total_cents'], $avec['total_cents']];
+$retrait = commandeCreer($client, panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']], 'retrait-toulouse'), $adresse);
+$s['retrait_ligne'] = array_map(fn ($l) => (int) $l['total_cents'], commandeLignes($retrait['id']));
+echo json_encode($s, JSON_UNESCAPED_UNICODE);
+`;
+	const l = JSON.parse(execFileSync("php", ["-r", PHP_LIVRAISON], { encoding: "utf-8" }));
+
+	console.log("\n### livraison");
+	verifie("trois modes : 0 €, 200 €, 400 €", [["retrait-toulouse", 0], ["livraison-toulouse", 20000], ["livraison-france", 40000]], l.modes);
+	verifie("autour de Toulouse : adresse en Haute-Garonne acceptée", null, l.toulouse_31);
+	verifie("autour de Toulouse : adresse à Lille refusée", true, l.toulouse_59);
+	verifie("France : Corse acceptée", null, l.france_corse);
+	verifie("France : outre-mer refusé", true, l.france_reunion);
+	verifie("France : autre pays refusé", true, l.france_belgique);
+	verifie("sans choix de livraison : rien compté", [null, 0, l.sans[2]], l.sans);
+	verifie("livraison en France : 400 € ajoutés au total", ["livraison-france", 40000, 40000], l.avec);
+	verifie("mode inconnu : ignoré", [null, 0], l.inconnu);
+	verifie("commande : la livraison est une ligne à part", ["Livraison — Livraison en France métropolitaine", 40000], l.commande_lignes[1]);
+	verifie("commande : total enregistré = total recalculé", l.commande_total[1], l.commande_total[0]);
+	verifie("retrait : ligne à 0 € conservée dans la commande", 0, l.retrait_ligne[1]);
 
 	// Bornes : un plafond bas doit faire refuser la configuration plutôt que
 	// facturer un montant que personne n'a décidé.

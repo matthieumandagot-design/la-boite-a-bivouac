@@ -71,8 +71,8 @@ function pricingMention(): string
 }
 
 /**
- * Mention affichée à côté du prix de la Boîte : « Hors TVA et frais de
- * livraison » (décision du 27/09/2026). Chaîne vide si elle manque au fichier.
+ * Mention affichée à côté du prix de la Boîte : « Hors frais de livraison »
+ * (décision du 27/09/2026). Chaîne vide si elle manque au fichier.
  */
 function pricingMentionPrix(): string
 {
@@ -240,10 +240,97 @@ function prixOptionsCents($ids): array
 	return ['cents' => $total, 'retenues' => $retenues, 'inconnues' => $inconnues];
 }
 
-/** Forfait de livraison, en centimes. */
-function prixLivraisonCents(): int
+/**
+ * Modes de livraison, indexés par identifiant (décision du 27/09/2026) :
+ * retrait gratuit à Toulouse, 200 € autour de Toulouse, 400 € en France.
+ *
+ * Même prudence que pour les options : une entrée mal formée est écartée, pas
+ * corrigée. Mieux vaut un mode qui n'apparaît pas qu'un port facturé à un
+ * montant deviné.
+ *
+ * @return array<string, array{id: string, libelle: string, description: string, prix_cents: int, pays: ?array, departements: ?array, codes_postaux_exclus: array}>
+ */
+function livraisonModes(): array
 {
-	return pricingEntier(pricing()['livraison'] ?? [], 'forfait_cents');
+	$bruts = pricing()['livraison']['modes'] ?? [];
+	if (!is_array($bruts)) {
+		return [];
+	}
+
+	$listeChaines = static fn ($valeur): ?array => is_array($valeur)
+		? array_values(array_filter($valeur, 'is_string'))
+		: null;
+
+	$modes = [];
+	foreach ($bruts as $mode) {
+		if (!is_array($mode)) {
+			continue;
+		}
+		$id = $mode['id'] ?? null;
+		$libelle = $mode['libelle'] ?? null;
+		$prix = $mode['prix_cents'] ?? null;
+		if (!is_string($id) || $id === '' || !is_string($libelle) || $libelle === '' || !is_int($prix) || $prix < 0) {
+			continue;
+		}
+
+		$modes[$id] = [
+			'id' => $id,
+			'libelle' => $libelle,
+			'description' => is_string($mode['description'] ?? null) ? $mode['description'] : '',
+			'prix_cents' => $prix,
+			'pays' => $listeChaines($mode['pays'] ?? null),
+			'departements' => $listeChaines($mode['departements'] ?? null),
+			'codes_postaux_exclus' => $listeChaines($mode['codes_postaux_exclus'] ?? null) ?? [],
+		];
+	}
+
+	return $modes;
+}
+
+/** Un mode de livraison, ou null s'il n'existe pas. */
+function livraisonMode(string $id): ?array
+{
+	return livraisonModes()[$id] ?? null;
+}
+
+/** Ce que le navigateur a besoin de savoir des modes : ni plus, ni moins. */
+function livraisonModesPublics(): array
+{
+	return array_values(array_map(static fn (array $mode): array => [
+		'id' => $mode['id'],
+		'libelle' => $mode['libelle'],
+		'description' => $mode['description'],
+		'prix_cents' => $mode['prix_cents'],
+	], livraisonModes()));
+}
+
+/**
+ * Le mode choisi dessert-il cette adresse ? Retourne le motif du refus, ou
+ * null si tout va bien.
+ *
+ * Le rayon de 100 km autour de Toulouse est approché par les départements
+ * listés dans data/pricing.json : un garde-fou contre un choix manifestement
+ * faux (« autour de Toulouse » depuis Lille), pas une mesure de distance. Les
+ * cas limites se règlent avec l'atelier.
+ */
+function livraisonRefus(array $mode, array $adresse): ?string
+{
+	$pays = strtoupper(trim((string) ($adresse['pays'] ?? 'FR')));
+	$codePostal = preg_replace('/\s+/', '', (string) ($adresse['code_postal'] ?? '')) ?? '';
+
+	if ($mode['pays'] !== null && !in_array($pays, $mode['pays'], true)) {
+		return 'Ce mode de livraison ne dessert pas le pays de votre adresse.';
+	}
+	foreach ($mode['codes_postaux_exclus'] as $prefixe) {
+		if ($prefixe !== '' && str_starts_with($codePostal, $prefixe)) {
+			return 'Ce mode de livraison ne dessert pas votre adresse : écrivez-nous pour un devis.';
+		}
+	}
+	if ($mode['departements'] !== null && !in_array(substr($codePostal, 0, 2), $mode['departements'], true)) {
+		return 'Votre adresse semble à plus de 100 km de Toulouse : choisissez la livraison en France, ou écrivez-nous.';
+	}
+
+	return null;
 }
 
 /** Formate un montant pour l'affichage : 200000 → « 2 000,00 € ». */
