@@ -24,6 +24,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/remorques.php';
 require_once __DIR__ . '/pricing.php';
 require_once __DIR__ . '/produits.php';
+require_once __DIR__ . '/equipements.php';
 
 /** Au-delà, ce n'est plus un panier. Borne les abus autant que les erreurs. */
 const PANIER_LIGNES_MAX = 20;
@@ -193,12 +194,66 @@ function panierLigneAccessoire(array $ligne): array
 }
 
 /**
+ * Recalcule une ligne « equipement » : un accessoire du catalogue Équipements
+ * (27/09/2026).
+ *
+ * Prix de vente = prix estimé + marge, recalculé ici à partir du catalogue ;
+ * le navigateur ne transmet qu'un identifiant et une quantité. Les frais de
+ * port estimés voyagent à part (port_cents), multipliés par la quantité : ils
+ * sont facturés en plus, pas margés. Une fiche retirée du catalogue, ou encore
+ * sans prix, est écartée.
+ */
+function panierLigneEquipement(array $ligne): array
+{
+	$id = is_string($ligne['id'] ?? null) ? $ligne['id'] : '';
+	$item = $id === '' ? null : equipementParId($id);
+
+	if ($item === null) {
+		return ['ok' => false, 'type' => 'equipement', 'motif' => 'Accessoire retiré du catalogue.'];
+	}
+
+	$estime = equipementPrixEstimeCents($item);
+	if ($estime === null) {
+		return [
+			'ok' => false,
+			'type' => 'equipement',
+			'motif' => sprintf('« %s » n\'a pas encore de prix.', (string) $item['titre']),
+		];
+	}
+
+	$quantite = panierQuantite($ligne['quantite'] ?? 1);
+	$prix = equipementPrixVenteCents($estime);
+	$medias = equipementMedias($item);
+	$photo = '';
+	foreach ($medias as $media) {
+		if (($media['type'] ?? '') === 'image') {
+			$photo = (string) $media['url'];
+			break;
+		}
+	}
+
+	return [
+		'ok' => true,
+		'type' => 'equipement',
+		'libelle' => (string) $item['titre'],
+		'detail' => equipementPrecision($item),
+		'quantite' => $quantite,
+		'prix_unitaire_cents' => $prix,
+		'total_cents' => $prix * $quantite,
+		'port_cents' => equipementPortCents($item) * $quantite,
+		'photo' => $photo,
+		// Trace dans l'instantané de commande : quel article du catalogue.
+		'configuration' => ['equipement' => (string) $item['id']],
+	];
+}
+
+/**
  * Recalcule un panier entier.
  *
  * @param mixed $brut le contenu du localStorage, tel quel
  * @param ?string $livraison identifiant du mode de livraison choisi ; null tant
  *                          que l'acheteur n'a pas choisi (panier, configurateur)
- * @return array{lignes: array, refusees: array, sous_total_cents: int, livraison: ?array, livraison_cents: int, livraison_modes: array, total_cents: int, provisoire: bool, mention: string, mention_prix: string}
+ * @return array{lignes: array, refusees: array, sous_total_cents: int, livraison: ?array, livraison_cents: int, livraison_modes: array, port_accessoires_cents: int, total_cents: int, provisoire: bool, mention: string, mention_prix: string}
  */
 function panierRecalcule($brut, ?string $livraison = null): array
 {
@@ -220,6 +275,7 @@ function panierRecalcule($brut, ?string $livraison = null): array
 		$resultat = match ($type) {
 			'boite' => panierLigneBoite($entree),
 			'accessoire' => panierLigneAccessoire($entree),
+			'equipement' => panierLigneEquipement($entree),
 			default => ['ok' => false, 'type' => 'inconnu', 'motif' => 'Ligne non reconnue.'],
 		};
 
@@ -237,6 +293,9 @@ function panierRecalcule($brut, ?string $livraison = null): array
 	}
 
 	$sousTotal = array_sum(array_column($lignes, 'total_cents'));
+	// Frais de port des accessoires du catalogue : facturés à part, dès le
+	// panier, en plus du mode de livraison choisi à la commande.
+	$portAccessoires = array_sum(array_map(static fn (array $l): int => (int) ($l['port_cents'] ?? 0), $lignes));
 	// Livraison (27/09/2026) : au choix de l'acheteur, dans le tunnel. Tant qu'il
 	// n'a pas choisi, rien n'est compté ; un identifiant inconnu non plus.
 	$mode = ($livraison === null || $lignes === []) ? null : livraisonMode($livraison);
@@ -253,7 +312,8 @@ function panierRecalcule($brut, ?string $livraison = null): array
 		],
 		'livraison_cents' => $livraisonCents,
 		'livraison_modes' => livraisonModesPublics(),
-		'total_cents' => $sousTotal + $livraisonCents,
+		'port_accessoires_cents' => $portAccessoires,
+		'total_cents' => $sousTotal + $portAccessoires + $livraisonCents,
 		'provisoire' => pricingProvisoire(),
 		'mention' => pricingMention(),
 		'mention_prix' => pricingMentionPrix(),

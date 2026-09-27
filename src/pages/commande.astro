@@ -250,6 +250,16 @@ import PageCommerce from "../components/PageCommerce.astro";
 			rangee.append(gauche, el("p", "font-semibold text-brun-700", formaterCents(ligne.total_cents)));
 			table.append(rangee);
 		});
+		// Frais de port des accessoires du catalogue, facturés à part.
+		if (panier.port_accessoires_cents > 0) {
+			const rangee = el("div", "flex items-start justify-between gap-4 border-t border-ardoise/20 py-3");
+			rangee.append(
+				el("p", "font-display font-semibold text-brun-700", "Frais de port des accessoires"),
+				el("p", "font-semibold text-brun-700", formaterCents(panier.port_accessoires_cents)),
+			);
+			table.append(rangee);
+		}
+
 		// Livraison : ligne à part, montant venu du serveur comme le reste.
 		if (panier.livraison) {
 			const rangee = el("div", "flex items-start justify-between gap-4 border-t border-ardoise/20 py-3");

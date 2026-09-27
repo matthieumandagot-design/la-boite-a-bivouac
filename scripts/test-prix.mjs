@@ -187,6 +187,73 @@ echo json_encode($s, JSON_UNESCAPED_UNICODE);
 	verifie("commande : total enregistré = total recalculé", l.commande_total[1], l.commande_total[0]);
 	verifie("retrait : ligne à 0 € conservée dans la commande", 0, l.retrait_ligne[1]);
 
+	// Accessoires du catalogue Équipements (27/09/2026) : marge, lecture des
+	// anciens prix en texte, frais de port facturés à part, accord TS / PHP.
+	const catalogue = JSON.parse(readFileSync(path.join(bac, "data", "equipements.default.json"), "utf-8"));
+	catalogue[0].frais_port_cents = 850; // antivol : 8,50 € de port pour le test
+	catalogue.push({ id: "ancien", domaine: "toit", titre: "Fiche d'avant", prix: "À partir de 79,99 € la paire", description: "", medias: [] });
+	catalogue.push({ id: "sans-prix", domaine: "toit", titre: "Sur devis", prix: "Sur devis", description: "", medias: [] });
+	writeFileSync(path.join(bac, "data", "equipements.default.json"), JSON.stringify(catalogue));
+
+	const PHP_ACCESSOIRES = `
+require '${path.join(bac, "lib", "commandes.php").replace(/\\/g, "/")}';
+require '${path.join(bac, "lib", "clients.php").replace(/\\/g, "/")}';
+$s = [];
+$s['textes'] = array_map(fn ($t) => equipementLireMontant($t)['cents'] ?? null, ['À partir de 29,99 €', '1 249 € TTC', 'À partir de 20 € l’unité', 'Sur devis']);
+$s['ventes'] = array_map(fn ($i) => [$i['id'], ($e = equipementPrixEstimeCents($i)) === null ? null : equipementPrixVenteCents($e)], equipementsCatalogue());
+$ancien = equipementPublic(equipementParId('ancien'));
+$s['ancien'] = [$ancien['prix_cents'], $ancien['precision']];
+$s['public_sans_cout'] = array_diff(array_keys(equipementPublic(equipementParId('ancien'))), ['id', 'domaine', 'titre', 'description', 'medias', 'prix_cents', 'port_cents', 'precision']);
+$p = panierRecalcule([
+	['type' => 'boite', 'remorque' => 'Erdé|Classic 163'],
+	['type' => 'equipement', 'id' => '8b3c57d6de01547e', 'quantite' => 2],
+	['type' => 'equipement', 'id' => 'sans-prix'],
+]);
+$s['panier'] = [
+	$p['lignes'][1]['total_cents'] ?? null,
+	$p['port_accessoires_cents'],
+	$p['total_cents'] - $p['sous_total_cents'],
+	count($p['refusees']),
+];
+$propre = panierRecalcule([
+	['type' => 'boite', 'remorque' => 'Erdé|Classic 163'],
+	['type' => 'equipement', 'id' => '8b3c57d6de01547e', 'quantite' => 2],
+], 'retrait-toulouse');
+$client = creerClient('accessoires@exemple.fr', 'motdepasse123', 'A', 'B');
+$cmd = commandeCreer($client, $propre, ['ligne1' => '1 rue', 'code_postal' => '31000', 'ville' => 'Toulouse', 'pays' => 'FR']);
+$lignes = commandeLignes($cmd['id']);
+$s['commande'] = [array_map(fn ($l) => [$l['libelle'], (int) $l['total_cents']], $lignes), (int) commandeParId($cmd['id'])['total_cents'], array_sum(array_map(fn ($l) => (int) $l['total_cents'], $lignes))];
+echo json_encode($s, JSON_UNESCAPED_UNICODE);
+`;
+	const acc = JSON.parse(execFileSync("php", ["-r", PHP_ACCESSOIRES], { encoding: "utf-8" }));
+	const { prixVenteAccessoireCents } = await import("../src/data/accessoires.ts");
+	const marge = regles.accessoires.marge_pourcent;
+
+	console.log("\n### accessoires");
+	verifie("anciens prix en texte lus en centimes", [2999, 124900, 2000, null], acc.textes);
+	verifie("marge de 20 % : antivol 29,99 € → 35,99 €", 3599, acc.ventes.find((v) => v[0] === "8b3c57d6de01547e")[1]);
+	verifie("tente 1 249 € → 1 498,80 €", 149880, acc.ventes.find((v) => v[0] === "5c61b61d450ac98b")[1]);
+	verifie(
+		"TypeScript et PHP d'accord sur tout le catalogue",
+		acc.ventes.filter((v) => v[1] !== null).map(([id, c]) => [id, c]),
+		catalogue
+			.filter((i) => i.prix_estime_cents || i.prix)
+			.filter((i) => i.id !== "sans-prix")
+			.map((i) => [i.id, prixVenteAccessoireCents(i.prix_estime_cents ?? 7999, marge)]),
+	);
+	verifie("fiche d'avant : prix lu dans le texte, précision gardée", [9599, "la paire"], acc.ancien);
+	verifie("rien d'autre que le public ne sort (ni coût, ni texte d'origine)", [], Object.values(acc.public_sans_cout));
+	verifie("panier : 2 antivols à 35,99 €", 7198, acc.panier[0]);
+	verifie("panier : port 2 × 8,50 € facturé à part", 1700, acc.panier[1]);
+	verifie("panier : total = articles + port", 1700, acc.panier[2]);
+	verifie("panier : accessoire sans prix écarté", 1, acc.panier[3]);
+	verifie(
+		"commande : ligne de port à part",
+		["Frais de port des accessoires", 1700],
+		acc.commande[0].find((l) => l[0] === "Frais de port des accessoires"),
+	);
+	verifie("commande : total enregistré = somme des lignes", acc.commande[2], acc.commande[1]);
+
 	// Bornes : un plafond bas doit faire refuser la configuration plutôt que
 	// facturer un montant que personne n'a décidé.
 	regles.boite.total_max_cents = 1000;

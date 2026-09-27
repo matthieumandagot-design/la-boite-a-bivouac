@@ -25,6 +25,11 @@
 		"total_max_cents": 500000
 	},
 
+	"accessoires": {
+		"_note": "Accessoires du catalogue Équipements (27/09/2026) : prix de vente = prix estimé saisi dans /admin/equipements.php + cette marge, arrondi au centime. Les frais de port estimés ne sont pas margés : ils sont facturés à part, au panier et à la commande.",
+		"marge_pourcent": 20
+	},
+
 	"options": {
 		"_note": "Liste des options du configurateur non arrêtée (question 6, phase 2). Vide volontairement : inventer des options donnerait l'illusion d'un catalogue décidé. La mécanique, elle, est en place — ajouter une entrée ici la fait apparaître dans le configurateur et la rend facturable, sans toucher au code.",
 		"_format": "Chaque entrée : { \"id\": \"identifiant-stable-en-minuscules\", \"libelle\": \"Nom affiché\", \"description\": \"Une phrase, facultative\", \"prix_cents\": 0 }. L'id voyage dans l'URL partageable et dans le panier : ne jamais le renommer une fois publié, une commande passée y ferait référence.",

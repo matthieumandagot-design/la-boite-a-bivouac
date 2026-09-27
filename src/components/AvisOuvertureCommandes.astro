@@ -1,0 +1,92 @@
+---
+/**
+ * Fenêtre « les commandes ouvriront au printemps 2027 » (27/09/2026).
+ *
+ * Tant que la boutique est fermée, on peut remplir son panier mais pas
+ * commander : cette fenêtre s'ouvre à la place de la commande, sur l'événement
+ * « bab:commandes-fermees », et propose d'être prévenu de l'ouverture par la
+ * lettre d'information existante. Le message vient de src/consts.ts.
+ */
+import { Icon } from "astro-icon/components";
+import SubscribeForm from "./SubscribeForm.astro";
+import { MESSAGE_OUVERTURE_COMMANDES } from "../consts";
+---
+
+<dialog id="avis-ouverture" class="avis" aria-labelledby="avis-titre">
+	<div class="avis__cadre">
+		<button type="button" class="avis__fermer" data-fermer aria-label="Fermer">
+			<Icon name="tabler:x" class="h-5 w-5" />
+		</button>
+		<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">
+			<Icon name="tabler:calendar-event" class="mr-1 inline h-4 w-4 align-[-2px]" />
+			Bientôt
+		</p>
+		<h2 id="avis-titre" class="mt-2 t-sous font-display font-semibold text-brun-700">
+			{MESSAGE_OUVERTURE_COMMANDES}
+		</h2>
+		<p class="t-petit mt-2 text-brun-500">
+			Votre panier est conservé sur cet appareil. Laissez votre adresse pour être prévenu dès
+			l'ouverture.
+		</p>
+		<div class="mt-4">
+			<SubscribeForm />
+		</div>
+		<button type="button" class="avis__lien mt-5" data-fermer>Fermer</button>
+	</div>
+</dialog>
+
+<style>
+	.avis {
+		margin: auto;
+		width: min(30rem, calc(100% - 2rem));
+		padding: 0;
+		border: 0;
+		border-radius: 1rem;
+		background: #f9f4e8;
+		color: #0a1610;
+		box-shadow: 0 24px 60px rgb(10 22 16 / 0.35);
+	}
+	.avis::backdrop {
+		background: rgb(10 22 16 / 0.55);
+		backdrop-filter: blur(2px);
+	}
+	.avis__cadre {
+		position: relative;
+		padding: 1.75rem;
+	}
+	.avis__fermer {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		display: flex;
+		height: 2.25rem;
+		width: 2.25rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		color: #1e3a28;
+	}
+	.avis__fermer:hover {
+		background: #e8e0c8;
+	}
+	.avis__lien {
+		display: block;
+		font-size: 0.9rem;
+		color: #1e3a28;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+</style>
+
+<script>
+	const avis = document.getElementById("avis-ouverture") as HTMLDialogElement | null;
+	if (avis) {
+		avis.querySelectorAll("[data-fermer]").forEach((b) => b.addEventListener("click", () => avis.close()));
+		avis.addEventListener("click", (event) => {
+			if (event.target === avis) avis.close();
+		});
+		window.addEventListener("bab:commandes-fermees", () => {
+			if (!avis.open) avis.showModal();
+		});
+	}
+</script>

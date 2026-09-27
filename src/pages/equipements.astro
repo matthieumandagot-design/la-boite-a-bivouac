@@ -5,11 +5,21 @@ import Lightbox from "../components/Lightbox.astro";
 import { Icon } from "astro-icon/components";
 // Import statique (build time) du contenu par défaut : les équipements sont
 // rendus dans le HTML dès le build — affichage immédiat et page lisible sans
-// JS. Le fetch de /data/equipements.json (voir plus bas) ne sert qu'à refléter
+// JS. Le fetch de /api/accessoires.php (voir plus bas) ne sert qu'à refléter
 // ce qui a été saisi depuis /admin/equipements.php, fichier non versionné.
+// Prix affiché = prix estimé + marge ; le prix estimé, lui, n'est jamais publié.
 // Penser à resynchroniser public/data/equipements.default.json après une
 // campagne d'ajouts, pour que le HTML servi aux moteurs reste exact.
 import equipementsData from "../../public/data/equipements.default.json";
+import pricing from "../../public/data/pricing.json";
+import {
+	prixVenteAccessoireCents,
+	libellePrixAccessoire,
+	libellePortAccessoire,
+} from "../data/accessoires";
+
+/** Marge sur les prix estimés (27/09/2026) : voir data/pricing.json. */
+const MARGE = pricing.accessoires?.marge_pourcent ?? 0;
 
 interface Media {
 	type: "image" | "video";
@@ -20,7 +30,12 @@ interface Equipement {
 	id: string;
 	domaine: string;
 	titre: string;
-	prix: string;
+	/** Prix d'achat estimé, jamais affiché : le prix de vente en découle. */
+	prix_estime_cents?: number;
+	/** Frais de port estimés d'un exemplaire, facturés à part. */
+	frais_port_cents?: number;
+	/** « la paire », « l'unité »… affiché après le prix. */
+	precision?: string;
 	description: string;
 	medias: Media[];
 	/** Ancien format : une seule photo. Conservé pour lire le contenu existant. */
@@ -31,6 +46,13 @@ interface Equipement {
 function mediasDe(item: Equipement): Media[] {
 	if (Array.isArray(item.medias)) return item.medias.filter((media) => media?.url);
 	return item.image ? [{ type: "image", url: item.image }] : [];
+}
+
+/** Prix de vente TTC en centimes, ou null tant que l'estimation manque. */
+function prixVente(item: Equipement): number | null {
+	return item.prix_estime_cents && item.prix_estime_cents > 0
+		? prixVenteAccessoireCents(item.prix_estime_cents, MARGE)
+		: null;
 }
 
 const equipements = equipementsData as Equipement[];
@@ -186,8 +208,18 @@ const parDomaine = Object.fromEntries(
 										)}
 										<div class="eq-carte-corps">
 											<h2 class="eq-carte-titre">{item.titre}</h2>
-											{item.prix && <p class="eq-carte-prix">{item.prix}</p>}
+											{prixVente(item) !== null && (
+												<p class="eq-carte-prix">{libellePrixAccessoire(prixVente(item)!, item.precision ?? "")}</p>
+											)}
+											{(item.frais_port_cents ?? 0) > 0 && (
+												<p class="eq-carte-port">{libellePortAccessoire(item.frais_port_cents!)}</p>
+											)}
 											<p class="eq-carte-texte">{item.description}</p>
+											{prixVente(item) !== null && (
+												<button type="button" class="eq-carte-ajouter" data-ajouter-equipement={item.id}>
+													Ajouter au panier
+												</button>
+											)}
 										</div>
 									</article>
 									);
@@ -477,6 +509,27 @@ const parDomaine = Object.fromEntries(
     color: var(--color-rouille-500);
   }
 
+  .eq-carte-port {
+    margin: 0.35rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--color-brun-400);
+  }
+
+  /* Bouton d'ajout au panier (27/09/2026) : même rouille que le reste du
+     parcours d'achat. */
+  .eq-carte-ajouter {
+    margin-top: 1rem;
+    border-radius: 9999px;
+    background: var(--color-rouille-500);
+    padding: 0.55rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-ecru-50);
+    transition: background 150ms;
+  }
+  .eq-carte-ajouter:hover { background: var(--color-rouille-400); }
+  .eq-carte-ajouter:disabled { opacity: 0.75; cursor: default; }
+
   .eq-carte-texte {
     margin: 0.75rem 0 0;
     font-size: 0.9375rem;
@@ -576,22 +629,27 @@ const parDomaine = Object.fromEntries(
 </script>
 
 <script>
+	import { formaterCents } from "../scripts/panier";
 	/* ── Synchronisation avec les équipements saisis depuis l'admin ──
 	   Les cartes sont déjà rendues au build ; ce fetch les remplace par le
-	   contenu live de /data/equipements.json. En cas d'échec (fichier absent
+	   contenu live de /api/accessoires.php. En cas d'échec (fichier absent
 	   en local, réseau coupé), le contenu du build reste affiché. */
 	interface Media {
 		type: "image" | "video";
 		url: string;
 	}
 
+	/** Accessoire tel que le publie /api/accessoires.php : sans prix d'achat. */
 	interface Equipement {
 		id: string;
 		domaine: string;
 		titre: string;
-		prix: string;
 		description: string;
 		medias?: Media[];
+		/** Prix de vente TTC en centimes, ou null tant qu'il n'est pas fixé. */
+		prix_cents?: number | null;
+		port_cents?: number;
+		precision?: string;
 		/** Ancien format : une seule photo. */
 		image?: string;
 	}
@@ -674,17 +732,34 @@ const parDomaine = Object.fromEntries(
 		titre.textContent = item.titre;
 		corps.append(titre);
 
-		if (item.prix) {
+		if (typeof item.prix_cents === "number") {
 			const prix = document.createElement("p");
 			prix.className = "eq-carte-prix";
-			prix.textContent = item.prix;
+			prix.textContent = `${formaterCents(item.prix_cents)} TTC${item.precision ? ` ${item.precision}` : ""}`;
 			corps.append(prix);
+		}
+
+		if ((item.port_cents ?? 0) > 0) {
+			const port = document.createElement("p");
+			port.className = "eq-carte-port";
+			port.textContent = `+ ${formaterCents(item.port_cents!)} de frais de port`;
+			corps.append(port);
 		}
 
 		const texte = document.createElement("p");
 		texte.className = "eq-carte-texte";
 		texte.textContent = item.description;
 		corps.append(texte);
+
+		// Le clic est traité par src/scripts/features.ts, pour toutes les pages.
+		if (typeof item.prix_cents === "number") {
+			const ajouter = document.createElement("button");
+			ajouter.type = "button";
+			ajouter.className = "eq-carte-ajouter";
+			ajouter.dataset.ajouterEquipement = item.id;
+			ajouter.textContent = "Ajouter au panier";
+			corps.append(ajouter);
+		}
 
 		carte.append(corps);
 		return carte;
@@ -693,9 +768,11 @@ const parDomaine = Object.fromEntries(
 	async function synchroniser() {
 		let live: unknown;
 		try {
-			const reponse = await fetch("/data/equipements.json", { cache: "no-store" });
+			// L'API, et non plus /data/equipements.json : le fichier contient les
+			// prix d'achat, que seule l'API sait retirer (27/09/2026).
+			const reponse = await fetch("/api/accessoires.php", { cache: "no-store" });
 			if (!reponse.ok) return;
-			live = await reponse.json();
+			live = ((await reponse.json()) as { accessoires?: unknown }).accessoires;
 		} catch {
 			return;
 		}

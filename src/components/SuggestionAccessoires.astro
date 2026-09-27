@@ -11,19 +11,29 @@
  * rendues au build depuis equipements.default.json, puis rafraîchies à la
  * première ouverture depuis /data/equipements.json, le catalogue en ligne.
  *
- * Ouverture : l'événement « bab:boite-ajoutee », émis par le configurateur.
+ * Ouverture : l'événement « bab:boite-ajoutee », émis par le configurateur,
+ * avec { ouvert } : boutique fermée, un bandeau annonce l'ouverture des
+ * commandes (27/09/2026). Chaque vignette porte le prix de vente (prix estimé +
+ * marge) et un bouton d'ajout au panier ; le rafraîchissement passe par
+ * /api/accessoires.php, qui ne publie jamais le prix d'achat.
  */
 import { Icon } from "astro-icon/components";
 import equipementsData from "../../public/data/equipements.default.json";
+import pricing from "../../public/data/pricing.json";
+import { prixVenteAccessoireCents, libellePrixAccessoire } from "../data/accessoires";
+import { MESSAGE_OUVERTURE_COMMANDES } from "../consts";
 
 type Equipement = {
 	id: string;
 	domaine: string;
 	titre: string;
-	prix: string;
+	prix_estime_cents?: number;
+	precision?: string;
 	medias?: { type: string; url: string }[];
 	image?: string;
 };
+
+const MARGE = pricing.accessoires?.marge_pourcent ?? 0;
 
 /** Les trois accessoires proposés, dans l'ordre d'affichage. */
 const SUGGESTIONS = [
@@ -43,7 +53,18 @@ function photo(e: Equipement | undefined): string {
 
 const vignettes = SUGGESTIONS.map((s) => {
 	const e = trouver(equipementsData as Equipement[], s);
-	return { ...s, titre: e?.titre ?? s.nom, prix: e?.prix ?? "", photo: photo(e), domaine: e?.domaine ?? "" };
+	const prix =
+		e?.prix_estime_cents && e.prix_estime_cents > 0
+			? libellePrixAccessoire(prixVenteAccessoireCents(e.prix_estime_cents, MARGE), e.precision ?? "")
+			: "";
+	return {
+		...s,
+		idReel: e?.id ?? "",
+		titre: e?.titre ?? s.nom,
+		prix,
+		photo: photo(e),
+		domaine: e?.domaine ?? "",
+	};
 });
 ---
 
@@ -60,17 +81,25 @@ const vignettes = SUGGESTIONS.map((s) => {
 		<h2 id="suggestion-titre" class="mt-2 t-sous font-display font-semibold text-brun-700">
 			Complétez votre Boîte
 		</h2>
-		<p class="t-petit mt-1 text-brun-500">Trois accessoires pensés pour partir l'esprit tranquille. Prix TTC.</p>
+		<p class="t-petit mt-1 text-brun-500">Trois accessoires pensés pour partir l'esprit tranquille.</p>
+
+		{/* Boutique fermée : la Boîte est bien dans le panier, mais la commande
+		    attend. Révélé par le script selon l'état reçu du configurateur. */}
+		<p class="suggestion__fermee" data-commandes-fermees hidden>
+			<Icon name="tabler:calendar-event" class="h-5 w-5 shrink-0" />
+			<span>
+				<strong>{MESSAGE_OUVERTURE_COMMANDES}</strong>
+				Votre sélection reste dans votre panier d'ici là.
+			</span>
+		</p>
 
 		<ul class="suggestion__grille">
 			{
 				vignettes.map((v) => (
-					<li>
+					<li class="suggestion__vignette" data-suggestion={v.id} data-motif={v.motif}>
 						<a
 							href={v.domaine ? `/equipements/#${v.domaine}` : "/equipements/"}
-							class="suggestion__vignette"
-							data-suggestion={v.id}
-							data-motif={v.motif}
+							class="suggestion__lienfiche"
 							title={v.titre}
 						>
 							<span class="suggestion__image">
@@ -80,6 +109,14 @@ const vignettes = SUGGESTIONS.map((s) => {
 							<span class="suggestion__nom">{v.nom}</span>
 							<span class="suggestion__prix" data-prix>{v.prix}</span>
 						</a>
+						<button
+							type="button"
+							class="suggestion__ajouter"
+							data-ajouter-equipement={v.idReel}
+							hidden={!v.prix || !v.idReel}
+						>
+							Ajouter au panier
+						</button>
 					</li>
 				))
 			}
@@ -162,6 +199,26 @@ const vignettes = SUGGESTIONS.map((s) => {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 
+	.suggestion__fermee {
+		display: flex;
+		gap: 0.6rem;
+		align-items: flex-start;
+		margin-top: 1rem;
+		border-radius: 0.75rem;
+		background: #122218;
+		padding: 0.8rem 1rem;
+		font-size: 0.88rem;
+		line-height: 1.45;
+		color: #f5ecd8;
+	}
+	.suggestion__fermee strong {
+		display: block;
+		color: #e8b428;
+	}
+	.suggestion__fermee[hidden] {
+		display: none;
+	}
+
 	.suggestion__vignette {
 		display: flex;
 		height: 100%;
@@ -170,15 +227,33 @@ const vignettes = SUGGESTIONS.map((s) => {
 		border: 1px solid rgb(192 200 200 / 0.6);
 		border-radius: 0.75rem;
 		background: #fff;
-		text-decoration: none;
-		transition:
-			border-color 150ms,
-			transform 150ms;
+		transition: border-color 150ms;
 	}
 	.suggestion__vignette:hover,
-	.suggestion__vignette:focus-visible {
+	.suggestion__vignette:focus-within {
 		border-color: #b85438;
-		transform: translateY(-2px);
+	}
+	.suggestion__lienfiche {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		text-decoration: none;
+	}
+	.suggestion__ajouter {
+		margin: 0 0.7rem 0.7rem;
+		border-radius: 999px;
+		background: #122218;
+		padding: 0.4rem 0.6rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		color: #f9f4e8;
+		transition: background 150ms;
+	}
+	.suggestion__ajouter:hover {
+		background: #1e3a28;
+	}
+	.suggestion__ajouter[hidden] {
+		display: none;
 	}
 
 	.suggestion__image {
@@ -254,12 +329,20 @@ const vignettes = SUGGESTIONS.map((s) => {
 		}
 		.suggestion__vignette {
 			display: grid;
+			grid-template-columns: 1fr auto;
+			align-items: center;
+		}
+		.suggestion__lienfiche {
+			display: grid;
 			grid-template-columns: 4.5rem 1fr;
 			grid-template-rows: auto auto;
 			align-items: center;
 		}
 		.suggestion__image {
 			grid-row: span 2;
+		}
+		.suggestion__ajouter {
+			margin: 0 0.7rem 0 0;
 		}
 		.suggestion__nom {
 			padding-top: 0.4rem;
@@ -271,13 +354,16 @@ const vignettes = SUGGESTIONS.map((s) => {
 </style>
 
 <script>
-	type Equipement = {
+	import { formaterCents } from "../scripts/panier";
+
+	type Accessoire = {
 		id: string;
 		domaine: string;
 		titre: string;
-		prix: string;
-		medias?: { type: string; url: string }[];
-		image?: string;
+		medias: { type: string; url: string }[];
+		prix_cents: number | null;
+		port_cents: number;
+		precision: string;
 	};
 
 	const fenetre = document.getElementById("suggestion-accessoires") as HTMLDialogElement | null;
@@ -291,33 +377,49 @@ const vignettes = SUGGESTIONS.map((s) => {
 	}
 
 	/**
-	 * Met les vignettes au diapason du catalogue en ligne (prix ou photo
+	 * Met les vignettes au diapason du catalogue en ligne (prix, photo ou fiche
 	 * modifiés dans l'admin). En cas d'échec, celles du build restent.
 	 */
 	async function rafraichir() {
 		if (rafraichie || !fenetre) return;
 		rafraichie = true;
 		try {
-			const reponse = await fetch("/data/equipements.json", { cache: "no-store" });
+			const reponse = await fetch("/api/accessoires.php", { cache: "no-store" });
 			if (!reponse.ok) return;
-			const items = (await reponse.json()) as Equipement[];
+			const items = ((await reponse.json()) as { accessoires?: Accessoire[] }).accessoires;
 			if (!Array.isArray(items)) return;
 
-			fenetre.querySelectorAll<HTMLAnchorElement>("[data-suggestion]").forEach((lien) => {
-				const motif = lien.dataset.motif ?? "";
+			fenetre.querySelectorAll<HTMLElement>("[data-suggestion]").forEach((vignette) => {
+				const motif = vignette.dataset.motif ?? "";
 				const e =
-					items.find((i) => i.id === lien.dataset.suggestion) ??
+					items.find((i) => i.id === vignette.dataset.suggestion) ??
 					items.find((i) => typeof i.titre === "string" && i.titre.toLowerCase().includes(motif));
 				if (!e) return;
 
-				lien.title = e.titre;
-				if (e.domaine) lien.href = `/equipements/#${e.domaine}`;
-				const prix = lien.querySelector("[data-prix]");
-				if (prix) prix.textContent = e.prix ?? "";
+				const lien = vignette.querySelector<HTMLAnchorElement>("a");
+				if (lien) {
+					lien.title = e.titre;
+					if (e.domaine) lien.href = `/equipements/#${e.domaine}`;
+				}
 
-				const url = e.medias?.find((m) => m.type === "image" && m.url)?.url ?? e.image;
+				const prix = vignette.querySelector("[data-prix]");
+				if (prix) {
+					prix.textContent =
+						e.prix_cents === null
+							? ""
+							: `${formaterCents(e.prix_cents)} TTC${e.precision ? ` ${e.precision}` : ""}` +
+								(e.port_cents > 0 ? ` + ${formaterCents(e.port_cents)} de port` : "");
+				}
+
+				const bouton = vignette.querySelector<HTMLButtonElement>("[data-ajouter-equipement]");
+				if (bouton) {
+					bouton.dataset.ajouterEquipement = e.id;
+					bouton.hidden = e.prix_cents === null;
+				}
+
+				const url = e.medias?.find((m) => m.type === "image" && m.url)?.url;
 				if (url) {
-					const cadre = lien.querySelector(".suggestion__image");
+					const cadre = vignette.querySelector(".suggestion__image");
 					let img = cadre?.querySelector<HTMLImageElement>("img[data-photo]") ?? null;
 					if (!img && cadre) {
 						img = document.createElement("img");
@@ -348,7 +450,10 @@ const vignettes = SUGGESTIONS.map((s) => {
 			if (event.target === fenetre) fenetre.close();
 		});
 
-		window.addEventListener("bab:boite-ajoutee", () => {
+		window.addEventListener("bab:boite-ajoutee", (event) => {
+			const ouvert = (event as CustomEvent<{ ouvert?: boolean }>).detail?.ouvert === true;
+			const bandeau = fenetre.querySelector<HTMLElement>("[data-commandes-fermees]");
+			if (bandeau) bandeau.hidden = ouvert;
 			void rafraichir();
 			if (!fenetre.open) fenetre.showModal();
 		});

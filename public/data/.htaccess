@@ -11,12 +11,17 @@
 # au build, ni le PHP, qui le lit sur disque, ne passent par HTTP : l'interdire
 # ne coûte rien et évite de publier des prix factices.
 #
+# equipements.json et equipements.default.json contiennent, depuis le
+# 27/09/2026, les prix d'achat estimés et les frais de port des accessoires.
+# Le public passe par /api/accessoires.php, qui n'en publie que le prix de
+# vente ; l'admin et le build les lisent sur le disque.
+#
 # questions.json contient les questions envoyées par les visiteurs, avant toute
 # modération. Seuls ask-question.php et admin/faq.php le lisent, et tous deux
 # sur le disque. Rien ne le récupère par HTTP : il n'y a aucune raison qu'un
 # tiers puisse lire ce qu'un visiteur vient d'écrire.
 
-<FilesMatch "^(settings\.default|settings|pricing|questions)\.json$">
+<FilesMatch "^(settings\.default|settings|pricing|questions|equipements|equipements\.default)\.json$">
 	<IfModule mod_authz_core.c>
 		Require all denied
 	</IfModule>
