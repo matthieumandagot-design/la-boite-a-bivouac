@@ -104,7 +104,7 @@ function rqCalculeBoite(
 		$horsGabarit[] = 'remorque de plus de ' . (RQ_LONGUEUR_REMORQUE_MAX_CM / 100) . ' m de long';
 	}
 	if ($largeur < RQ_LIMITES['largeurMin']) {
-		$horsGabarit[] = 'largeur trop étroite';
+		$horsGabarit[] = 'remorque de moins de ' . RQ_LARGEUR_REMORQUE_MIN_CM . ' cm de large';
 	}
 	if ($largeur > RQ_LIMITES['largeurMax']) {
 		$horsGabarit[] = 'largeur trop grande';

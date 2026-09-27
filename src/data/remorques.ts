@@ -59,6 +59,12 @@ export const JEU_PAR_COTE_CM = 1;
 export const LONGUEUR_REMORQUE_MAX_CM = 400;
 
 /**
+ * Largeur intérieure de remorque la plus petite acceptée : 80 cm (décision de
+ * Matthieu, 27/09/2026). En dessous, la configuration est hors gabarit.
+ */
+export const LARGEUR_REMORQUE_MIN_CM = 80;
+
+/**
  * Hauteur de boîte la plus grande fabriquée : 3 m (décision du 27/09/2026).
  * S'ajoute à l'autre plafond, la longueur intérieure de la caisse : c'est le
  * plus bas des deux qui s'applique.
@@ -67,12 +73,13 @@ export const HAUTEUR_BOITE_MAX_CM = 300;
 
 /**
  * Limites de fabrication au sol, sur les cotes de la BOÎTE. La longueur
- * maximale découle de la remorque de 4 m, moins le jeu des deux côtés. Les
- * autres valeurs restent provisoires : à confirmer avec l'atelier.
+ * maximale découle de la remorque de 4 m, la largeur minimale de la remorque
+ * de 80 cm, moins le jeu des deux côtés. Les autres valeurs restent
+ * provisoires : à confirmer avec l'atelier.
  */
 export const LIMITES = {
 	longueurMin: 100,
-	largeurMin: 90,
+	largeurMin: LARGEUR_REMORQUE_MIN_CM - 2 * JEU_PAR_COTE_CM,
 	longueurMax: LONGUEUR_REMORQUE_MAX_CM - 2 * JEU_PAR_COTE_CM,
 	largeurMax: 160,
 };
@@ -571,7 +578,9 @@ export function calculeBoite(
 	if (longueur > LIMITES.longueurMax) {
 		horsGabarit.push(`remorque de plus de ${LONGUEUR_REMORQUE_MAX_CM / 100} m de long`);
 	}
-	if (largeur < LIMITES.largeurMin) horsGabarit.push("largeur trop étroite");
+	if (largeur < LIMITES.largeurMin) {
+		horsGabarit.push(`remorque de moins de ${LARGEUR_REMORQUE_MIN_CM} cm de large`);
+	}
 	if (largeur > LIMITES.largeurMax) horsGabarit.push("largeur trop grande");
 
 	return {
