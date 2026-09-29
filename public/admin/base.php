@@ -89,6 +89,30 @@ if ($pilote) {
 }
 
 $enRetard = array_values(array_diff($disponibles, $appliquees));
+
+// État des sauvegardes produites par lib/sauvegarde-commerce.php. Le dossier
+// est en dehors du site, dans le dossier du compte : on se contente de le lire.
+// Une sauvegarde que personne ne surveille n'est qu'une demi-sauvegarde, d'où
+// l'affichage de la date de la dernière ici plutôt que dans un journal isolé.
+$sauvDossier = dirname(__DIR__, 2) . '/sauvegardes-commerce';
+$sauvFichiers = is_dir($sauvDossier) ? (glob($sauvDossier . '/commerce-*.sqlite.gz') ?: []) : [];
+rsort($sauvFichiers); // noms datés : ordre alphabétique inverse = du plus récent au plus ancien
+$sauvDerniere = $sauvFichiers[0] ?? null;
+$sauvDate = null;
+$sauvAge = null;
+$sauvPoids = 0;
+
+foreach ($sauvFichiers as $f) {
+	$sauvPoids += (int) @filesize($f);
+}
+
+if ($sauvDerniere !== null && preg_match('/commerce-(\d{4}-\d{2}-\d{2})\.sqlite\.gz$/', basename($sauvDerniere), $m)) {
+	$d = DateTimeImmutable::createFromFormat('!Y-m-d', $m[1]);
+	if ($d !== false) {
+		$sauvDate = $d->format('d/m/Y');
+		$sauvAge = (int) (new DateTimeImmutable('today'))->diff($d)->days;
+	}
+}
 ?>
 <!doctype html>
 <html lang="fr">
@@ -185,10 +209,31 @@ $enRetard = array_values(array_diff($disponibles, $appliquees));
 
 				<section class="carte">
 					<h2 class="titre-carte">Sauvegarde</h2>
-					<p class="aide">
-						Le fichier de base est exclu de la synchronisation FTP : un déploiement ne l'écrase pas.
-						Ce n'est pas une sauvegarde pour autant — rien ne le copie ailleurs aujourd'hui.
-						À traiter avant la première commande réelle.
+
+					<?php if ($sauvDerniere === null) : ?>
+						<p class="aide" style="color:#8a6d1f;font-weight:600;margin-bottom:.5rem;">Aucune sauvegarde pour l'instant.</p>
+						<p class="aide">
+							Le fichier de base est exclu de la synchronisation FTP : un déploiement ne l'écrase pas.
+							Ce n'est pas une sauvegarde pour autant — tant que la tâche planifiée n'est pas créée,
+							rien ne le copie ailleurs. À traiter avant la première commande réelle.
+						</p>
+					<?php else : ?>
+						<p class="aide" style="margin-bottom:.5rem;color:<?= ($sauvAge !== null && $sauvAge >= 2) ? '#8a6d1f' : '#17603c' ?>;font-weight:600;">
+							Dernière sauvegarde : <?= h((string) $sauvDate) ?>
+							<?php if ($sauvAge !== null) : ?>
+								<?= $sauvAge === 0 ? '(aujourd\'hui)' : ($sauvAge === 1 ? '(hier)' : '— il y a ' . $sauvAge . ' jours, la tâche planifiée ne tourne peut-être plus') ?>
+							<?php endif; ?>
+						</p>
+						<p class="aide">
+							<?= count($sauvFichiers) ?> fichier(s) conservé(s), <?= h(number_format($sauvPoids / 1024, 1, ',', ' ')) ?> Ko au total.
+							Copies quotidiennes gardées un mois, celles du 1<sup>er</sup> du mois un an.
+						</p>
+					<?php endif; ?>
+
+					<p class="aide" style="margin-top:.9rem;">
+						Produites par <code>lib/sauvegarde-commerce.php</code>, à lancer une fois par jour par une tâche
+						planifiée OVH (PHP 8.3, mode CLI). Elles sont écrites dans <code>sauvegardes-commerce/</code>,
+						à côté du site et donc hors du web : ni téléchargeables, ni effacées par un déploiement.
 					</p>
 				</section>
 			</main>
