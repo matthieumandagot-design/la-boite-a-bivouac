@@ -21,11 +21,102 @@ require_once __DIR__ . '/commandes.php';
 require_once __DIR__ . '/pricing.php';
 
 const EMAIL_ATELIER = 'contact@laboiteabivouac.fr';
+const EMAIL_SITE = 'https://laboiteabivouac.fr';
+
+/**
+ * Habillage des messages (29/09/2026).
+ *
+ * Contraintes propres à l'email, qui expliquent le style de ce code :
+ *   - tout en tableaux et en styles en ligne, les clients de messagerie
+ *     ignorent les feuilles de style et la mise en page moderne ;
+ *   - largeur bornée à 600 px, la limite au-delà de laquelle Outlook coupe ;
+ *   - le logo est une image distante, que Gmail et consorts bloquent par
+ *     défaut : rien d'important ne doit reposer dessus, d'où le nom écrit en
+ *     toutes lettres juste en dessous et l'attribut alt.
+ */
+const EMAIL_LOGO = EMAIL_SITE . '/images/logo-badge.png';
+const EMAIL_POLICE = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+const EMAIL_FORET = '#122218';
+const EMAIL_OR = '#E8B428';
+const EMAIL_CREME = '#F5ECD8';
+const EMAIL_FOND = '#F4F2EE';
+const EMAIL_TRAIT = '#E4E0D8';
+const EMAIL_TEXTE = '#1A1A1A';
+const EMAIL_DISCRET = '#6A6A62';
+const EMAIL_TERRE = '#B85438';
 
 /** Échappement HTML pour les emails, indépendant de l'admin. */
 function emailH(string $valeur): string
 {
 	return htmlspecialchars($valeur, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+/**
+ * Document complet : en-tête à la marque, contenu, pied de page.
+ *
+ * Le préheader est la ligne que les boîtes mail affichent à côté de l'objet.
+ * Sans lui, elles y mettent le premier texte du message — ici « La Boîte à
+ * Bivouac », ce qui n'apprend rien.
+ */
+function emailGabarit(string $preheader, string $contenu, string $piedSupplement = ''): string
+{
+	$police = EMAIL_POLICE;
+	$foret = EMAIL_FORET;
+	$or = EMAIL_OR;
+	$creme = EMAIL_CREME;
+	$fond = EMAIL_FOND;
+	$trait = EMAIL_TRAIT;
+	$discret = EMAIL_DISCRET;
+	$logo = EMAIL_LOGO;
+	$site = EMAIL_SITE;
+	$apercu = emailH($preheader);
+
+	return <<<HTML
+	<!doctype html>
+	<html lang="fr">
+	<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="color-scheme" content="light only" />
+	<title>La Boîte à Bivouac</title>
+	</head>
+	<body style="margin:0;padding:0;background:{$fond};">
+	<div style="display:none;max-height:0;overflow:hidden;opacity:0;">{$apercu}</div>
+	<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:{$fond};">
+	<tr><td align="center" style="padding:24px 12px;">
+		<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#FFFFFF;border:1px solid {$trait};border-radius:16px;">
+			<tr><td align="center" style="background:{$foret};border-radius:16px 16px 0 0;padding:26px 24px 22px;">
+				<img src="{$logo}" width="60" height="60" alt="La Boîte à Bivouac" style="display:block;border:0;outline:none;margin:0 auto 12px;" />
+				<div style="font-family:{$police};font-size:15px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:{$creme};">La Boîte à Bivouac</div>
+				<div style="width:54px;height:3px;background:{$or};margin:14px auto 0;font-size:0;line-height:0;">&nbsp;</div>
+			</td></tr>
+			<tr><td style="padding:30px 28px 26px;font-family:{$police};font-size:16px;line-height:1.6;color:#1A1A1A;">
+	{$contenu}
+			</td></tr>
+			<tr><td style="border-top:1px solid {$trait};padding:18px 28px 24px;font-family:{$police};font-size:12px;line-height:1.6;color:{$discret};">
+				{$piedSupplement}
+				<div><a href="{$site}" style="color:{$discret};">laboiteabivouac.fr</a> — une question&nbsp;? Répondez simplement à cet email.</div>
+			</td></tr>
+		</table>
+	</td></tr>
+	</table>
+	</body>
+	</html>
+	HTML;
+}
+
+/** Bouton d'action, en tableau : les clients Outlook ignorent le padding d'un <a>. */
+function emailBouton(string $url, string $texte): string
+{
+	$police = EMAIL_POLICE;
+	$or = EMAIL_OR;
+	$foret = EMAIL_FORET;
+
+	return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 6px;"><tr>'
+		. '<td align="center" style="background:' . $or . ';border-radius:999px;">'
+		. '<a href="' . emailH($url) . '" style="display:inline-block;padding:13px 28px;font-family:' . $police
+		. ';font-size:15px;font-weight:700;color:' . $foret . ';text-decoration:none;">' . emailH($texte) . '</a>'
+		. '</td></tr></table>';
 }
 
 /** Tableau des lignes, commun aux deux messages. */
@@ -34,14 +125,61 @@ function emailLignesCommande(array $lignes): string
 	$html = '';
 	foreach ($lignes as $ligne) {
 		$html .= sprintf(
-			'<tr><td style="padding:6px 0;">%d × %s</td><td style="padding:6px 0;text-align:right;">%s</td></tr>',
-			(int) $ligne['quantite'],
+			'<tr><td style="padding:9px 0;border-bottom:1px solid %s;">%s%s</td>'
+			. '<td style="padding:9px 0 9px 12px;border-bottom:1px solid %s;text-align:right;white-space:nowrap;">%s</td></tr>',
+			EMAIL_TRAIT,
+			(int) $ligne['quantite'] > 1 ? ((int) $ligne['quantite'] . ' × ') : '',
 			emailH((string) $ligne['libelle']),
+			EMAIL_TRAIT,
 			emailH(formaterCents((int) $ligne['total_cents']))
 		);
 	}
 
 	return $html;
+}
+
+/** Récapitulatif complet : lignes, total et adresse. */
+function emailRecapitulatif(array $commande, array $lignes): string
+{
+	$police = EMAIL_POLICE;
+	$foret = EMAIL_FORET;
+	$trait = EMAIL_TRAIT;
+	$discret = EMAIL_DISCRET;
+	$corpsLignes = emailLignesCommande($lignes);
+	$total = emailH(formaterCents((int) $commande['total_cents']));
+	$adresse = nl2br(emailH((string) $commande['adresse_livraison']));
+
+	return <<<HTML
+	<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;font-family:{$police};font-size:15px;color:#1A1A1A;margin-top:6px;">
+	{$corpsLignes}
+		<tr><td style="padding:14px 0 0;font-weight:700;">Total TTC</td>
+			<td style="padding:14px 0 0 12px;text-align:right;font-weight:700;font-size:18px;color:{$foret};white-space:nowrap;">{$total}</td></tr>
+	</table>
+	<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;">
+	<tr><td style="border:1px solid {$trait};border-radius:12px;padding:16px 18px;font-family:{$police};font-size:14px;line-height:1.6;color:#1A1A1A;">
+		<div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:{$discret};padding-bottom:6px;">Livraison</div>
+		{$adresse}
+	</td></tr>
+	</table>
+	HTML;
+}
+
+/** Version texte du récapitulatif, pour la partie text/plain du message. */
+function emailTexteRecapitulatif(array $commande, array $lignes): string
+{
+	$texte = '';
+	foreach ($lignes as $ligne) {
+		$texte .= sprintf(
+			"- %s%s : %s\n",
+			(int) $ligne['quantite'] > 1 ? ((int) $ligne['quantite'] . ' x ') : '',
+			(string) $ligne['libelle'],
+			formaterCents((int) $ligne['total_cents'])
+		);
+	}
+	$texte .= 'Total TTC : ' . formaterCents((int) $commande['total_cents']) . "\n\n";
+	$texte .= "Livraison\n" . (string) $commande['adresse_livraison'] . "\n";
+
+	return $texte;
 }
 
 /**
@@ -53,56 +191,114 @@ function emailLignesCommande(array $lignes): string
  */
 function emailConfirmationClient(array $commande, array $lignes, string $prenom): string
 {
-	$bonjour = $prenom === '' ? 'Bonjour,' : 'Bonjour ' . emailH($prenom) . ',';
+	$police = EMAIL_POLICE;
+	$foret = EMAIL_FORET;
+	$discret = EMAIL_DISCRET;
+	$terre = EMAIL_TERRE;
+	$creme = EMAIL_CREME;
 	$numero = emailH((string) $commande['numero']);
-	$total = emailH(formaterCents((int) $commande['total_cents']));
-	$adresse = nl2br(emailH((string) $commande['adresse_livraison']));
 	$cgv = emailH((string) $commande['cgv_version']);
-	$corpsLignes = emailLignesCommande($lignes);
+	$recapitulatif = emailRecapitulatif($commande, $lignes);
+	$bouton = emailBouton(EMAIL_SITE . '/compte/', 'Suivre ma commande');
+
+	$titre = $prenom === '' ? 'Merci pour votre commande&nbsp;!' : 'Merci ' . emailH($prenom) . '&nbsp;!';
 
 	$avertissementTest = $commande['payment_mode'] === 'test'
-		? '<p style="color:#8c2020;"><strong>Commande de test : aucun paiement réel n\'a été effectué.</strong></p>'
+		? '<div style="border-left:3px solid ' . $terre . ';background:#FBEFEB;padding:10px 14px;margin:0 0 18px;font-size:14px;color:'
+			. $terre . ';"><strong>Commande de test</strong> — aucun paiement réel n\'a été effectué.</div>'
 		: '';
 
 	$mentionPrix = pricingProvisoire()
-		? '<p style="color:#8c2020;">Les montants de cette commande sont provisoires (' . emailH(pricingMention()) . ').</p>'
+		? '<p style="margin:0 0 16px;font-size:14px;color:' . $terre . ';">Les montants de cette commande sont provisoires ('
+			. emailH(pricingMention()) . ').</p>'
 		: '';
 
-	return <<<HTML
-	<p>{$bonjour}</p>
+	$contenu = <<<HTML
 	{$avertissementTest}
-	<p>Nous avons bien reçu votre paiement pour la commande <strong>{$numero}</strong>. Merci de votre confiance.</p>
-	<table style="width:100%;border-collapse:collapse;">{$corpsLignes}
-		<tr><td style="padding:10px 0;border-top:1px solid #ddd;"><strong>Total TTC</strong></td>
-			<td style="padding:10px 0;border-top:1px solid #ddd;text-align:right;"><strong>{$total}</strong></td></tr>
-	</table>
+	<h1 style="margin:0 0 14px;font-family:{$police};font-size:26px;line-height:1.25;font-weight:700;color:{$foret};">{$titre}</h1>
+	<p style="margin:0 0 18px;">Votre paiement est bien arrivé : la commande <strong>{$numero}</strong> est confirmée. Votre Boîte part maintenant en fabrication, et nous y mettrons le même soin qu'à la nôtre.</p>
 	{$mentionPrix}
-	<p><strong>Adresse</strong><br />{$adresse}</p>
-	<p>Conditions générales de vente applicables : {$cgv}.</p>
-	<p>Nous vous tiendrons informé de l'avancement de la fabrication. Vous retrouvez à tout moment le statut de votre commande dans votre espace client.</p>
-	<p>— La Boîte à Bivouac</p>
+	{$recapitulatif}
+	{$bouton}
+	<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:26px;">
+	<tr><td style="background:{$creme};border-radius:12px;padding:18px;font-family:{$police};font-size:14px;line-height:1.7;color:#1A1A1A;">
+		<div style="font-weight:700;color:{$foret};padding-bottom:6px;">Et maintenant&nbsp;?</div>
+		Nous lançons la fabrication à l'atelier. Vous recevrez un email à chaque étape&nbsp;: mise en fabrication, Boîte prête, puis retrait ou livraison. Le détail reste consultable à tout moment dans votre espace client.
+	</td></tr>
+	</table>
+	<p style="margin:26px 0 0;">Merci de votre confiance&nbsp;— et bons bivouacs.</p>
+	<p style="margin:4px 0 0;font-weight:700;color:{$foret};">Toute l'équipe de La Boîte à Bivouac</p>
 	HTML;
+
+	$pied = '<div style="padding-bottom:6px;">Conditions générales de vente applicables&nbsp;: ' . $cgv . '.</div>';
+
+	return emailGabarit('Votre commande ' . (string) $commande['numero'] . ' est confirmée.', $contenu, $pied);
+}
+
+/** Version texte de la confirmation, pour les clients qui n'affichent pas le HTML. */
+function emailTexteConfirmationClient(array $commande, array $lignes, string $prenom): string
+{
+	$titre = $prenom === '' ? 'Merci pour votre commande !' : 'Merci ' . $prenom . ' !';
+	$test = $commande['payment_mode'] === 'test'
+		? "COMMANDE DE TEST - aucun paiement reel n'a ete effectue.\n\n"
+		: '';
+	$provisoire = pricingProvisoire()
+		? 'Les montants de cette commande sont provisoires (' . pricingMention() . ").\n\n"
+		: '';
+
+	return $titre . "\n\n" . $test
+		. 'Votre paiement est bien arrive : la commande ' . (string) $commande['numero'] . " est confirmee.\n"
+		. "Votre Boite part maintenant en fabrication.\n\n"
+		. $provisoire
+		. emailTexteRecapitulatif($commande, $lignes) . "\n"
+		. "Suivre ma commande : " . EMAIL_SITE . "/compte/\n\n"
+		. "Vous recevrez un email a chaque etape : mise en fabrication, Boite prete, puis retrait ou livraison.\n\n"
+		. "Conditions generales applicables : " . (string) $commande['cgv_version'] . "\n\n"
+		. "Merci de votre confiance, et bons bivouacs.\n"
+		. "Toute l'equipe de La Boite a Bivouac\n"
+		. EMAIL_SITE . "\n";
 }
 
 /** Corps du message envoyé à l'atelier. */
 function emailNotificationAtelier(array $commande, array $lignes, string $client, string $email): string
 {
+	$police = EMAIL_POLICE;
+	$foret = EMAIL_FORET;
+	$trait = EMAIL_TRAIT;
+	$discret = EMAIL_DISCRET;
+	$terre = EMAIL_TERRE;
 	$numero = emailH((string) $commande['numero']);
-	$total = emailH(formaterCents((int) $commande['total_cents']));
-	$adresse = nl2br(emailH((string) $commande['adresse_livraison']));
-	$mode = $commande['payment_mode'] === 'test' ? ' — MODE TEST, aucun encaissement' : '';
-	$corpsLignes = emailLignesCommande($lignes);
+	$nom = emailH($client);
+	$courriel = emailH($email);
+	$recapitulatif = emailRecapitulatif($commande, $lignes);
+	$bouton = emailBouton(EMAIL_SITE . '/admin/commandes.php', 'Ouvrir dans l\'administration');
 
-	return <<<HTML
-	<p><strong>Commande {$numero} payée{$mode}</strong></p>
-	<p>{$client} &lt;{$email}&gt;</p>
-	<table style="width:100%;border-collapse:collapse;">{$corpsLignes}
-		<tr><td style="padding:10px 0;border-top:1px solid #ddd;"><strong>Total TTC</strong></td>
-			<td style="padding:10px 0;border-top:1px solid #ddd;text-align:right;"><strong>{$total}</strong></td></tr>
-	</table>
-	<p><strong>Adresse</strong><br />{$adresse}</p>
-	<p><a href="https://laboiteabivouac.fr/admin/commandes.php">Ouvrir dans l'administration</a></p>
+	$avertissementTest = $commande['payment_mode'] === 'test'
+		? '<div style="border-left:3px solid ' . $terre . ';background:#FBEFEB;padding:10px 14px;margin:0 0 18px;font-size:14px;color:'
+			. $terre . ';"><strong>Mode test</strong> — aucun encaissement.</div>'
+		: '';
+
+	$contenu = <<<HTML
+	{$avertissementTest}
+	<h1 style="margin:0 0 6px;font-family:{$police};font-size:22px;line-height:1.3;font-weight:700;color:{$foret};">Commande {$numero} payée</h1>
+	<p style="margin:0 0 18px;font-size:14px;color:{$discret};">{$nom} &lt;<a href="mailto:{$courriel}" style="color:{$discret};">{$courriel}</a>&gt;</p>
+	<div style="height:1px;background:{$trait};font-size:0;line-height:0;">&nbsp;</div>
+	{$recapitulatif}
+	{$bouton}
 	HTML;
+
+	return emailGabarit('Commande ' . (string) $commande['numero'] . ' payée.', $contenu);
+}
+
+/** Version texte de la notification interne. */
+function emailTexteAtelier(array $commande, array $lignes, string $client, string $email): string
+{
+	$mode = $commande['payment_mode'] === 'test' ? " (MODE TEST, aucun encaissement)" : '';
+
+	return 'Commande ' . (string) $commande['numero'] . ' payee' . $mode . "\n"
+		. $client . ' <' . $email . ">\n\n"
+		. emailTexteRecapitulatif($commande, $lignes) . "\n"
+		. 'Ouvrir dans l\'administration : ' . EMAIL_SITE . "/admin/commandes.php\n";
 }
 
 /**
@@ -111,7 +307,7 @@ function emailNotificationAtelier(array $commande, array $lignes, string $client
  * Une connexion par message : les envois sont rares, et une session SMTP
  * partagée ferait qu'un premier échec emporte les suivants.
  */
-function emailEnvoyer(string $destinataire, string $sujet, string $html, string $contexte): bool
+function emailEnvoyer(string $destinataire, string $sujet, string $html, string $contexte, ?string $texte = null): bool
 {
 	$config = __DIR__ . '/../api/config.php';
 	if (!is_file($config)) {
@@ -127,7 +323,9 @@ function emailEnvoyer(string $destinataire, string $sujet, string $html, string 
 	try {
 		$smtp = new SimpleSmtp(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS);
 		$smtp->connect();
-		$smtp->sendMail($destinataire, $sujet, $html);
+		// La version texte fait passer le message en multipart/alternative : sans
+		// elle, le HTML partirait annoncé en text/plain (voir api/lib/smtp.php).
+		$smtp->sendMail($destinataire, $sujet, $html, null, $texte);
 		$smtp->quit();
 
 		return true;
@@ -154,15 +352,17 @@ function envoyerEmailsCommandePayee(array $commande, array $lignes, array $clien
 	return [
 		'client' => emailEnvoyer(
 			(string) $client['email'],
-			'Votre commande ' . $numero . ' — La Boîte à Bivouac',
+			'Votre commande ' . $numero . ' est confirmée — La Boîte à Bivouac',
 			emailConfirmationClient($commande, $lignes, (string) $client['prenom']),
-			'confirmation client ' . $numero
+			'confirmation client ' . $numero,
+			emailTexteConfirmationClient($commande, $lignes, (string) $client['prenom'])
 		),
 		'atelier' => emailEnvoyer(
 			EMAIL_ATELIER,
 			'Commande ' . $numero . ' payée',
 			emailNotificationAtelier($commande, $lignes, $nom, (string) $client['email']),
-			'notification atelier ' . $numero
+			'notification atelier ' . $numero,
+			emailTexteAtelier($commande, $lignes, $nom, (string) $client['email'])
 		),
 	];
 }
@@ -203,18 +403,47 @@ function emailChangementStatut(array $commande, string $prenom): string
 	$libelle = emailH(commandeStatutLibelle($statut));
 	$message = emailH(emailMessagesStatut()[$statut] ?? '');
 
+	$police = EMAIL_POLICE;
+	$foret = EMAIL_FORET;
+	$creme = EMAIL_CREME;
+	$terre = EMAIL_TERRE;
+	$bouton = emailBouton(EMAIL_SITE . '/compte/', 'Voir ma commande');
+
 	$avertissementTest = $commande['payment_mode'] === 'test'
-		? '<p style="color:#8c2020;"><strong>Commande de test : aucun paiement réel n\'a été effectué.</strong></p>'
+		? '<div style="border-left:3px solid ' . $terre . ';background:#FBEFEB;padding:10px 14px;margin:0 0 18px;font-size:14px;color:'
+			. $terre . ';"><strong>Commande de test</strong> — aucun paiement réel n\'a été effectué.</div>'
 		: '';
 
-	return <<<HTML
-	<p>{$bonjour}</p>
+	$contenu = <<<HTML
 	{$avertissementTest}
-	<p>Le statut de votre commande <strong>{$numero}</strong> a changé : <strong>{$libelle}</strong>.</p>
-	<p>{$message}</p>
-	<p>Vous retrouvez le détail de votre commande dans votre <a href="https://laboiteabivouac.fr/compte/">espace client</a>. Une question ? Répondez simplement à cet email.</p>
-	<p>— La Boîte à Bivouac</p>
+	<p style="margin:0 0 14px;">{$bonjour}</p>
+	<h1 style="margin:0 0 14px;font-family:{$police};font-size:24px;line-height:1.3;font-weight:700;color:{$foret};">{$libelle}</h1>
+	<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr><td style="background:{$creme};border-radius:12px;padding:16px 18px;font-family:{$police};font-size:15px;line-height:1.7;color:#1A1A1A;">
+		Commande <strong>{$numero}</strong><br />{$message}
+	</td></tr>
+	</table>
+	{$bouton}
+	<p style="margin:26px 0 0;">À bientôt,</p>
+	<p style="margin:4px 0 0;font-weight:700;color:{$foret};">Toute l'équipe de La Boîte à Bivouac</p>
 	HTML;
+
+	return emailGabarit('Commande ' . (string) $commande['numero'] . ' : ' . commandeStatutLibelle($statut), $contenu);
+}
+
+/** Version texte du changement de statut. */
+function emailTexteChangementStatut(array $commande, string $prenom): string
+{
+	$statut = (string) $commande['statut'];
+	$test = $commande['payment_mode'] === 'test'
+		? "COMMANDE DE TEST - aucun paiement reel n'a ete effectue.\n\n"
+		: '';
+
+	return ($prenom === '' ? 'Bonjour,' : 'Bonjour ' . $prenom . ',') . "\n\n" . $test
+		. 'Commande ' . (string) $commande['numero'] . ' : ' . commandeStatutLibelle($statut) . ".\n"
+		. (emailMessagesStatut()[$statut] ?? '') . "\n\n"
+		. 'Voir ma commande : ' . EMAIL_SITE . "/compte/\n\n"
+		. "A bientot,\nToute l'equipe de La Boite a Bivouac\n";
 }
 
 /**
@@ -237,6 +466,7 @@ function envoyerEmailChangementStatut(array $commande, array $client): bool
 		(string) $client['email'],
 		'Commande ' . $numero . ' : ' . commandeStatutLibelle((string) $commande['statut']) . ' — La Boîte à Bivouac',
 		emailChangementStatut($commande, (string) $client['prenom']),
-		'changement de statut ' . $numero
+		'changement de statut ' . $numero,
+		emailTexteChangementStatut($commande, (string) $client['prenom'])
 	);
 }

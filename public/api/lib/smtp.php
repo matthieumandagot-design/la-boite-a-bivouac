@@ -50,12 +50,26 @@ final class SimpleSmtp
 		$this->command(base64_encode($this->password), 235);
 	}
 
-	public function sendMail(string $toEmail, string $subject, string $body, ?string $unsubscribeUrl = null): void
+	/**
+	 * @param string|null $texteAlternatif version texte brut du message. Quand
+	 *        elle est fournie, $body est envoyé comme HTML dans un
+	 *        multipart/alternative ; sinon le message reste en texte brut, comme
+	 *        l'attendent la newsletter et le formulaire de contact.
+	 */
+	public function sendMail(string $toEmail, string $subject, string $body, ?string $unsubscribeUrl = null, ?string $texteAlternatif = null): void
 	{
 		$this->command('MAIL FROM:<' . SMTP_FROM . '>', 250);
 		$this->command('RCPT TO:<' . $toEmail . '>', 250);
 		$this->command('DATA', 354);
+		$this->command(self::composerMessage($toEmail, $subject, $body, $unsubscribeUrl, $texteAlternatif), 250);
+	}
 
+	/**
+	 * Assemble le message complet, en-têtes compris, terminé par le point final
+	 * de la commande DATA. Séparé de l'envoi pour être vérifiable sans serveur.
+	 */
+	public static function composerMessage(string $toEmail, string $subject, string $body, ?string $unsubscribeUrl = null, ?string $texteAlternatif = null): string
+	{
 		$encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
 		$encodedFromName = '=?UTF-8?B?' . base64_encode(SMTP_NAME) . '?=';
 
@@ -70,12 +84,34 @@ final class SimpleSmtp
 			'Date: ' . date('r'),
 			'Message-ID: <' . bin2hex(random_bytes(16)) . '@laboiteabivouac.fr>',
 			'MIME-Version: 1.0',
-			'Content-Type: text/plain; charset=UTF-8',
+		];
+
+		if ($texteAlternatif === null) {
+			$headers[] = 'Content-Type: text/plain; charset=UTF-8';
 			// Corps encodé en base64 : l'alphabet base64 ne contient jamais de
 			// ".", ce qui évite tout souci de "dot-stuffing" SMTP sans avoir à
 			// échapper manuellement les lignes du message.
-			'Content-Transfer-Encoding: base64',
-		];
+			$headers[] = 'Content-Transfer-Encoding: base64';
+			$corps = chunk_split(base64_encode($body));
+		} else {
+			// Deux versions du même message, la dernière étant celle que le client
+			// préfère afficher s'il en est capable (RFC 2046 §5.1.4). Sans cela, un
+			// corps HTML annoncé en text/plain s'affiche balises comprises dans les
+			// clients qui prennent l'en-tête au mot — constaté le 29/09/2026 : les
+			// emails de commande partaient en text/plain avec du HTML dedans, que
+			// seule la tolérance de Gmail rendait lisibles.
+			$frontiere = 'bab-' . bin2hex(random_bytes(12));
+			$headers[] = 'Content-Type: multipart/alternative; boundary="' . $frontiere . '"';
+			$corps = "--{$frontiere}\r\n"
+				. "Content-Type: text/plain; charset=UTF-8\r\n"
+				. "Content-Transfer-Encoding: base64\r\n\r\n"
+				. chunk_split(base64_encode($texteAlternatif))
+				. "--{$frontiere}\r\n"
+				. "Content-Type: text/html; charset=UTF-8\r\n"
+				. "Content-Transfer-Encoding: base64\r\n\r\n"
+				. chunk_split(base64_encode($body))
+				. "--{$frontiere}--\r\n";
+		}
 
 		if ($unsubscribeUrl !== null) {
 			// Requis par Gmail/Yahoo pour tout envoi assimilable à une newsletter :
@@ -86,10 +122,7 @@ final class SimpleSmtp
 			$headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
 		}
 
-		$encodedBody = chunk_split(base64_encode($body));
-
-		$message = implode("\r\n", $headers) . "\r\n\r\n" . $encodedBody . "\r\n.";
-		$this->command($message, 250);
+		return implode("\r\n", $headers) . "\r\n\r\n" . $corps . "\r\n.";
 	}
 
 	public function quit(): void
