@@ -1,0 +1,150 @@
+# La Boîte à Bivouac — génération automatique du dossier atelier
+# Déclenché par le site (commande validée ou bouton admin) via repository_dispatch,
+# ou à la main depuis l'onglet Actions de GitHub (workflow_dispatch).
+# Produit : modèle FreeCAD, STEP soudé, STEP d'ensemble, plan PDF A3, débit CSV, aperçus, rapport.
+
+name: Dossier atelier
+
+on:
+  repository_dispatch:
+    types: [dossier-atelier]
+  workflow_dispatch:
+    inputs:
+      reference:
+        description: "Référence (commande ou devis)"
+        required: true
+        default: "DEVIS-TEST"
+      longueur_int_cm:
+        description: "Longueur intérieure de la caisse (cm)"
+        required: true
+        default: "185"
+      largeur_int_cm:
+        description: "Largeur intérieure de la caisse (cm)"
+        required: true
+        default: "115"
+      hauteur_ridelle_cm:
+        description: "Hauteur des ridelles (cm)"
+        required: true
+        default: "40"
+      hauteur_boite_cm:
+        description: "Hauteur de la boîte (cm)"
+        required: true
+        default: "90"
+      marque:
+        description: "Marque de la remorque (facultatif)"
+        required: false
+        default: ""
+      modele:
+        description: "Modèle de la remorque (facultatif)"
+        required: false
+        default: ""
+
+concurrency:
+  group: dossier-atelier
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  dossier:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      FREECAD_VERSION: "1.1.3"
+      LANG: fr_FR.UTF-8
+      LC_ALL: fr_FR.UTF-8
+    steps:
+      - name: Récupérer le générateur
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: atelier
+
+      - name: Lire la configuration client
+        env:
+          PAYLOAD: ${{ toJSON(github.event.client_payload) }}
+          INPUTS: ${{ toJSON(github.event.inputs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          def lire(v):
+              try:
+                  d = json.loads(v or 'null')
+                  return d if isinstance(d, dict) else {}
+              except Exception:
+                  return {}
+          cfg = lire(os.environ.get('PAYLOAD')) or lire(os.environ.get('INPUTS'))
+          json.dump(cfg, open('config.json', 'w'), ensure_ascii=False, indent=2)
+          ref = ''.join(c if c.isalnum() or c in '-_' else '-' for c in str(cfg.get('reference', 'sans-ref')))[:40]
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write('REF=%s\n' % ref)
+          print(json.dumps(cfg, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Installer l'affichage virtuel
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb xauth
+
+      - name: FreeCAD en cache
+        id: cache-freecad
+        uses: actions/cache@v4
+        with:
+          path: FreeCAD.AppImage
+          key: freecad-${{ env.FREECAD_VERSION }}-linux-x86_64
+
+      - name: Télécharger FreeCAD
+        if: steps.cache-freecad.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL -o FreeCAD.AppImage \
+            "https://github.com/FreeCAD/FreeCAD/releases/download/${FREECAD_VERSION}/FreeCAD_${FREECAD_VERSION}-Linux-x86_64-py311.AppImage"
+
+      - name: Préparer FreeCAD
+        run: |
+          chmod +x FreeCAD.AppImage
+          ./FreeCAD.AppImage --appimage-extract > /dev/null
+          mv squashfs-root freecad
+
+      - name: Générer le modèle
+        run: |
+          mkdir -p dossier
+          BIVOUAC_CONFIG=config.json BIVOUAC_OUT=dossier \
+            timeout 1500 xvfb-run -a -s "-screen 0 1920x1200x24" freecad/usr/bin/freecad atelier/generer_boite.py \
+            > dossier/sortie_freecad.txt 2>&1 || true
+          test -f dossier/rapport_generation.json || \
+            echo '{"statut": "erreur", "erreurs": ["FreeCAD ne s est pas lancé : voir sortie_freecad.txt"]}' > dossier/rapport_generation.json
+          cat dossier/rapport_generation.json
+
+      - name: Exporter STEP, plan PDF, débit et aperçus
+        run: |
+          if grep -q '"statut": "erreur"' dossier/rapport_generation.json; then
+            echo "Génération en erreur : pas d'export."
+          else
+            BIVOUAC_OUT=dossier BIVOUAC_MACRO=atelier/Exporter_pour_atelier.FCMacro \
+              timeout 900 xvfb-run -a -s "-screen 0 1920x1200x24" freecad/usr/bin/freecad atelier/exporter_dossier.py \
+              >> dossier/sortie_freecad.txt 2>&1 || true
+          fi
+          ls -la dossier
+
+      - name: Archiver le dossier (90 jours)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dossier-${{ env.REF }}-${{ github.run_number }}
+          path: dossier
+          retention-days: 90
+
+      - name: Envoyer le dossier par e-mail
+        if: always()
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          DEST_EMAIL: ${{ secrets.DEST_EMAIL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 atelier/envoyer_dossier.py dossier
+
+      - name: Statut final
+        run: |
+          python3 -c "import json,sys; r=json.load(open('dossier/rapport_generation.json')); print('Statut :', r['statut']); sys.exit(1 if r['statut']=='erreur' else 0)"

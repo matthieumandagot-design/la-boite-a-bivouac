@@ -27,6 +27,7 @@ require_once __DIR__ . '/../lib/stripe-api.php';
 require_once __DIR__ . '/../lib/commandes.php';
 require_once __DIR__ . '/../lib/clients.php';
 require_once __DIR__ . '/../lib/emails-commande.php';
+require_once __DIR__ . '/../lib/dossier-atelier-commande.php';
 
 /** Réponse JSON puis fin. Autonome : ce fichier ne dépend pas de commerce-api. */
 function webhookReponse(int $code, string $message): void
@@ -197,6 +198,26 @@ if (!$dejaPayee) {
 	$client = clientParId((int) $commande['customer_id']);
 	if ($client !== null) {
 		envoyerEmailsCommandePayee(commandeParId((int) $commande['id']), commandeLignes((int) $commande['id']), $client);
+	}
+
+	/*
+	 * Dossier atelier : une commande payée déclenche la génération FreeCAD de
+	 * chaque Boîte. Même raisonnement que pour les emails — après la
+	 * transaction, et seulement si c'est ce passage-ci qui a fait basculer la
+	 * commande. Sans « forcer » : une seconde livraison du même événement
+	 * Stripe ne doit pas relancer la génération.
+	 *
+	 * Ne peut pas faire échouer le webhook. Un dossier non déclenché se
+	 * rattrape d'un clic dans l'administration ; un webhook en erreur ferait
+	 * rejouer Stripe en boucle sur une commande déjà payée.
+	 */
+	try {
+		$resume = dossierAtelierLancerPourCommande((int) $commande['id']);
+		if ($resume['echecs'] > 0) {
+			error_log('[stripe-webhook] dossier atelier : ' . implode(' | ', $resume['messages']));
+		}
+	} catch (Throwable $e) {
+		error_log('[stripe-webhook] dossier atelier impossible : ' . $e->getMessage());
 	}
 }
 

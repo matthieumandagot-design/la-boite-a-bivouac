@@ -1,0 +1,133 @@
+# -*- coding: utf-8 -*-
+# La Boîte à Bivouac — Exporter le dossier atelier (V1.8)
+# ------------------------------------------------------
+# À lancer avec le modèle ouvert et enregistré. Produit, dans le dossier du fichier .FCStd :
+#   <nom>.step            toutes les pièces soudées (caisse + cadres de portes et de plateau), ouvrants fermés
+#   <nom>_ensemble.step   même chose + charnières piano
+#   <nom>_plan.pdf        plan A3 : vues, débit, cotes et rivetage, paramètres, achats
+#   <nom>_debit.csv       liste de débit + achats (s'ouvre dans Excel)
+
+import os
+import FreeCAD as App
+import FreeCADGui as Gui
+
+
+def _message(titre, texte, erreur=False):
+    App.Console.PrintMessage(texte + '\n')
+    if os.environ.get('BIVOUAC_NO_DIALOG'):
+        return
+    from PySide import QtWidgets
+    box = QtWidgets.QMessageBox.critical if erreur else QtWidgets.QMessageBox.information
+    box(Gui.getMainWindow(), titre, texte)
+
+
+def _conteneur(o):
+    for p in o.InList:
+        if p.TypeId == 'App::Part':
+            return p
+    return None
+
+
+def _feuille_csv(feuille, colonnes, nb_lignes):
+    lignes = []
+    for r in range(1, nb_lignes + 1):
+        ligne = []
+        for c in colonnes:
+            try:
+                v = feuille.get('%s%d' % (c, r))
+            except Exception:
+                v = ''
+            if hasattr(v, 'Value'):
+                v = v.Value
+            if isinstance(v, float):
+                v = ('%.2f' % v).rstrip('0').rstrip('.').replace('.', ',')
+            ligne.append(str(v))
+        if any(ligne):
+            lignes.append(';'.join(ligne))
+    return lignes
+
+
+def exporter():
+    doc = App.ActiveDocument
+    if doc is None or not doc.FileName:
+        _message('Export atelier', "Ouvre le modèle et enregistre-le (Ctrl+S) avant de lancer l'export.", True)
+        return
+
+    # Ouvrants fermés pour l'export
+    param = doc.getObject('Parametres')
+    angles = {}
+    if param is not None:
+        for a in ('AnglePorteG', 'AnglePorteD', 'AnglePlateau'):
+            try:
+                angles[a] = param.get(a)
+                param.set(a, '0')
+            except Exception:
+                pass
+    doc.recompute()
+    erreurs = [o.Label for o in doc.Objects if 'Invalid' in o.State or 'Error' in o.State]
+    if erreurs:
+        _message('Export atelier', "Le modèle contient des erreurs, export annulé :\n- " + '\n- '.join(erreurs[:10]), True)
+        return
+    doc.save()
+
+    dossier = os.path.dirname(doc.FileName)
+    nom = os.path.splitext(os.path.basename(doc.FileName))[0]
+    import Import, Part
+
+    # Pièces soudées ; celles rangées dans une porte ou le plateau sont replacées à leur position réelle
+    pieces, temporaires, renommes = [], [], []
+    for o in doc.Objects:
+        if not hasattr(o, 'Repere'):
+            continue
+        c = _conteneur(o)
+        if c is None:
+            pieces.append(o)
+        else:
+            nom_piece = o.Label
+            o.Label = nom_piece + ' [local]'
+            renommes.append((o, nom_piece))
+            t = doc.addObject('Part::Feature', 'tmp_' + o.Name)
+            t.Shape = o.Shape.transformed(c.Placement.toMatrix())
+            t.Label = nom_piece
+            temporaires.append(t)
+    Import.export(pieces + temporaires, os.path.join(dossier, nom + '.step'))
+
+    ouvrants = [o for o in doc.Objects if hasattr(o, 'Ouvrant') and _conteneur(o) is None]
+    if ouvrants:
+        Import.export(pieces + ouvrants, os.path.join(dossier, nom + '_ensemble.step'))
+    nb = sum(len(o.Shape.Solids) for o in pieces + temporaires)
+    for t in temporaires:
+        doc.removeObject(t.Name)
+    for o, nom_piece in renommes:
+        o.Label = nom_piece
+
+    # CSV : débit + achats
+    lignes = []
+    if doc.getObject('Debit') is not None:
+        lignes += _feuille_csv(doc.getObject('Debit'), 'ABCDEFGHIJK', 40)
+    if doc.getObject('Achats') is not None:
+        lignes += [''] + _feuille_csv(doc.getObject('Achats'), 'ABCD', 10)
+    with open(os.path.join(dossier, nom + '_debit.csv'), 'w', encoding='utf-8-sig') as f:
+        f.write('\n'.join(lignes) + '\n')
+
+    # PDF du plan
+    page = doc.getObject('Plan')
+    if page is not None:
+        import TechDrawGui
+        page.ViewObject.show()
+        for _ in range(20):
+            Gui.updateGui()
+        TechDrawGui.exportPageAsPdf(page, os.path.join(dossier, nom + '_plan.pdf'))
+
+    # Remet les angles d'ouverture tels qu'ils étaient
+    if param is not None and angles:
+        for a, v in angles.items():
+            param.set(a, str(v))
+        doc.recompute()
+
+    _message('Export atelier',
+             "Export terminé (%d pièces soudées) dans :\n%s\n\n- %s.step\n%s- %s_plan.pdf\n- %s_debit.csv"
+             % (nb, dossier, nom, ('- %s_ensemble.step\n' % nom) if ouvrants else '', nom, nom))
+
+
+exporter()

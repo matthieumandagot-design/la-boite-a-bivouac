@@ -139,11 +139,29 @@ function panierLigneBoite(array $ligne): array
 			$libelleRemorque,
 			$libellesOptions === [] ? '' : ' · ' . implode(', ', $libellesOptions)
 		),
+		/*
+		 * Instantané de la configuration, enregistré tel quel dans
+		 * order_items.configuration à la validation de la commande.
+		 *
+		 * Les cinq premières clés portent les noms attendus par le générateur
+		 * FreeCAD (atelier/generer_boite.py, via api/dossier-atelier.php) : le
+		 * dossier atelier se fabrique à partir de cet instantané, et de rien
+		 * d'autre. Les renommer casserait la génération des commandes passées.
+		 *
+		 * hauteur_ridelle_cm porte la valeur RÉELLEMENT utilisée pour le calcul,
+		 * pas celle du catalogue : quand la fiche ne la donne pas, c'est le repli
+		 * qui a servi, et l'atelier doit savoir qu'il travaille sur une
+		 * estimation — d'où ridelle_estimee.
+		 */
 		'configuration' => [
+			'longueur_int_cm' => $longueur,
+			'largeur_int_cm' => $largeur,
+			'hauteur_ridelle_cm' => $ridelle ?? RQ_RIDELLE_DEFAUT_CM,
+			'hauteur_boite_cm' => $dimensions['hauteur'],
+			'ridelle_estimee' => $ridelle === null,
+			'marque' => $remorque['marque'] ?? '',
+			'modele' => $remorque['modele'] ?? '',
 			'remorque' => $cle === '' ? null : $cle,
-			'longueur_interieure' => $longueur,
-			'largeur_interieure' => $largeur,
-			'ridelle' => $ridelle,
 			'dimensions' => $dimensions,
 			'options' => $options['retenues'],
 		],

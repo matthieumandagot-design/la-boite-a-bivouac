@@ -20,6 +20,7 @@ require_once __DIR__ . '/../lib/commandes.php';
 require_once __DIR__ . '/../lib/pricing.php';
 require_once __DIR__ . '/../lib/clients.php';
 require_once __DIR__ . '/../lib/emails-commande.php';
+require_once __DIR__ . '/../lib/dossier-atelier-commande.php';
 
 demarrerSessionAdmin();
 header('X-Robots-Tag: noindex, nofollow', true);
@@ -72,6 +73,28 @@ if ($baseUtilisable && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 		http_response_code(400);
 		$message = 'Jeton de sécurité invalide. Rechargez la page et réessayez.';
 		$messageType = 'erreur';
+	} elseif (($_POST['action'] ?? '') === 'dossier-atelier') {
+		/*
+		 * Relance manuelle de la génération FreeCAD.
+		 *
+		 * Appelle la même fonction que la confirmation de paiement, côté
+		 * serveur : la page est déjà authentifiée, et ni le jeton GitHub ni la
+		 * clé d'administration n'ont à exister dans du JavaScript.
+		 *
+		 * « forcer » ici, contrairement au webhook : c'est précisément le bouton
+		 * qui sert à recommencer après un échec ou un changement de cotes.
+		 */
+		$resume = dossierAtelierLancerPourCommande((int) ($_POST['id'] ?? 0), true);
+
+		if ($resume['lancees'] === 0 && $resume['echecs'] === 0) {
+			$message = 'Aucune ligne « Boîte » à générer sur cette commande.';
+			$messageType = 'erreur';
+		} else {
+			$message = $resume['lancees'] . ' génération(s) lancée(s)'
+				. ($resume['echecs'] > 0 ? ', ' . $resume['echecs'] . ' en échec' : '')
+				. '. ' . implode(' | ', $resume['messages']);
+			$messageType = $resume['echecs'] > 0 ? 'erreur' : 'succes';
+		}
 	} else {
 		$id = (int) ($_POST['id'] ?? 0);
 		$statut = (string) ($_POST['statut'] ?? '');
@@ -261,6 +284,42 @@ function dateLisible(?string $iso): string
 								</tr>
 							</tbody>
 						</table>
+
+						<?php
+						// Dossier atelier : état de chaque Boîte de la commande.
+						$lignesBoite = array_values(array_filter($lignes, 'dossierAtelierLigneEligible'));
+						?>
+						<?php if ($lignesBoite !== []) : ?>
+							<div style="margin-top:1.5rem;border-top:1px solid #f0ece2;padding-top:1.25rem;">
+								<p style="font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:#5d6b60;margin:0 0 .6rem;">
+									Dossier atelier
+								</p>
+								<?php foreach ($lignesBoite as $ligneBoite) : ?>
+									<?php $etat = dossierAtelierEtat($ligneBoite); ?>
+									<p class="aide" style="margin-bottom:.35rem;">
+										<?php if ($etat === null) : ?>
+											<span aria-hidden="true">⬜</span> <?= h((string) $ligneBoite['libelle']) ?> — pas encore généré.
+										<?php else : ?>
+											<span aria-hidden="true"><?= ($etat['ok'] ?? false) ? '✅' : '⚠️' ?></span>
+											<code><?= h((string) ($etat['reference'] ?? '?')) ?></code> —
+											<?= h((string) ($etat['message'] ?? '')) ?>
+											<span style="color:#8a9a8c;">(<?= h(dateLisible((string) ($etat['date'] ?? ''))) ?>)</span>
+										<?php endif; ?>
+									</p>
+								<?php endforeach; ?>
+
+								<form method="post" style="margin-top:.75rem;">
+									<input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>" />
+									<input type="hidden" name="action" value="dossier-atelier" />
+									<input type="hidden" name="id" value="<?= (int) $detail['id'] ?>" />
+									<button type="submit" class="bouton bouton--neutre">Générer le dossier atelier</button>
+								</form>
+								<p class="aide" style="margin-top:.5rem;">
+									Relance la génération FreeCAD sur GitHub, même si elle a déjà réussi.
+									Le dossier arrive par e-mail dix à quinze minutes plus tard.
+								</p>
+							</div>
+						<?php endif; ?>
 
 						<form method="post" style="margin-top:1.5rem;display:grid;gap:.75rem;max-width:32rem;">
 							<input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>" />

@@ -41,6 +41,11 @@ public/data/rate-limits.json
 # jamais dans le repo, seulement dans dist/ après build en CI.
 public/admin/config.php
 public/api/config.php
+
+# Jeton GitHub et cle d'administration du dossier atelier. Ce fichier ne vit
+# QUE sur l'hebergement, dans le dossier parent de laboiteabivouac/ : il n'est
+# ni versionne, ni deploye. Le modele est config-dossier-atelier.example.php.
+config-dossier-atelier.php
 # Clés Stripe, générées à part pour ne pas redéfinir les constantes d'admin
 # (voir public/api/config-stripe.example.php).
 public/api/config-stripe.php
