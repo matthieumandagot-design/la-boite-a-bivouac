@@ -179,6 +179,72 @@ import PageCommerce from "../components/PageCommerce.astro";
 		return typeof donnees === "string" ? donnees : "";
 	}
 
+	/**
+	 * Fenêtre de modification d'une adresse (27/09/2026). Un <dialog> natif :
+	 * Échap, focus et voile sont gérés par le navigateur. Créée à la demande,
+	 * retirée à la fermeture.
+	 */
+	function modifierAdresse(adresse: Adresse): void {
+		const fenetre = el(
+			"dialog",
+			"m-auto w-[min(32rem,calc(100%-2rem))] rounded-2xl bg-ecru-50 p-0 text-brun-700 shadow-2xl backdrop:bg-brun-700/50",
+		);
+		fenetre.setAttribute("aria-labelledby", "titre-modifier-adresse");
+
+		const formulaire = el("form", "p-6");
+		const titre = el("h2", "t-sous font-display font-semibold text-brun-700", "Modifier l'adresse");
+		titre.id = "titre-modifier-adresse";
+		formulaire.append(
+			titre,
+			champ("libelle", "Intitulé (facultatif)", "text", adresse.libelle),
+			champ("ligne1", "Adresse", "text", adresse.ligne1),
+			champ("ligne2", "Complément (facultatif)", "text", adresse.ligne2),
+			champ("code_postal", "Code postal", "text", adresse.code_postal),
+			champ("ville", "Ville", "text", adresse.ville),
+			champ("telephone", "Téléphone (facultatif)", "tel", adresse.telephone),
+		);
+
+		const msg = messagerie();
+		const actions = el("div", "flex flex-wrap items-center gap-4");
+		const annuler = lienBouton("Annuler");
+		annuler.className += " mt-5";
+		annuler.addEventListener("click", () => fenetre.close());
+		actions.append(boutonPrincipal("Enregistrer"), annuler);
+		formulaire.append(actions, msg.noeud);
+		fenetre.append(formulaire);
+
+		formulaire.addEventListener("submit", async (evenement) => {
+			evenement.preventDefault();
+			msg.dire("Enregistrement…");
+			const reponse = await envoyer(`/api/compte-adresses.php?id=${adresse.id}`, "PUT", {
+				libelle: valeur(formulaire, "libelle"),
+				ligne1: valeur(formulaire, "ligne1"),
+				ligne2: valeur(formulaire, "ligne2"),
+				code_postal: valeur(formulaire, "code_postal"),
+				ville: valeur(formulaire, "ville"),
+				pays: adresse.pays,
+				telephone: valeur(formulaire, "telephone"),
+			});
+			if (reponse.ok) {
+				fenetre.close();
+				void afficher();
+			} else {
+				const champs = reponse.donnees.champs ?? {};
+				const premier = Object.values(champs)[0];
+				msg.dire(typeof premier === "string" ? premier : (reponse.donnees.error ?? "Adresse refusée."), true);
+			}
+		});
+
+		// Clic sur le voile : fermeture, comme les autres fenêtres du site.
+		fenetre.addEventListener("click", (evenement) => {
+			if (evenement.target === fenetre) fenetre.close();
+		});
+		fenetre.addEventListener("close", () => fenetre.remove());
+
+		document.body.append(fenetre);
+		fenetre.showModal();
+	}
+
 	// ── Écrans ───────────────────────────────────────────────────────────
 
 	function ecranConnexion(fournisseurs: Fournisseur[]): HTMLElement {
@@ -509,12 +575,18 @@ import PageCommerce from "../components/PageCommerce.astro";
 			);
 			ligne.append(texte);
 
+			const modifier = lienBouton("Modifier");
+			modifier.addEventListener("click", () => modifierAdresse(adresse));
+
 			const supprimer = lienBouton("Supprimer");
 			supprimer.addEventListener("click", async () => {
 				await envoyer(`/api/compte-adresses.php?id=${adresse.id}`, "DELETE");
 				void afficher();
 			});
-			ligne.append(supprimer);
+
+			const actionsAdresse = el("div", "flex shrink-0 gap-4");
+			actionsAdresse.append(modifier, supprimer);
+			ligne.append(actionsAdresse);
 			carnet.append(ligne);
 		});
 
@@ -572,7 +644,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 
 			const droite = el("div", "text-right");
 			droite.append(
-				el("p", "font-semibold text-brun-700", formaterCents(commande.total_cents)),
+				el("p", "font-semibold text-brun-700", `${formaterCents(commande.total_cents)} TTC`),
 				el("p", "t-petit text-brun-500", commande.statut_libelle),
 			);
 			ligne.append(droite);

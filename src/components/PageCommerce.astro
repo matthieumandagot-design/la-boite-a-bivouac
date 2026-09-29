@@ -19,30 +19,41 @@ import Layout from "../layouts/Layout.astro";
 interface Props {
 	title: string;
 	description: string;
+	/**
+	 * Page ouverte à tous, boutique fermée comprise : aujourd'hui le seul
+	 * panier (27/09/2026). Ni masquage, ni renvoi vers l'accueil ; la page
+	 * elle-même bloque ce qui doit attendre l'ouverture (la commande).
+	 */
+	publique?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, publique = false } = Astro.props;
 ---
 
 <Layout title={title} description={description} noindex>
-	{/* Le contenu ne s'affiche qu'une fois le module confirmé ouvert. Sans
-	    cela, la page clignoterait avant de disparaître à la redirection. */}
-	<section
-		data-feature="commerce"
-		hidden
-		class="px-6 py-20 sm:px-8 lg:px-12"
-	>
-		<h1 class="t-titre font-display font-semibold text-brun-700">{title}</h1>
-		<slot />
-	</section>
+	{
+		publique ? (
+			<section class="px-6 py-20 sm:px-8 lg:px-12" data-page-publique>
+				<h1 class="t-titre font-display font-semibold text-brun-700">{title}</h1>
+				<slot />
+			</section>
+		) : (
+			<>
+				{/* Le contenu ne s'affiche qu'une fois le module confirmé ouvert.
+				    Sans cela, la page clignoterait avant de disparaître à la
+				    redirection. */}
+				<section data-feature="commerce" hidden class="px-6 py-20 sm:px-8 lg:px-12">
+					<h1 class="t-titre font-display font-semibold text-brun-700">{title}</h1>
+					<slot />
+				</section>
 
-	{/* Écran d'attente, le temps de savoir si la page a le droit d'exister. */}
-	<p
-		data-commerce-attente
-		class="t-petit px-6 py-20 text-center text-brun-400 sm:px-8 lg:px-12"
-	>
-		Chargement…
-	</p>
+				{/* Écran d'attente, le temps de savoir si la page a le droit d'exister. */}
+				<p data-commerce-attente class="t-petit px-6 py-20 text-center text-brun-400 sm:px-8 lg:px-12">
+					Chargement…
+				</p>
+			</>
+		)
+	}
 </Layout>
 
 <script>
@@ -57,6 +68,9 @@ const { title, description } = Astro.props;
 	 * l'historique, sinon le bouton Retour y ramène en boucle.
 	 */
 	async function controleAcces(): Promise<void> {
+		// Page publique (le panier) : rien à contrôler.
+		if (document.querySelector("[data-page-publique]")) return;
+
 		let autorise = false;
 
 		try {

@@ -1,5 +1,5 @@
 /**
- * Catalogue de remorques pour la page /compatibilite.
+ * Catalogue de remorques pour la page /configurateur.
  *
  * Les cotes sont les dimensions INTÉRIEURES de la caisse, en centimètres,
  * relevées une par une sur la fiche citée en source. Un même nom de modèle peut
@@ -53,13 +53,34 @@ export const TENTE_DEFAUT_CM = 35;
 export const JEU_PAR_COTE_CM = 1;
 
 /**
- * Limites de fabrication au sol. Valeurs provisoires : à confirmer avec
- * l'atelier (plus petite et plus grande boîte réellement réalisables).
+ * Longueur intérieure de remorque la plus grande acceptée : 4 m (décision de
+ * Matthieu, 27/09/2026). Au-delà, la configuration est hors gabarit.
+ */
+export const LONGUEUR_REMORQUE_MAX_CM = 400;
+
+/**
+ * Largeur intérieure de remorque la plus petite acceptée : 80 cm (décision de
+ * Matthieu, 27/09/2026). En dessous, la configuration est hors gabarit.
+ */
+export const LARGEUR_REMORQUE_MIN_CM = 80;
+
+/**
+ * Hauteur de boîte la plus grande fabriquée : 3 m (décision du 27/09/2026).
+ * S'ajoute à l'autre plafond, la longueur intérieure de la caisse : c'est le
+ * plus bas des deux qui s'applique.
+ */
+export const HAUTEUR_BOITE_MAX_CM = 300;
+
+/**
+ * Limites de fabrication au sol, sur les cotes de la BOÎTE. La longueur
+ * maximale découle de la remorque de 4 m, la largeur minimale de la remorque
+ * de 80 cm, moins le jeu des deux côtés. Les autres valeurs restent
+ * provisoires : à confirmer avec l'atelier.
  */
 export const LIMITES = {
 	longueurMin: 100,
-	largeurMin: 90,
-	longueurMax: 260,
+	largeurMin: LARGEUR_REMORQUE_MIN_CM - 2 * JEU_PAR_COTE_CM,
+	longueurMax: LONGUEUR_REMORQUE_MAX_CM - 2 * JEU_PAR_COTE_CM,
 	largeurMax: 160,
 };
 
@@ -466,12 +487,12 @@ export function hauteurMini(ridelle: number | null): number {
 }
 
 /**
- * Hauteur maximale de la boîte, en cm : elle ne peut pas être plus haute que la
- * caisse n'est longue. Les 2 m hors tout ne bornent rien, ils ne servent qu'à
- * situer l'ensemble dans les classes de péage.
+ * Hauteur maximale de la boîte, en cm : jamais plus haute que la caisse n'est
+ * longue, et jamais plus de HAUTEUR_BOITE_MAX_CM (3 m). Les 2 m hors tout ne
+ * bornent rien, ils ne servent qu'à situer l'ensemble dans les classes de péage.
  */
 export function hauteurMaxi(longueurInterieure: number): number {
-	return Math.max(1, Math.round(longueurInterieure));
+	return Math.max(1, Math.min(Math.round(longueurInterieure), HAUTEUR_BOITE_MAX_CM));
 }
 
 /**
@@ -554,8 +575,12 @@ export function calculeBoite(
 		horsGabarit.push("ridelles plus hautes que la boîte permise");
 	}
 	if (longueur < LIMITES.longueurMin) horsGabarit.push("longueur trop courte");
-	if (longueur > LIMITES.longueurMax) horsGabarit.push("longueur trop grande");
-	if (largeur < LIMITES.largeurMin) horsGabarit.push("largeur trop étroite");
+	if (longueur > LIMITES.longueurMax) {
+		horsGabarit.push(`remorque de plus de ${LONGUEUR_REMORQUE_MAX_CM / 100} m de long`);
+	}
+	if (largeur < LIMITES.largeurMin) {
+		horsGabarit.push(`remorque de moins de ${LARGEUR_REMORQUE_MIN_CM} cm de large`);
+	}
 	if (largeur > LIMITES.largeurMax) horsGabarit.push("largeur trop grande");
 
 	return {

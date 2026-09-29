@@ -4,11 +4,11 @@
  *
  * Deux blocs : la configuration de la Boîte, et les accessoires.
  *
- * Le configurateur complet vit sur /compatibilite à partir de la phase 2 ; ce
+ * Le configurateur complet vit sur /configurateur à partir de la phase 2 ; ce
  * qu'on trouve ici est le strict nécessaire pour mettre une Boîte au panier —
  * une remorque du catalogue ou des cotes saisies, une hauteur. La liste des
  * remorques est incluse au build depuis src/data/remorques.ts : c'est la même
- * source que /compatibilite, et le serveur la relit de son côté au moment de
+ * source que /configurateur, et le serveur la relit de son côté au moment de
  * calculer (voir public/lib/remorques.php).
  *
  * Aucun prix n'est écrit dans cette page. Tous ceux qui s'affichent viennent
@@ -18,7 +18,7 @@
 import PageCommerce from "../components/PageCommerce.astro";
 import { REMORQUES, HAUTEUR_DEFAUT_CM } from "../data/remorques";
 
-/** Regroupées par marque, comme sur /compatibilite. */
+/** Regroupées par marque, comme sur /configurateur. */
 const PAR_MARQUE = REMORQUES.reduce<Record<string, typeof REMORQUES>>((acc, remorque) => {
 	(acc[remorque.marque] ??= []).push(remorque);
 	return acc;
@@ -173,7 +173,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, typeof REMORQUES>>((acc, remo
 				}
 
 				const mention = donnees.provisoire ? ` — ${donnees.mention}` : "";
-				apercu!.textContent = `${ligne.detail} · ${formaterCents(ligne.total_cents)}${mention}`;
+				apercu!.textContent = `${ligne.detail} · ${formaterCents(ligne.total_cents)} TTC${mention}`;
 				bouton!.disabled = false;
 			} catch {
 				apercu!.textContent = "Configuration indisponible pour le moment.";
@@ -261,7 +261,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, typeof REMORQUES>>((acc, remo
 
 		const prix = document.createElement("p");
 		prix.className = "mt-4 font-semibold text-brun-700";
-		prix.textContent = formaterCents(produit.prix_cents);
+		prix.textContent = `${formaterCents(produit.prix_cents)} TTC`;
 		carte.append(prix);
 
 		if (provisoire) {

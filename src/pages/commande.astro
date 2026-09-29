@@ -2,7 +2,7 @@
 /**
  * Tunnel de commande (docs/SPEC-module-commercial.md §6.4).
  *
- * Panier → connexion → adresse → récapitulatif → validation.
+ * Panier → connexion → adresse → mode de livraison → récapitulatif → validation.
  *
  * L'étape de connexion renvoie vers /compte plutôt que de reproduire les
  * formulaires : il y en a déjà deux là-bas, et une troisième copie finirait par
@@ -24,7 +24,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 
 <script>
 	import { lire, vider, recalculer, formaterCents, jetonCsrf, mesurer } from "../scripts/panier";
-	import type { PanierCalcule } from "../scripts/panier";
+	import type { PanierCalcule, ModeLivraison } from "../scripts/panier";
 
 	const zone = document.getElementById("tunnel");
 	let jeton: string | null = null;
@@ -198,8 +198,47 @@ import PageCommerce from "../components/PageCommerce.astro";
 		return bloc;
 	}
 
+	/**
+	 * Étape 3 bis : mode de livraison (27/09/2026). Le retrait à l'atelier,
+	 * gratuit, est choisi d'office : la livraison est un souhait de l'acheteur,
+	 * jamais un supplément imposé.
+	 */
+	function etapeLivraison(modes: ModeLivraison[], choisi: string, surChoix: (id: string) => void): HTMLElement {
+		const bloc = carte("Mode de livraison");
+		const liste = el("div", "mt-4 grid gap-3");
+		modes.forEach((mode) => {
+			const label = el("label", "flex cursor-pointer items-start gap-3 rounded-xl border border-ardoise/30 p-4");
+			const radio = el("input");
+			radio.type = "radio";
+			radio.name = "livraison";
+			radio.value = mode.id;
+			radio.checked = mode.id === choisi;
+			radio.className = "mt-1";
+			radio.addEventListener("change", () => surChoix(mode.id));
+
+			const texte = el("div", "flex-1");
+			texte.append(el("p", "t-petit font-semibold text-brun-600", mode.libelle));
+			if (mode.description) texte.append(el("p", "t-petit text-brun-500", mode.description));
+
+			const prix = el(
+				"p",
+				"t-petit font-semibold text-brun-700",
+				mode.prix_cents === 0 ? "Gratuit" : formaterCents(mode.prix_cents),
+			);
+			label.append(radio, texte, prix);
+			liste.append(label);
+		});
+		bloc.append(liste, el("p", "t-petit mt-3 text-brun-400", "Prix TTC."));
+		return bloc;
+	}
+
 	/** Étape 4 : récapitulatif et validation. */
-	function etapeRecapitulatif(panier: PanierCalcule, adresseId: () => number): HTMLElement {
+	function etapeRecapitulatif(
+		panier: PanierCalcule,
+		adresseId: () => number,
+		livraisonId: () => string,
+		cgvCochee: { valeur: boolean },
+	): HTMLElement {
 		const bloc = carte("Récapitulatif");
 
 		const table = el("div", "mt-4");
@@ -211,15 +250,40 @@ import PageCommerce from "../components/PageCommerce.astro";
 			rangee.append(gauche, el("p", "font-semibold text-brun-700", formaterCents(ligne.total_cents)));
 			table.append(rangee);
 		});
+		// Frais de port des accessoires du catalogue, facturés à part.
+		if (panier.port_accessoires_cents > 0) {
+			const rangee = el("div", "flex items-start justify-between gap-4 border-t border-ardoise/20 py-3");
+			rangee.append(
+				el("p", "font-display font-semibold text-brun-700", "Frais de port des accessoires"),
+				el("p", "font-semibold text-brun-700", formaterCents(panier.port_accessoires_cents)),
+			);
+			table.append(rangee);
+		}
+
+		// Livraison : ligne à part, montant venu du serveur comme le reste.
+		if (panier.livraison) {
+			const rangee = el("div", "flex items-start justify-between gap-4 border-t border-ardoise/20 py-3");
+			rangee.append(
+				el("p", "font-display font-semibold text-brun-700", panier.livraison.libelle),
+				el(
+					"p",
+					"font-semibold text-brun-700",
+					panier.livraison.prix_cents === 0 ? "Gratuit" : formaterCents(panier.livraison.prix_cents),
+				),
+			);
+			table.append(rangee);
+		}
 		bloc.append(table);
 
 		const total = el("div", "mt-4 flex items-baseline justify-between border-t border-ardoise/30 pt-4");
 		total.append(
-			el("span", "t-corps text-brun-600", "Total"),
+			el("span", "t-corps text-brun-600", "Total TTC"),
 			el("span", "t-sous font-display font-semibold text-brun-700", formaterCents(panier.total_cents)),
 		);
 		bloc.append(total);
 
+		// Pas de « hors frais de livraison » ici : la livraison choisie est comprise
+		// dans ce total.
 		if (panier.provisoire) {
 			bloc.append(
 				el("p", "t-petit mt-2 text-rouille-500", `${panier.mention} — montants factices, aucun engagement.`),
@@ -233,6 +297,10 @@ import PageCommerce from "../components/PageCommerce.astro";
 		const cgv = el("input");
 		cgv.type = "checkbox";
 		cgv.className = "mt-1";
+		// Le récapitulatif est redessiné à chaque changement de livraison : la
+		// case garde ce que l'acheteur avait coché.
+		cgv.checked = cgvCochee.valeur;
+		cgv.addEventListener("change", () => (cgvCochee.valeur = cgv.checked));
 		cgvLabel.append(cgv, el("span", "t-petit text-brun-500", "J'accepte les conditions générales de vente."));
 		bloc.append(cgvLabel);
 
@@ -262,6 +330,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 			const reponse = await envoyer("/api/commande-creer.php", "POST", {
 				lignes: lire(),
 				adresse_id: adresseId(),
+				livraison: livraisonId(),
 				cgv: true,
 			});
 
@@ -296,7 +365,7 @@ import PageCommerce from "../components/PageCommerce.astro";
 		bloc.id = "bloc-confirmation";
 		bloc.append(
 			el("p", "t-corps mt-4 text-brun-700", `Votre commande porte le numéro ${numero}.`),
-			el("p", "t-petit mt-2 text-brun-500", `Montant : ${formaterCents(totalCents)}.`),
+			el("p", "t-petit mt-2 text-brun-500", `Montant : ${formaterCents(totalCents)} TTC.`),
 		);
 		if (panier.provisoire) {
 			bloc.append(el("p", "t-petit mt-2 text-rouille-500", `${panier.mention} — montants factices.`));
@@ -440,8 +509,8 @@ import PageCommerce from "../components/PageCommerce.astro";
 			return;
 		}
 
-		const panier = await recalculer();
-		if (!panier) {
+		const premier = await recalculer();
+		if (!premier) {
 			zone.replaceChildren(el("p", "t-petit text-brun-400", "Panier indisponible pour le moment."));
 			return;
 		}
@@ -453,8 +522,34 @@ import PageCommerce from "../components/PageCommerce.astro";
 		const blocs: HTMLElement[] = [etapeAdresse(adresses, (id) => (adresseChoisie = id))];
 
 		if (adresses.length > 0) {
-			blocs.push(etapeRecapitulatif(panier, () => adresseChoisie));
+			const modes = premier.livraison_modes ?? [];
+			// Retrait gratuit d'office quand il existe, sinon le moins cher.
+			let livraisonChoisie =
+				(modes.find((m) => m.prix_cents === 0) ?? [...modes].sort((a, b) => a.prix_cents - b.prix_cents)[0])?.id ?? "";
+			const cgvCochee = { valeur: false };
+
+			// Le total livraison comprise vient du serveur : on redemande le panier
+			// à chaque changement de mode, et on remplace le récapitulatif.
+			let recap = el("div");
+			const majRecap = async () => {
+				const panier = await recalculer(livraisonChoisie);
+				if (!panier) return;
+				const nouveau = etapeRecapitulatif(panier, () => adresseChoisie, () => livraisonChoisie, cgvCochee);
+				recap.replaceWith(nouveau);
+				recap = nouveau;
+			};
+
+			blocs.push(
+				etapeLivraison(modes, livraisonChoisie, (id) => {
+					livraisonChoisie = id;
+					void majRecap();
+				}),
+				recap,
+			);
+			zone.replaceChildren(...blocs);
+			await majRecap();
 			mesurer("debut_commande");
+			return;
 		}
 
 		zone.replaceChildren(...blocs);

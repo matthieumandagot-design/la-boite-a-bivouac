@@ -13,7 +13,7 @@ declare(strict_types=1);
  * src/data/remorques.ts, puis relancer le générateur.
  *
  * La clé de chaque remorque est « marque|modele », exactement la valeur du
- * sélecteur de /compatibilite : c'est elle que le panier transmet.
+ * sélecteur de /configurateur : c'est elle que le panier transmet.
  */
 
 const RQ_HAUTEUR_DEFAUT_CM = 90;
@@ -23,11 +23,14 @@ const RQ_PLANCHER_DEFAUT_CM = 55;
 const RQ_BARRES_TOIT_CM = 6;
 const RQ_TENTE_DEFAUT_CM = 35;
 const RQ_JEU_PAR_COTE_CM = 1;
+const RQ_LONGUEUR_REMORQUE_MAX_CM = 400;
+const RQ_LARGEUR_REMORQUE_MIN_CM = 80;
+const RQ_HAUTEUR_BOITE_MAX_CM = 300;
 
 const RQ_LIMITES = [
 	'longueurMin' => 100,
-	'largeurMin' => 90,
-	'longueurMax' => 260,
+	'largeurMin' => 78,
+	'longueurMax' => 398,
 	'largeurMax' => 160,
 ];
 

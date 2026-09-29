@@ -1,6 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
 import { SITE_TITLE, NAV_LINKS, NAVBAR_SOCIAL_LINKS } from "../consts";
+import ConvoiNav from "./ConvoiNav.astro";
 
 const currentPath = Astro.url.pathname;
 
@@ -20,7 +21,8 @@ const socialIconPaths: Record<string, string> = {
 ---
 
 <header class="border-b border-ardoise/30 bg-ecru-50/95 backdrop-blur sticky top-0 z-50">
-	<div class="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-6 py-3 sm:py-4 md:grid-cols-[1fr_auto_1fr]">
+	{/* md:pb-7 : la place du convoi sous le menu (voir ConvoiNav.astro). */}
+	<div class="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-6 py-3 sm:py-4 md:grid-cols-[1fr_auto_1fr] md:pb-7">
 		<a
 			href="/"
 			class="col-start-1 flex min-w-0 shrink items-center gap-2 justify-self-start font-display text-base font-semibold tracking-tight text-brun-600 sm:text-lg"
@@ -66,10 +68,10 @@ const socialIconPaths: Record<string, string> = {
 			>
 				Mon compte
 			</a>
+			{/* Le panier, lui, est visible de tous depuis le 27/09/2026 : on peut
+			    le remplir boutique fermée, seule la commande attend. */}
 			<a
 				href="/panier/"
-				data-feature="commerce"
-				hidden
 				aria-label="Panier"
 				class="relative flex h-9 w-9 items-center justify-center rounded-full text-brun-600 transition-colors hover:bg-sable hover:text-rouille-500"
 			>
@@ -174,6 +176,8 @@ const socialIconPaths: Record<string, string> = {
 			}
 		</ul>
 	</nav>
+
+	<ConvoiNav />
 </header>
 
 <script>

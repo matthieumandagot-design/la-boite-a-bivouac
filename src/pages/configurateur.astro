@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
 import { Icon } from "astro-icon/components";
+import SuggestionAccessoires from "../components/SuggestionAccessoires.astro";
 import {
 	REMORQUES,
 	HAUTEUR_DEFAUT_CM,
@@ -9,11 +10,9 @@ import {
 	HAUTEUR_TOTALE_MAX_CM,
 	TENTE_DEFAUT_CM,
 	JEU_PAR_COTE_CM,
-	calculeBoite,
+	LARGEUR_REMORQUE_MIN_CM,
 	type Remorque,
 } from "../data/remorques";
-import { toJsonLd } from "../utils/jsonld";
-import { SITE_TITLE } from "../consts";
 import pricing from "../../public/data/pricing.json";
 
 /**
@@ -31,7 +30,7 @@ const OPTIONS: { id: string; libelle: string; description?: string }[] =
 	Array.isArray(pricing.options?.disponibles) ? pricing.options.disponibles : [];
 
 const PAGE_DESCRIPTION =
-	"Votre remorque est-elle compatible ? Choisissez votre modèle ou saisissez vos cotes : nous calculons les dimensions exactes de la Boîte à Bivouac qui s'y logera.";
+	"Configurez votre Boîte à Bivouac sur mesure : choisissez votre remorque ou saisissez vos cotes, réglez la hauteur, et obtenez les dimensions exactes, le volume et le schéma de votre Boîte.";
 
 /** Regroupement par marque pour les <optgroup> du sélecteur. */
 const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
@@ -39,78 +38,25 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 	return acc;
 }, {});
 
-const LIGNES = REMORQUES.map((r) => ({ ...r, boite: calculeBoite(r.longueur, r.largeur) }));
-
-const fmt = (n: number) => n.toLocaleString("fr-FR");
-
-/**
- * Le relevé des remorques est la donnée la plus singulière du site : des cotes
- * intérieures réelles, marque par marque, que peu de sources publient en
- * France. Déclarée en Dataset, elle devient exploitable et citable par les
- * moteurs de réponse, au lieu de rester un tableau que seul un humain peut
- * lire. On n'y met que ce qui est réellement mesuré, et on signale les fiches
- * non vérifiées plutôt que de les présenter comme certaines.
- */
-const datasetSchema = {
-	"@context": "https://schema.org",
-	"@type": "Dataset",
-	name: "Dimensions intérieures des remorques utilitaires courantes en France",
-	description:
-		`Relevé de ${REMORQUES.length} modèles de remorques de ${new Set(REMORQUES.map((r) => r.marque)).size} marques : ` +
-		"longueur et largeur intérieures de caisse, hauteur de ridelle et PTAC. " +
-		`${REMORQUES.filter((r) => !r.verifie).length} fiches proviennent d'une source tierce et sont signalées « cotes à confirmer ».`,
-	url: new URL("/compatibilite/", Astro.site).href,
-	inLanguage: "fr",
-	isAccessibleForFree: true,
-	creator: { "@type": "Organization", name: SITE_TITLE, url: Astro.site?.origin },
-	variableMeasured: [
-		{ "@type": "PropertyValue", name: "Longueur intérieure", unitCode: "CMT" },
-		{ "@type": "PropertyValue", name: "Largeur intérieure", unitCode: "CMT" },
-		{ "@type": "PropertyValue", name: "Hauteur de ridelle", unitCode: "CMT" },
-		{ "@type": "PropertyValue", name: "PTAC", unitCode: "KGM" },
-	],
-	hasPart: {
-		"@type": "ItemList",
-		numberOfItems: REMORQUES.length,
-		itemListElement: REMORQUES.map((r, i) => ({
-			"@type": "ListItem",
-			position: i + 1,
-			item: {
-				"@type": "Product",
-				name: `${r.marque} ${r.modele}`,
-				brand: { "@type": "Brand", name: r.marque },
-				additionalProperty: [
-					{ "@type": "PropertyValue", name: "Longueur intérieure", value: r.longueur, unitCode: "CMT" },
-					{ "@type": "PropertyValue", name: "Largeur intérieure", value: r.largeur, unitCode: "CMT" },
-					...(r.ridelle === null
-						? []
-						: [{ "@type": "PropertyValue", name: "Hauteur de ridelle", value: r.ridelle, unitCode: "CMT" }]),
-					...(r.ptac === null
-						? []
-						: [{ "@type": "PropertyValue", name: "PTAC", value: r.ptac, unitCode: "KGM" }]),
-					{ "@type": "PropertyValue", name: "Cotes vérifiées", value: r.verifie ? "oui" : "à confirmer" },
-				],
-			},
-		})),
-	},
-};
 ---
 
-<Layout title="Compatibilité" description={PAGE_DESCRIPTION}>
-	<script type="application/ld+json" set:html={toJsonLd(datasetSchema)} />
+<Layout title="Configurateur" description={PAGE_DESCRIPTION}>
+	{/* Proposée après l'ajout d'une Boîte au panier : jamais visible autrement,
+	    puisque le bouton d'ajout n'existe que boutique ouverte ou en aperçu. */}
+	<SuggestionAccessoires />
 
 	<ScrollReveal />
 
 	<section class="border-b border-ardoise/30 bg-sable/50 px-6 py-16 sm:px-8 lg:px-12">
 		<p class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>
-			Compatibilité
+			Configurateur
 		</p>
 		<h1
 			class="mt-3 t-hero font-display font-semibold text-brun-700"
 			data-reveal
 			style="--reveal-delay: 60ms"
 		>
-			Quelle Boîte pour votre remorque&nbsp;?
+			Configurez votre Boîte à Bivouac
 		</h1>
 		{/* Seule contrainte de largeur de la page : une ligne de prose au-delà de
 		    ~80 caractères devient pénible à lire. Le reste suit la fenêtre. */}
@@ -119,17 +65,27 @@ const datasetSchema = {
 			data-reveal
 			style="--reveal-delay: 120ms"
 		>
-			Chaque Boîte est fabriquée sur mesure pour s’adapter à l’intérieur de votre remorque. Un jeu
-			de {JEU_PAR_COTE_CM}&nbsp;cm de chaque côté facilite sa mise en place et son retrait.
+			Chaque Boîte est fabriquée sur mesure pour votre remorque. Choisissez votre modèle ou
+			saisissez vos cotes, réglez la hauteur, indiquez si vous posez une tente de toit&nbsp;:
+			dimensions, volume et hauteur hors tout s'affichent aussitôt, avec un schéma à l'échelle.
 		</p>
 		<p
 			class="t-corps mt-4 max-w-[80ch] text-brun-500"
 			data-reveal
 			style="--reveal-delay: 160ms"
 		>
-			Sa hauteur standard est de {HAUTEUR_DEFAUT_CM}&nbsp;cm, ajustable selon vos besoins&nbsp;:
-			elle ne peut être inférieure à la hauteur des ridelles ni dépasser la longueur intérieure de
-			la caisse.
+			La Boîte reprend l'intérieur de votre caisse, moins {JEU_PAR_COTE_CM}&nbsp;cm de jeu de chaque
+			côté pour la poser et la retirer facilement. Sa hauteur standard est de {HAUTEUR_DEFAUT_CM}&nbsp;cm.
+		</p>
+		{/* Seulement quand la boutique est ouverte (ou en mode aperçu) : sans elle,
+		    annoncer une commande en ligne serait faux. */}
+		<p
+			data-feature="commerce"
+			hidden
+			class="t-corps mt-4 max-w-[80ch] font-medium text-brun-600"
+		>
+			Votre Boîte est prête&nbsp;? Ajoutez-la au panier pour la commander&nbsp;: elle sera fabriquée
+			à ces dimensions.
 		</p>
 	</section>
 
@@ -202,7 +158,7 @@ const datasetSchema = {
 							id="largeur"
 							type="number"
 							inputmode="numeric"
-							min="50"
+							min={LARGEUR_REMORQUE_MIN_CM}
 							max="250"
 							step="1"
 							value="115"
@@ -258,8 +214,7 @@ const datasetSchema = {
 					/>
 				</div>
 				<p class="mt-2 text-sm text-brun-400" id="hauteur-aide">
-					{HAUTEUR_DEFAUT_CM}&nbsp;cm par défaut&nbsp;: de quoi ranger le matériel debout sous la
-					tente de toit.
+					Choisissez la hauteur de votre Boîte, dans les limites compatibles avec votre remorque.
 				</p>
 
 				<div class="mt-6 border-t border-ardoise/30 pt-6">
@@ -271,10 +226,10 @@ const datasetSchema = {
 							class="mt-0.5 h-4 w-4 shrink-0 accent-rouille-500"
 						/>
 						<span>
-							Avec une tente de toit
+							Avec votre tente de toit
 							<span class="mt-0.5 block text-brun-400">
-								Posée sur les barres de toit de la boîte. Sa hauteur repliée s'ajoute à la hauteur
-								hors tout, donc elle compte dans les {HAUTEUR_TOTALE_MAX_CM / 100}&nbsp;m.
+								Ajoutez votre tente de toit pour calculer automatiquement la hauteur totale de
+								l’ensemble.
 							</span>
 						</span>
 					</label>
@@ -309,22 +264,13 @@ const datasetSchema = {
 				</div>
 
 				{/* Étape 2 du configurateur (SPEC §7). Masquée avec le reste du
-				    module commercial : sans boutique, choisir des options n'aurait
-				    nulle part où mener, et la page doit rester exactement l'outil de
-				    compatibilité qu'elle est aujourd'hui. */}
-				<div
-					data-feature="commerce"
-					hidden
-					class="mt-8 border-t border-ardoise/30 pt-6"
-				>
-					<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">Options</p>
-					{
-						OPTIONS.length === 0 ? (
-							<p class="t-petit mt-3 text-brun-400">
-								Aucune option n'est encore proposée. La Boîte est livrée dans sa
-								configuration standard.
-							</p>
-						) : (
+				    module commercial, et absente tant qu'aucune option n'est
+				    proposée dans data/pricing.json (27/09/2026) : un bloc vide
+				    n'apprend rien au visiteur. */}
+				{
+					OPTIONS.length > 0 && (
+						<div data-feature="commerce" hidden class="mt-8 border-t border-ardoise/30 pt-6">
+							<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">Options</p>
 							<div class="mt-3 grid gap-2">
 								{OPTIONS.map((option) => (
 									<label class="flex cursor-pointer items-start gap-3">
@@ -338,9 +284,9 @@ const datasetSchema = {
 									</label>
 								))}
 							</div>
-						)
-					}
-				</div>
+						</div>
+					)
+				}
 
 			</div>
 		</div>
@@ -351,101 +297,36 @@ const datasetSchema = {
 			</div>
 
 			{/* Étape 3 : le prix et la mise au panier. Hors de #resultat, que le
-			    script réécrit entièrement à chaque frappe — un bloc réinjecté
-			    resterait masqué, features.ts ne révélant qu'une fois au chargement.
+			    script réécrit entièrement à chaque frappe.
+
+			    Visible de tous depuis le 27/09/2026, boutique fermée comprise :
+			    l'ajout au panier fonctionne, et la fenêtre qui suit annonce
+			    l'ouverture des commandes (voir SuggestionAccessoires.astro).
 
 			    Aucun prix n'est calculé ici : le montant affiché vient de
 			    /api/panier.php, exactement celui qui sera facturé. */}
 			<div
-				data-feature="commerce"
-				hidden
-				class="mt-6 rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm sm:p-8"
+				class="mt-6 rounded-2xl bg-brun-600 p-6 text-ecru-50 shadow-lg ring-1 ring-mousse/40 sm:p-8"
 			>
-				<div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-					<p class="t-corps text-brun-600">Prix de cette configuration</p>
-					<p id="prix-configuration" class="t-sous font-display font-semibold text-brun-700">—</p>
+				{/* Fond vert forêt de la marque : c'est l'aboutissement de la page, il
+				    doit se détacher des cartes crème qui l'entourent. Prix en doré,
+				    bouton rouille : les deux seules couleurs vives du site. */}
+				<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+					<div>
+						<p class="t-menu font-medium uppercase tracking-widest text-ecru-200">Prix de votre Boîte</p>
+						<p id="prix-configuration" class="mt-1 font-display text-4xl font-semibold text-[#e8b428] tabular-nums sm:text-5xl">—</p>
+						<p id="prix-mention" class="t-petit mt-1 text-rouille-400" hidden></p>
+					</div>
+
+					<button
+						id="ajouter-configuration"
+						type="button"
+						class="inline-flex items-center gap-2 rounded-full bg-rouille-500 px-7 py-3.5 text-base font-semibold text-ecru-50 shadow-md transition-colors hover:bg-rouille-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ecru-50 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						Ajouter au panier
+					</button>
 				</div>
-				<p id="prix-mention" class="t-petit mt-1 text-rouille-500" hidden></p>
-
-				<button
-					id="ajouter-configuration"
-					type="button"
-					class="mt-5 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-5 py-2.5 font-semibold text-ecru-50 transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					Ajouter au panier
-				</button>
-				<p id="achat-message" class="t-petit mt-3 text-brun-500" role="status" hidden></p>
-			</div>
-		</div>
-	</section>
-
-	<section class="border-t border-ardoise/30 bg-ecru-100 px-6 py-16 sm:px-8 lg:px-12">
-		<div>
-			<h2 class="t-titre font-display font-semibold text-brun-700" data-reveal>
-				Les modèles déjà relevés
-			</h2>
-			<p class="mt-3 max-w-2xl text-brun-500" data-reveal style="--reveal-delay: 60ms">
-				Cotes intérieures relevées sur les fiches constructeur ou revendeur, et boîte
-				correspondante. Un même modèle peut changer de cotes selon l'année et la finition&nbsp;:
-				vérifiez toujours au mètre avant de commander. Les modèles marqués «&nbsp;cotes à
-				confirmer&nbsp;» viennent d'un vendeur dont la fiche n'est pas consultable
-				automatiquement.
-			</p>
-
-			<div class="mt-8 overflow-x-auto" data-reveal style="--reveal-delay: 120ms">
-				<table class="w-full min-w-[46rem] border-collapse text-left text-sm">
-					<thead>
-						<tr class="border-b border-ardoise/40 text-brun-600">
-							<th scope="col" class="py-3 pr-4 font-medium">Remorque</th>
-							<th scope="col" class="py-3 pr-4 font-medium">Intérieur caisse</th>
-							<th scope="col" class="py-3 pr-4 font-medium">
-								Boîte correspondante
-								<span class="block text-xs font-normal text-brun-400">hauteur {HAUTEUR_DEFAUT_CM} cm</span>
-							</th>
-							<th scope="col" class="py-3 pr-4 font-medium">Volume</th>
-							<th scope="col" class="py-3 font-medium">Source</th>
-						</tr>
-					</thead>
-					<tbody>
-						{
-							LIGNES.map((r) => (
-								<tr class="border-b border-ardoise/25 align-top">
-									<th scope="row" class="py-3 pr-4 font-display font-semibold text-brun-700">
-										{r.marque} {r.modele}
-										{
-											!r.verifie && (
-												<span class="mt-1 block text-xs font-normal text-rouille-500">
-													cotes à confirmer
-												</span>
-											)
-										}
-									</th>
-									<td class="py-3 pr-4 tabular-nums text-brun-500">
-										{r.longueur} × {r.largeur} cm
-										{r.ridelle !== null && <span class="block text-xs text-brun-400">ridelles {r.ridelle} cm</span>}
-									</td>
-									<td class="py-3 pr-4 tabular-nums text-brun-700">
-										{r.boite.longueur} × {r.boite.largeur} × {r.boite.hauteur} cm
-									</td>
-									<td class="py-3 pr-4 tabular-nums font-semibold text-rouille-500">
-										{fmt(r.boite.volume)} L
-									</td>
-									<td class="py-3">
-										<a
-											href={r.source}
-											target="_blank"
-											rel="noopener noreferrer"
-											class="inline-flex items-center gap-1 text-rouille-500 underline-offset-4 hover:underline"
-										>
-											Fiche
-											<Icon name="tabler:arrow-up-right" class="h-4 w-4" />
-										</a>
-									</td>
-								</tr>
-							))
-						}
-					</tbody>
-				</table>
+				<p id="achat-message" class="t-petit mt-3 text-ecru-200" role="status" hidden></p>
 			</div>
 		</div>
 	</section>
@@ -548,7 +429,7 @@ const datasetSchema = {
 	// Le panier et le formatage des montants sont déjà chargés partout par
 	// features.ts : les réutiliser ne coûte rien et évite une seconde façon
 	// d'écrire un prix.
-	import { ajouter, jetonCsrf, formaterCents } from "../scripts/panier";
+	import { ajouter, formaterCents, commandesOuvertes } from "../scripts/panier";
 
 	const donnees = document.getElementById("donnees-remorques");
 	const sortie = document.getElementById("resultat");
@@ -643,8 +524,10 @@ const datasetSchema = {
 			if (v > plafond) inputHauteur!.value = String(plafond);
 			curseurHauteur!.value = inputHauteur!.value;
 
+			// Texte fixe (demande de Matthieu, 27/09/2026) : les bornes, elles,
+			// sont appliquées au curseur et au champ ci-dessus.
 			aideHauteur!.textContent =
-				`De ${mini} cm, la hauteur des ridelles, à ${plafond} cm, la longueur de la caisse.`;
+				"Choisissez la hauteur de votre Boîte, dans les limites compatibles avec votre remorque.";
 		}
 
 		/* Cotes de principe pour le train roulant : elles ne figurent pas sur les
@@ -1023,9 +906,8 @@ const datasetSchema = {
 		 * Demande le prix au serveur.
 		 *
 		 * Différé : `rendu()` s'exécute à chaque frappe, et un aller-retour par
-		 * caractère saturerait le serveur pour rien. Le bloc reste masqué tant que
-		 * le module commercial n'est pas ouvert, auquel cas l'appel échoue en 404
-		 * et le prix affiche un tiret — sans bruit.
+		 * caractère saturerait le serveur pour rien. Public depuis le 27/09/2026 :
+		 * le prix s'affiche même boutique fermée ; seule la commande attend.
 		 */
 		let minuteurPrix: number | undefined;
 
@@ -1034,15 +916,12 @@ const datasetSchema = {
 
 			window.clearTimeout(minuteurPrix);
 			minuteurPrix = window.setTimeout(async () => {
-				const jeton = await jetonCsrf();
-				if (!jeton) return;
-
 				try {
 					const reponse = await fetch("/api/panier.php", {
 						method: "POST",
 						cache: "no-store",
 						credentials: "same-origin",
-						headers: { "Content-Type": "application/json", "X-CSRF-Token": jeton },
+						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ lignes: [configurationCourante()] }),
 					});
 					if (!reponse.ok) throw new Error(String(reponse.status));
@@ -1056,6 +935,8 @@ const datasetSchema = {
 						if (champMention) {
 							champMention.textContent = donnees.refusees?.[0]?.motif ?? "Configuration non chiffrable.";
 							champMention.hidden = false;
+							champMention.classList.add("text-rouille-400");
+							champMention.classList.remove("text-ecru-200");
 						}
 						return;
 					}
@@ -1063,8 +944,12 @@ const datasetSchema = {
 					champPrix.textContent = formaterCents(ligne.total_cents);
 					boutonAjouter.disabled = false;
 					if (champMention) {
-						champMention.textContent = donnees.provisoire ? donnees.mention : "";
-						champMention.hidden = !donnees.provisoire;
+						// Montants factices : la mention d'avertissement prime. Sinon,
+						// « TTC, hors frais de livraison », qui accompagne le prix de la Boîte.
+						champMention.textContent = donnees.provisoire ? donnees.mention : (donnees.mention_prix ?? "");
+						champMention.hidden = champMention.textContent === "";
+						champMention.classList.toggle("text-rouille-400", donnees.provisoire);
+						champMention.classList.toggle("text-ecru-200", !donnees.provisoire);
 					}
 				} catch {
 					champPrix.textContent = "—";
@@ -1075,6 +960,11 @@ const datasetSchema = {
 
 		boutonAjouter?.addEventListener("click", () => {
 			ajouter(configurationCourante());
+			// Propose les accessoires, et annonce l'ouverture des commandes tant
+			// que la boutique est fermée : voir SuggestionAccessoires.astro.
+			void commandesOuvertes().then((ouvert) =>
+				window.dispatchEvent(new CustomEvent("bab:boite-ajoutee", { detail: { ouvert } })),
+			);
 			if (messageAchat) {
 				messageAchat.textContent = "Ajouté au panier.";
 				messageAchat.hidden = false;
@@ -1108,6 +998,12 @@ const datasetSchema = {
 		/* Les bornes ne bougent qu'une fois la saisie des ridelles terminée :
 		   sinon un « 4 » en cours de frappe remonterait la hauteur à 4 cm. */
 		inputRidelle.addEventListener("blur", () => {
+			majBornes();
+			rendu();
+		});
+		/* Même logique pour la longueur, qui fixe le plafond de hauteur : sans
+		   cela, le curseur gardait celui de la cote précédente. */
+		inputLongueur.addEventListener("blur", () => {
 			majBornes();
 			rendu();
 		});

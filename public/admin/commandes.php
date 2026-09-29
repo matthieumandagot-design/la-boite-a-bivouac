@@ -18,6 +18,8 @@ require_once __DIR__ . '/../lib/admin-session.php';
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/commandes.php';
 require_once __DIR__ . '/../lib/pricing.php';
+require_once __DIR__ . '/../lib/clients.php';
+require_once __DIR__ . '/../lib/emails-commande.php';
 
 demarrerSessionAdmin();
 header('X-Robots-Tag: noindex, nofollow', true);
@@ -33,20 +35,9 @@ require $configPath;
 require_once __DIR__ . '/../api/lib/admin-auth.php';
 require_once __DIR__ . '/nav.php';
 
-[$user, $pass] = adminBasicAuthCredentials() ?? [null, null];
-$autorise = $user !== null
-	&& $pass !== null
-	&& hash_equals(ADMIN_USERNAME, $user)
-	&& password_verify($pass, ADMIN_PASSWORD_HASH);
-
-if (!$autorise) {
-	header('WWW-Authenticate: Basic realm="Administration"');
-	http_response_code(401);
-	echo 'Accès refusé.';
-	exit;
-}
-
-marquerSessionAdmin();
+// Mot de passe ou session admin ouverte ; sinon, retour au formulaire de
+// connexion de /admin/ (voir api/lib/admin-auth.php).
+exigerAdminPage();
 
 if (empty($_SESSION['csrf_token'])) {
 	$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -85,12 +76,30 @@ if ($baseUtilisable && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 		$id = (int) ($_POST['id'] ?? 0);
 		$statut = (string) ($_POST['statut'] ?? '');
 		$note = trim((string) ($_POST['note'] ?? ''));
+		$prevenir = ($_POST['prevenir'] ?? '') === '1';
 
-		if (!commandeChangerStatut($id, $statut, $note)) {
+		$avant = commandeParId($id);
+
+		if ($avant === null || !commandeChangerStatut($id, $statut, $note)) {
 			$message = 'Statut inconnu ou commande introuvable.';
 			$messageType = 'erreur';
 		} else {
 			$message = 'Commande mise à jour.';
+
+			// Email au client (§6.6) seulement si le statut a réellement changé :
+			// corriger une note interne ne doit rien envoyer. La case permet de
+			// rattraper une erreur de manipulation sans alerter le client.
+			if ($avant['statut'] !== $statut && statutANotifier($statut)) {
+				$client = clientParId((int) $avant['customer_id']);
+				if (!$prevenir || $client === null || $client['anonymise_a'] !== null) {
+					$message .= ' Client non prévenu.';
+				} elseif (envoyerEmailChangementStatut(commandeParId($id), $client)) {
+					$message .= ' Email envoyé à ' . $client['email'] . '.';
+				} else {
+					$message .= ' L\'email au client n\'a pas pu partir : prévenez-le directement.';
+					$messageType = 'erreur';
+				}
+			}
 		}
 	}
 }
@@ -210,6 +219,7 @@ function dateLisible(?string $iso): string
 							<div>
 								<h2 class="titre-carte"><?= h((string) $detail['numero']) ?></h2>
 								<p class="aide">Passée le <?= h(dateLisible((string) $detail['created_at'])) ?></p>
+								<p class="aide"><a href="/admin/clients.php?id=<?= (int) $detail['customer_id'] ?>">Fiche client</a></p>
 							</div>
 							<div style="text-align:right;">
 								<span class="etiquette <?= $detail['statut'] === 'payee' ? 'etiquette--payee' : ($detail['statut'] === 'en_attente_paiement' ? 'etiquette--attente' : 'etiquette--fin') ?>">
@@ -262,6 +272,16 @@ function dateLisible(?string $iso): string
 										<option value="<?= h($valeur) ?>" <?= $detail['statut'] === $valeur ? 'selected' : '' ?>><?= h($libelle) ?></option>
 									<?php endforeach; ?>
 								</select>
+							</label>
+							<label style="display:flex;gap:.5rem;align-items:flex-start;font-size:.9rem;">
+								<input type="checkbox" name="prevenir" value="1" checked style="margin-top:.2rem;" />
+								<span>
+									Prévenir le client par email si le statut change
+									<span class="aide" style="display:block;">
+										Pour En fabrication, Prête, Expédiée, Livrée, Annulée et Remboursée.
+										Décochez pour corriger une erreur de saisie sans rien envoyer.
+									</span>
+								</span>
 							</label>
 							<label>
 								<span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.3rem;">Note interne</span>

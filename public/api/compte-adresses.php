@@ -6,7 +6,11 @@ declare(strict_types=1);
  *
  *   GET    /api/compte-adresses.php          → ses adresses
  *   POST   /api/compte-adresses.php          → en ajoute une
+ *   PUT    /api/compte-adresses.php?id=12    → en modifie une (27/09/2026)
  *   DELETE /api/compte-adresses.php?id=12    → en supprime une
+ *
+ * Modifier une adresse ne touche pas aux commandes passées : chacune garde
+ * l'adresse recopiée à plat au moment de la validation.
  *
  * Toutes les requêtes portent sur le client connecté, et sur lui seul :
  * l'identifiant du propriétaire vient de la session, jamais de la requête. Une
@@ -64,8 +68,8 @@ if ($methode === 'DELETE') {
 		: ['error' => 'Adresse introuvable.']);
 }
 
-if ($methode !== 'POST') {
-	header('Allow: GET, POST, DELETE');
+if ($methode !== 'POST' && $methode !== 'PUT') {
+	header('Allow: GET, POST, PUT, DELETE');
 	apiJson(405, ['error' => 'Méthode non autorisée.']);
 }
 
@@ -99,11 +103,7 @@ if ($erreurs !== []) {
 	apiJson(422, ['error' => 'Adresse incomplète.', 'champs' => $erreurs]);
 }
 
-$requete = bdCommerce()->prepare(
-	'INSERT INTO addresses (customer_id, libelle, ligne1, ligne2, code_postal, ville, pays, telephone, created_at)
-	 VALUES (:client, :libelle, :ligne1, :ligne2, :cp, :ville, :pays, :tel, :cree)'
-);
-$requete->execute([
+$valeurs = [
 	':client' => $clientId,
 	':libelle' => $champ('libelle'),
 	':ligne1' => $champ('ligne1'),
@@ -112,7 +112,37 @@ $requete->execute([
 	':ville' => $champ('ville'),
 	':pays' => $pays,
 	':tel' => $champ('telephone'),
-	':cree' => gmdate('c'),
-]);
+];
+
+if ($methode === 'PUT') {
+	$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+	if ($id === false || $id === null || $id <= 0) {
+		apiJson(400, ['error' => 'Adresse non précisée.']);
+	}
+
+	// Appartenance vérifiée dans le WHERE, comme pour la suppression.
+	$requete = bdCommerce()->prepare(
+		'UPDATE addresses
+		 SET libelle = :libelle, ligne1 = :ligne1, ligne2 = :ligne2, code_postal = :cp,
+		     ville = :ville, pays = :pays, telephone = :tel
+		 WHERE id = :id AND customer_id = :client'
+	);
+	$requete->execute($valeurs + [':id' => $id]);
+
+	// rowCount compte les lignes réellement changées : une adresse renvoyée
+	// telle quelle donnerait 0. On vérifie donc l'existence à part.
+	$existe = bdCommerce()->prepare('SELECT 1 FROM addresses WHERE id = :id AND customer_id = :client');
+	$existe->execute([':id' => $id, ':client' => $clientId]);
+
+	$trouvee = $existe->fetchColumn() !== false;
+
+	apiJson($trouvee ? 200 : 404, $trouvee ? ['ok' => true, 'id' => $id] : ['error' => 'Adresse introuvable.']);
+}
+
+$requete = bdCommerce()->prepare(
+	'INSERT INTO addresses (customer_id, libelle, ligne1, ligne2, code_postal, ville, pays, telephone, created_at)
+	 VALUES (:client, :libelle, :ligne1, :ligne2, :cp, :ville, :pays, :tel, :cree)'
+);
+$requete->execute($valeurs + [':cree' => gmdate('c')]);
 
 apiJson(201, ['ok' => true, 'id' => (int) bdCommerce()->lastInsertId()]);

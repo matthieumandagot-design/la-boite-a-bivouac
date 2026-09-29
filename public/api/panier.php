@@ -20,19 +20,25 @@ declare(strict_types=1);
  * n'est enregistré ici.
  *
  * Pas d'authentification : on remplit son panier avant d'avoir un compte (§6.3).
- * Le jeton CSRF reste exigé, comme sur tout POST du module.
+ *
+ * PUBLIC DEPUIS LE 27/09/2026 : prix du configurateur et panier sont visibles
+ * de tous, même boutique fermée — seule la COMMANDE reste verrouillée
+ * (commande-creer.php, checkout.php). Plus de jeton CSRF non plus : cet
+ * endpoint ne lit ni n'écrit rien de la session et n'enregistre rien. Un site
+ * tiers qui l'appellerait apprendrait un prix déjà public. L'exiger obligeait
+ * en revanche à poser un cookie de session à chaque visiteur du configurateur.
  */
-
-require_once __DIR__ . '/../lib/commerce-guard.php';
-exigerCommerceActif();
 
 require_once __DIR__ . '/lib/commerce-api.php';
 require_once __DIR__ . '/../lib/panier.php';
 
 apiExigerMethode('POST');
 apiExigerBase();
-apiExigerCsrf();
 
 $donnees = apiCorpsJson();
 
-apiJson(200, panierRecalcule($donnees['lignes'] ?? []));
+// Mode de livraison facultatif : le tunnel l'envoie pour afficher le total
+// livraison comprise, le panier et le configurateur non.
+$livraison = is_string($donnees['livraison'] ?? null) ? $donnees['livraison'] : null;
+
+apiJson(200, panierRecalcule($donnees['lignes'] ?? [], $livraison));

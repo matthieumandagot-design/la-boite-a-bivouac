@@ -7,20 +7,25 @@
  * prix unitaires, total. Un prix trafiqué dans le stockage du navigateur n'a
  * donc aucun effet — il n'y a même pas de champ prix à trafiquer.
  *
- * Le bouton « Commander » attend le tunnel de commande (§6.4), livré plus tard.
+ * Le bouton « Commander » mène au tunnel de commande (§6.4), /commande/ —
+ * sauf boutique fermée : il annonce alors l'ouverture des commandes.
  */
 
 import PageCommerce from "../components/PageCommerce.astro";
+import AvisOuvertureCommandes from "../components/AvisOuvertureCommandes.astro";
 ---
 
-<PageCommerce title="Panier" description="Votre sélection.">
+{/* Public depuis le 27/09/2026 : on remplit son panier boutique fermée ;
+    « Commander » annonce alors l'ouverture au lieu de lancer la commande. */}
+<PageCommerce title="Panier" description="Votre sélection." publique>
+	<AvisOuvertureCommandes />
 	<div id="panier-contenu" class="mt-8">
 		<p class="t-petit text-brun-400">Chargement du panier…</p>
 	</div>
 </PageCommerce>
 
 <script>
-	import { lire, definirQuantite, retirer, vider, recalculer, formaterCents } from "../scripts/panier";
+	import { lire, definirQuantite, retirer, vider, recalculer, formaterCents, commandesOuvertes } from "../scripts/panier";
 	import type { PanierCalcule } from "../scripts/panier";
 
 	const contenu = document.getElementById("panier-contenu");
@@ -158,13 +163,49 @@ import PageCommerce from "../components/PageCommerce.astro";
 
 		const pied = document.createElement("div");
 		pied.className = "mt-8 rounded-2xl border border-ardoise/30 bg-ecru-50 p-6";
+		// Frais de port des accessoires du catalogue : facturés à part, montrés
+		// avant le total qui les comprend.
+		const port =
+			panier.port_accessoires_cents > 0
+				? `<div class="mb-3 flex items-baseline justify-between"><span class="t-petit text-brun-500">Frais de port des accessoires</span>` +
+					`<span class="t-petit font-semibold text-brun-700">${formaterCents(panier.port_accessoires_cents)}</span></div>`
+				: "";
 		pied.innerHTML =
-			`<div class="flex items-baseline justify-between"><span class="t-corps text-brun-600">Total</span>` +
+			port +
+			`<div class="flex items-baseline justify-between"><span class="t-corps text-brun-600">Total TTC</span>` +
 			`<span class="t-sous font-display font-semibold text-brun-700">${formaterCents(panier.total_cents)}</span></div>` +
 			(panier.provisoire
 				? `<p class="t-petit mt-2 text-rouille-500">${panier.mention} — montants factices, aucun engagement.</p>`
-				: "") +
-			`<p class="t-petit mt-4 text-brun-400">Le tunnel de commande et le paiement arrivent prochainement.</p>`;
+				: panier.mention_prix
+					? `<p class="t-petit mt-2 text-brun-400">${panier.mention_prix}</p>`
+					: "") +
+			"";
+
+		// Pas de bouton tant qu'une ligne est écartée : le tunnel la refuserait
+		// (409), autant le dire ici, où le client peut la retirer.
+		if (panier.lignes.length > 0 && panier.refusees.length === 0) {
+			const commander = document.createElement("a");
+			commander.href = "/commande/";
+			// Boutique fermée : la commande n'est pas lancée, une fenêtre
+			// annonce l'ouverture (AvisOuvertureCommandes.astro).
+			commander.addEventListener("click", async (event) => {
+				event.preventDefault();
+				if (await commandesOuvertes()) {
+					window.location.href = "/commande/";
+				} else {
+					window.dispatchEvent(new CustomEvent("bab:commandes-fermees"));
+				}
+			});
+			commander.className =
+				"mt-6 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 font-semibold text-ecru-50 transition-colors hover:bg-rouille-400";
+			commander.textContent = "Commander";
+			pied.append(commander);
+		} else if (panier.refusees.length > 0) {
+			const note = document.createElement("p");
+			note.className = "t-petit mt-4 text-brun-400";
+			note.textContent = "Retirez les lignes écartées pour pouvoir commander.";
+			pied.append(note);
+		}
 		fragments.push(pied);
 
 		const vider_ = document.createElement("button");

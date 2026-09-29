@@ -38,20 +38,9 @@ require $configPath;
 require_once __DIR__ . '/../api/lib/admin-auth.php';
 require_once __DIR__ . '/nav.php';
 
-[$user, $pass] = adminBasicAuthCredentials() ?? [null, null];
-$autorise = $user !== null
-	&& $pass !== null
-	&& hash_equals(ADMIN_USERNAME, $user)
-	&& password_verify($pass, ADMIN_PASSWORD_HASH);
-
-if (!$autorise) {
-	header('WWW-Authenticate: Basic realm="Administration"');
-	http_response_code(401);
-	echo 'Accès refusé.';
-	exit;
-}
-
-marquerSessionAdmin();
+// Mot de passe ou session admin ouverte ; sinon, retour au formulaire de
+// connexion de /admin/ (voir api/lib/admin-auth.php).
+exigerAdminPage();
 
 if (empty($_SESSION['csrf_token'])) {
 	$_SESSION['csrf_token'] = bin2hex(random_bytes(32));

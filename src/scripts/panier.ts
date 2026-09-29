@@ -35,7 +35,14 @@ export type LigneAccessoire = {
 	quantite: number;
 };
 
-export type Ligne = LigneBoite | LigneAccessoire;
+/** Accessoire du catalogue Équipements (27/09/2026) : un identifiant, rien d'autre. */
+export type LigneEquipement = {
+	type: "equipement";
+	id: string;
+	quantite: number;
+};
+
+export type Ligne = LigneBoite | LigneAccessoire | LigneEquipement;
 
 /** Une ligne telle que le serveur la renvoie, prix compris. */
 export type LigneCalculee = {
@@ -50,14 +57,23 @@ export type LigneCalculee = {
 	photo: string;
 };
 
+export type ModeLivraison = { id: string; libelle: string; description: string; prix_cents: number };
+
 export type PanierCalcule = {
 	lignes: LigneCalculee[];
 	refusees: { index: number; type: string; motif: string }[];
 	sous_total_cents: number;
+	/** Mode retenu, quand le tunnel en a transmis un ; null sinon. */
+	livraison: { id: string; libelle: string; prix_cents: number } | null;
 	livraison_cents: number;
+	livraison_modes: ModeLivraison[];
+	/** Frais de port des accessoires du catalogue, facturés à part. Compris dans total_cents. */
+	port_accessoires_cents: number;
 	total_cents: number;
 	provisoire: boolean;
 	mention: string;
+	/** « TTC, hors frais de livraison » : à afficher près d'un total qui ne la comprend pas. */
+	mention_prix: string;
 };
 
 export function lire(): Ligne[] {
@@ -97,9 +113,11 @@ export function nombreArticles(): number {
 export function ajouter(ligne: Ligne): void {
 	const lignes = lire();
 
-	if (ligne.type === "accessoire") {
-		const existante = lignes.find(
-			(l): l is LigneAccessoire => l.type === "accessoire" && l.produit_id === ligne.produit_id,
+	if (ligne.type === "accessoire" || ligne.type === "equipement") {
+		const existante = lignes.find((l): l is LigneAccessoire | LigneEquipement =>
+			ligne.type === "accessoire"
+				? l.type === "accessoire" && l.produit_id === ligne.produit_id
+				: l.type === "equipement" && l.id === ligne.id,
 		);
 		if (existante) {
 			existante.quantite = Math.min(10, (Number(existante.quantite) || 1) + (Number(ligne.quantite) || 1));
@@ -172,23 +190,45 @@ export function jetonCsrf(forcer = false): Promise<string | null> {
  *
  * Retourne null si l'appel échoue : l'appelant affiche alors un message plutôt
  * qu'un total inventé. Aucun prix n'est jamais calculé dans le navigateur.
+ *
+ * `livraison` : identifiant du mode choisi dans le tunnel ; le total renvoyé
+ * le comprend alors.
  */
-export async function recalculer(): Promise<PanierCalcule | null> {
-	const jeton = await jetonCsrf();
-	if (!jeton) return null;
-
+export async function recalculer(livraison?: string): Promise<PanierCalcule | null> {
+	// Pas de jeton CSRF : /api/panier.php est public et sans effet depuis le
+	// 27/09/2026 (voir son en-tête).
 	try {
 		const reponse = await fetch("/api/panier.php", {
 			method: "POST",
 			cache: "no-store",
 			credentials: "same-origin",
-			headers: { "Content-Type": "application/json", "X-CSRF-Token": jeton },
-			body: JSON.stringify({ lignes: lire() }),
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(livraison ? { lignes: lire(), livraison } : { lignes: lire() }),
 		});
 		if (!reponse.ok) return null;
 		return (await reponse.json()) as PanierCalcule;
 	} catch {
 		return null;
+	}
+}
+
+/**
+ * Les commandes sont-elles ouvertes pour ce visiteur ? Vrai si la boutique est
+ * ouverte, ou pour un administrateur en mode aperçu. Faux au moindre doute :
+ * mieux vaut annoncer l'ouverture prochaine que lancer une commande refusée.
+ */
+export async function commandesOuvertes(): Promise<boolean> {
+	try {
+		const reponse = await fetch("/api/settings.php", {
+			cache: "no-store",
+			credentials: "same-origin",
+			headers: { Accept: "application/json" },
+		});
+		if (!reponse.ok) return false;
+		const etat = (await reponse.json()) as { commerce?: unknown; preview?: unknown };
+		return etat.commerce === true || etat.preview === true;
+	} catch {
+		return false;
 	}
 }
 

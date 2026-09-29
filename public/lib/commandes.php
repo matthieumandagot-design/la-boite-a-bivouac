@@ -167,6 +167,41 @@ function commandeCreer(int $clientId, array $panier, array $adresse): array
 				]);
 			}
 
+			// Frais de port des accessoires du catalogue (27/09/2026) : une ligne
+			// à part, comme la livraison, pour que le total des lignes reste
+			// celui encaissé.
+			$port = (int) ($panier['port_accessoires_cents'] ?? 0);
+			if ($port > 0) {
+				$insertion->execute([
+					':commande' => $commandeId,
+					':produit' => null,
+					':libelle' => 'Frais de port des accessoires',
+					':prix' => $port,
+					':quantite' => 1,
+					':total' => $port,
+					':config' => (string) json_encode(['port_accessoires' => true], JSON_UNESCAPED_UNICODE),
+					':cree' => $maintenant,
+				]);
+			}
+
+			// Livraison : une ligne comme les autres, figée avec la commande. Elle
+			// apparaît ainsi d'elle-même dans l'admin, les emails, l'espace client
+			// et le paiement Stripe. Le retrait gratuit est gardé aussi : c'est
+			// l'engagement pris avec le client, à 0 €.
+			if (is_array($panier['livraison'] ?? null)) {
+				$prixLivraison = (int) $panier['livraison']['prix_cents'];
+				$insertion->execute([
+					':commande' => $commandeId,
+					':produit' => null,
+					':libelle' => 'Livraison — ' . $panier['livraison']['libelle'],
+					':prix' => $prixLivraison,
+					':quantite' => 1,
+					':total' => $prixLivraison,
+					':config' => (string) json_encode(['livraison' => $panier['livraison']['id']], JSON_UNESCAPED_UNICODE),
+					':cree' => $maintenant,
+				]);
+			}
+
 			$pdo->commit();
 
 			return ['id' => $commandeId, 'numero' => $numero];

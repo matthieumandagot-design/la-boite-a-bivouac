@@ -9,12 +9,19 @@ export const HOME_TITLE = "La Boîte à Bivouac — Module de bivouac pour votre
 export const SITE_DESCRIPTION =
 	"La Boîte à Bivouac conçoit un box modulaire à installer sur une remorque que vous possédez déjà. Le même module s'adapte au bivouac, à la montagne et à la mer, avec une structure renforcée capable d'accueillir une tente de toit et un VTT XXL. Conçu et fabriqué en Occitanie.";
 export const HOME_DESCRIPTION =
-	"Nous concevons et fabriquons en Occitanie des modules de bivouac et leurs équipements, à installer sur la remorque que vous avez déjà. Du matériel réparable, à moins de 2 000 €.";
+	"Nous concevons et fabriquons en Occitanie des modules de bivouac et leurs équipements, à installer sur la remorque que vous avez déjà. Du matériel réparable, à partir de 1 400 €.";
+
+/**
+ * Tant que la boutique est fermée, la vitrine (prix, panier) est ouverte à tous
+ * mais pas la commande : ce message l'explique à qui ajoute au panier ou tente
+ * de commander (décision du 27/09/2026). À changer ici seulement.
+ */
+export const MESSAGE_OUVERTURE_COMMANDES = "Les commandes ouvriront au printemps 2027.";
 
 export const NAV_LINKS = [
 	{ href: "/", label: "Accueil" },
 	{ href: "/la-boite/", label: "La Boîte" },
-	{ href: "/compatibilite/", label: "Compatibilité" },
+	{ href: "/configurateur/", label: "Configurateur" },
 	{ href: "/equipements/", label: "Équipements" },
 	{ href: "/faq/", label: "FAQ" },
 	{ href: "/contact/", label: "Contact" },

@@ -21,55 +21,62 @@ if (!is_file($configPath)) {
 
 require $configPath;
 
-function denyAccess(): void
+// Mot de passe ou session admin ouverte ; sinon, retour au formulaire de
+// connexion de /admin/ (voir api/lib/admin-auth.php).
+require_once __DIR__ . '/../api/lib/admin-auth.php';
+// Prix de vente, marge et lecture des anciens prix en texte (27/09/2026).
+require_once __DIR__ . '/../lib/equipements.php';
+
+/**
+ * Montant saisi en euros (« 29,99 », « 1249 », « 8.5 ») → centimes. Null si
+ * vide ou illisible : le champ n'est alors pas renseigné.
+ */
+function eurosEnCentimes(string $saisie): ?int
 {
-	header('WWW-Authenticate: Basic realm="Administration"');
-	http_response_code(401);
-	echo 'Accès refusé.';
-	exit;
+	$propre = str_replace([',', ' ', "\u{00A0}", "\u{202F}", '€'], ['.', '', '', '', ''], trim($saisie));
+	if ($propre === '' || !is_numeric($propre) || (float) $propre < 0) {
+		return null;
+	}
+
+	return (int) round((float) $propre * 100);
 }
 
 /**
- * Sur PHP en CGI/FastCGI (courant en hébergement mutualisé), l'en-tête
- * Authorization n'est pas exposé via PHP_AUTH_USER/PHP_AUTH_PW : il faut le
- * relire manuellement dans HTTP_AUTHORIZATION (voir .htaccess du dossier, qui
- * force Apache à le transmettre).
+ * Coupe un texte à $octets sans laisser de caractère UTF-8 à moitié : mbstring
+ * n'est pas garantie sur l'hébergement. Le champ HTML limite déjà la saisie.
  */
-function basicAuthCredentials(): ?array
+function couperUtf8(string $texte, int $octets): string
 {
-	if (isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'])) {
-		return [$_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']];
+	$coupe = substr($texte, 0, $octets);
+	while ($coupe !== '' && preg_match('//u', $coupe) !== 1) {
+		$coupe = substr($coupe, 0, -1);
 	}
 
-	$header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null;
-	if ($header === null && function_exists('apache_request_headers')) {
-		$headers = apache_request_headers();
-		$header = $headers['Authorization'] ?? $headers['authorization'] ?? null;
-	}
-
-	if ($header !== null && stripos($header, 'Basic ') === 0) {
-		$decoded = base64_decode(substr($header, 6), true);
-		if ($decoded !== false && str_contains($decoded, ':')) {
-			return explode(':', $decoded, 2);
-		}
-	}
-
-	return null;
+	return $coupe;
 }
 
-[$user, $pass] = basicAuthCredentials() ?? [null, null];
-
-if ($user === null || $pass === null) {
-	denyAccess();
+/** 2999 → « 29,99 », pour préremplir un champ. */
+function centimesEnEuros(?int $cents): string
+{
+	return $cents === null ? '' : number_format($cents / 100, 2, ',', '');
 }
 
-// hash_equals pour une comparaison de l'identifiant à temps constant, comme password_verify pour le mot de passe.
-if (!hash_equals(ADMIN_USERNAME, $user) || !password_verify($pass, ADMIN_PASSWORD_HASH)) {
-	denyAccess();
+/**
+ * Champs de prix d'une fiche, lus dans le formulaire. Le prix d'achat estimé
+ * et les frais de port ne sont jamais publiés ; seul le prix de vente
+ * (estimé + marge) l'est, par /api/accessoires.php.
+ *
+ * @return array{prix_estime_cents: ?int, frais_port_cents: int, precision: string}
+ */
+function champsPrixPostes(): array
+{
+	return [
+		'prix_estime_cents' => eurosEnCentimes((string) ($_POST['prix_estime'] ?? '')),
+		'frais_port_cents' => eurosEnCentimes((string) ($_POST['frais_port'] ?? '')) ?? 0,
+		'precision' => couperUtf8(trim((string) ($_POST['precision'] ?? '')), 120),
+	];
 }
-
-// Authentification confirmée : on en garde la trace pour le mode aperçu.
-marquerSessionAdmin();
+exigerAdminPage();
 
 if (empty($_SESSION['csrf_token'])) {
 	$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -678,7 +685,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['C
 	} elseif ($action === 'ajouter') {
 		$domaine = (string) ($_POST['domaine'] ?? '');
 		$titre = trim((string) ($_POST['titre'] ?? ''));
-		$prix = trim((string) ($_POST['prix'] ?? ''));
 		$description = trim((string) ($_POST['description'] ?? ''));
 
 		if (!isset(DOMAINES[$domaine]) || $titre === '' || $description === '') {
@@ -691,7 +697,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['C
 				'id' => bin2hex(random_bytes(8)),
 				'domaine' => $domaine,
 				'titre' => $titre,
-				'prix' => $prix,
+				...champsPrixPostes(),
 				'description' => $description,
 				'medias' => $medias,
 			];
@@ -803,7 +809,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST === [] && (int) ($_SERVER['C
 				'id' => $id,
 				'domaine' => $domaine,
 				'titre' => $titre,
-				'prix' => trim((string) ($_POST['prix'] ?? '')),
+				...champsPrixPostes(),
 				'description' => $description,
 				'medias' => array_merge($medias, $nouveaux),
 			];
@@ -917,6 +923,9 @@ foreach ($equipements as $item) {
 					<a href="/admin/commandes.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
 						<span aria-hidden="true">🧾</span> Commandes
 					</a>
+					<a href="/admin/clients.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
+						<span aria-hidden="true">👥</span> Clients
+					</a>
 					<a href="/admin/parametres.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
 						<span aria-hidden="true">⚙️</span> Paramètres
 					</a>
@@ -986,8 +995,8 @@ foreach ($equipements as $item) {
 						<span aria-hidden="true">📌</span> Pinterest
 					</a>
 				</nav>
-				<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);font-size:.75rem;color:#babba8;">
-					Fermez l'onglet pour vous déconnecter (authentification navigateur).
+				<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);">
+					<a href="/admin/?deconnexion=1" style="display:block;text-align:center;border:1px solid rgba(232,224,200,0.3);color:#e8e0c8;border-radius:.5rem;padding:.5rem;font-size:.85rem;text-decoration:none;">Déconnexion</a>
 				</div>
 			</aside>
 
@@ -1036,10 +1045,23 @@ foreach ($equipements as $item) {
 							</label>
 
 							<label style="display:block;">
-								<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Prix</span>
-								<input type="text" name="prix" maxlength="60" placeholder="1 200 € ou À partir de 900 €"
+								<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Prix estimé (€)</span>
+								<input type="text" name="prix_estime" inputmode="decimal" maxlength="12" placeholder="29,99"
 									style="width:100%;padding:.55rem .65rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.95rem;" />
-								<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">Texte libre. Laissez vide pour ne rien afficher.</span>
+								<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">Votre coût, jamais affiché. Prix de vente = + <?= equipementMargePourcent() ?> %. Vide : pas de vente en ligne.</span>
+							</label>
+
+							<label style="display:block;">
+								<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Frais de port estimés (€)</span>
+								<input type="text" name="frais_port" inputmode="decimal" maxlength="12" placeholder="8,50"
+									style="width:100%;padding:.55rem .65rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.95rem;" />
+								<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">Par exemplaire, facturés à part au client, sans marge.</span>
+							</label>
+
+							<label style="display:block;">
+								<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Précision (facultatif)</span>
+								<input type="text" name="precision" maxlength="40" placeholder="la paire, l'unité…"
+									style="width:100%;padding:.55rem .65rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.95rem;" />
 							</label>
 						</div>
 
@@ -1176,9 +1198,32 @@ foreach ($equipements as $item) {
 													style="width:100%;padding:.5rem .6rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.92rem;" />
 											</label>
 
+											<?php
+											$estimeItem = equipementPrixEstimeCents($item);
+											$portItem = equipementPortCents($item);
+											?>
 											<label style="display:block;">
-												<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Prix</span>
-												<input type="text" name="prix" maxlength="60" value="<?= e((string) ($item['prix'] ?? '')) ?>"
+												<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Prix estimé (€)</span>
+												<input type="text" name="prix_estime" inputmode="decimal" maxlength="12" value="<?= e(centimesEnEuros($estimeItem)) ?>"
+													style="width:100%;padding:.5rem .6rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.92rem;" />
+												<span style="display:block;font-size:.75rem;color:#7f8a77;margin-top:.3rem;">
+													<?php if ($estimeItem !== null) : ?>
+														Vendu <?= e(formaterCents(equipementPrixVenteCents($estimeItem))) ?> TTC (+ <?= equipementMargePourcent() ?> %)<?= $portItem > 0 ? ' + ' . e(formaterCents($portItem)) . ' de port' : '' ?>.
+													<?php else : ?>
+														Pas de prix : non vendu en ligne.
+													<?php endif; ?>
+												</span>
+											</label>
+
+											<label style="display:block;">
+												<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Frais de port estimés (€)</span>
+												<input type="text" name="frais_port" inputmode="decimal" maxlength="12" value="<?= e($portItem > 0 ? centimesEnEuros($portItem) : '') ?>"
+													style="width:100%;padding:.5rem .6rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.92rem;" />
+											</label>
+
+											<label style="display:block;">
+												<span style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;">Précision</span>
+												<input type="text" name="precision" maxlength="40" value="<?= e(equipementPrecision($item)) ?>" placeholder="la paire, l'unité…"
 													style="width:100%;padding:.5rem .6rem;border:1px solid #c0c8c8;border-radius:.5rem;font-size:.92rem;" />
 											</label>
 

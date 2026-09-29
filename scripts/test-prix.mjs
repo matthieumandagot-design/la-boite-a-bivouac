@@ -62,15 +62,25 @@ require '${path.join(bac, "lib", "panier.php").replace(/\\/g, "/")}';
 $sortie = [];
 $dims = rqCalculeBoite(155, 115, 90.0, 40);
 
-$sortie['base'] = prixBoiteCents($dims)['cents'];
+$sortie['hauteur_boite'] = $dims['hauteur'];
+$sortie['base'] = prixBoiteCents($dims, 155)['cents'];
+// Formule A (27/09/2026) : 1 200 € fixes + 200 € + 2,80 €/cm de remorque
+// au-delà de 100 cm + 3,20 €/cm de hauteur au-delà de 35 cm, chaque partie
+// plancher à zéro. [longueur de remorque, hauteur de boîte] => variable.
+$sortie['variable'] = array_map(
+	static fn (array $c): int => prixVariableCents($c[0], $c[1]),
+	[[100, 35], [200, 35], [100, 135], [400, 300], [80, 30], [120, 90]]
+);
 $sortie['options_catalogue'] = array_keys(pricingOptions());
-$sortie['une_option'] = prixBoiteCents($dims, prixOptionsCents(['galerie'])['cents'])['cents'];
-$sortie['deux_options'] = prixBoiteCents($dims, prixOptionsCents(['galerie', 'serrure'])['cents'])['cents'];
+$sortie['une_option'] = prixBoiteCents($dims, 155, prixOptionsCents(['galerie'])['cents'])['cents'];
+$sortie['deux_options'] = prixBoiteCents($dims, 155, prixOptionsCents(['galerie', 'serrure'])['cents'])['cents'];
 $sortie['doublon'] = prixOptionsCents(['galerie', 'galerie'])['cents'];
 $sortie['inconnue'] = prixOptionsCents(['galerie', 'inexistante'])['inconnues'];
 $sortie['mal_formees'] = prixOptionsCents(['negatif', 'chaine'])['inconnues'];
 $sortie['mention'] = pricingMention();
 $sortie['provisoire'] = pricingProvisoire();
+$sortie['mention_prix'] = pricingMentionPrix();
+$sortie['panier_mention_prix'] = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']])['mention_prix'] ?? null;
 
 // Le panier complet : c'est lui qui refuse une option inconnue.
 $avecOption = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163', 'options' => ['galerie']]]);
@@ -102,22 +112,147 @@ echo json_encode($sortie);
 	verifie("seules les entrées bien formées sont retenues", ["galerie", "serrure"], r.options_catalogue);
 	verifie("prix négatif et prix en chaîne traités comme inconnus", ["negatif", "chaine"], r.mal_formees);
 
+	console.log("\n### formule A : longueur de remorque et hauteur de boîte");
+	verifie("minimum : 200 € à 100 cm × 35 cm", 20000, r.variable[0]);
+	verifie("+ 2,80 € par cm de remorque (100 cm de plus : 480 €)", 48000, r.variable[1]);
+	verifie("+ 3,20 € par cm de hauteur (100 cm de plus : 520 €)", 52000, r.variable[2]);
+	verifie("maximum : 4 m × 3 m → 1 888 €", 188800, r.variable[3]);
+	verifie("sous les seuils : jamais moins que la base", 20000, r.variable[4]);
+	verifie("Erdé Classic 122, 90 cm : 432 €", 43200, r.variable[5]);
+	const attendu = 120000 + 20000 + (155 - 100) * 280 + (r.hauteur_boite - 35) * 320;
+	verifie(`remorque de 155 cm, boîte de ${r.hauteur_boite} cm : fixe + variable`, attendu, r.base);
+
 	console.log("\n### addition");
-	verifie("prix de base seul", 200000, r.base);
-	verifie("une option ajoutée", 215000, r.une_option);
-	verifie("deux options ajoutées", 219500, r.deux_options);
+	verifie("une option ajoutée", attendu + 15000, r.une_option);
+	verifie("deux options ajoutées", attendu + 19500, r.deux_options);
 	verifie("même option deux fois comptée une seule", 15000, r.doublon);
 	verifie("option inconnue signalée", ["inexistante"], r.inconnue);
 
 	console.log("\n### panier");
-	verifie("total du panier avec option", 215000, r.panier_total);
+	verifie("total du panier avec option (Erdé Classic 163, même caisse)", attendu + 15000, r.panier_total);
 	verifie("option nommée dans le détail", true, String(r.panier_detail).includes("Galerie de toit"));
 	verifie("option conservée dans la configuration", ["galerie"], r.panier_config_options);
 	verifie("option inconnue fait refuser la ligne", true, r.option_inconnue_refusee);
 
-	console.log("\n### montants provisoires");
-	verifie("mention affichable", "À DÉFINIR", r.mention);
-	verifie("drapeau provisoire", true, r.provisoire);
+	console.log("\n### mentions de prix");
+	verifie("montants définitifs depuis le 27/09/2026", false, r.provisoire);
+	verifie("mention d'avertissement toujours disponible si besoin", "À DÉFINIR", r.mention);
+	verifie("mention de prix", "TTC, hors frais de livraison", r.mention_prix);
+	verifie("mention de prix transmise par le panier", "TTC, hors frais de livraison", r.panier_mention_prix);
+
+	// Livraison (27/09/2026) : modes, garde-fous d'adresse, total, et ligne
+	// ajoutée à la commande. La base est créée dans le bac, jamais ailleurs.
+	const PHP_LIVRAISON = `
+require '${path.join(bac, "lib", "commandes.php").replace(/\\/g, "/")}';
+require '${path.join(bac, "lib", "clients.php").replace(/\\/g, "/")}';
+bdMigrer();
+$s = [];
+$s['modes'] = array_map(fn ($m) => [$m['id'], $m['prix_cents']], livraisonModesPublics());
+$toulouse = livraisonMode('livraison-toulouse');
+$france = livraisonMode('livraison-france');
+$s['toulouse_31'] = livraisonRefus($toulouse, ['pays' => 'FR', 'code_postal' => '31000']);
+$s['toulouse_59'] = livraisonRefus($toulouse, ['pays' => 'FR', 'code_postal' => '59000']) !== null;
+$s['france_corse'] = livraisonRefus($france, ['pays' => 'FR', 'code_postal' => '20000']);
+$s['france_reunion'] = livraisonRefus($france, ['pays' => 'FR', 'code_postal' => '97400']) !== null;
+$s['france_belgique'] = livraisonRefus($france, ['pays' => 'BE', 'code_postal' => '1000']) !== null;
+$sans = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']]);
+$avec = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']], 'livraison-france');
+$inconnu = panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']], 'teleportation');
+$s['sans'] = [$sans['livraison'], $sans['livraison_cents'], $sans['total_cents']];
+$s['avec'] = [$avec['livraison']['id'] ?? null, $avec['livraison_cents'], $avec['total_cents'] - $avec['sous_total_cents']];
+$s['inconnu'] = [$inconnu['livraison'], $inconnu['livraison_cents']];
+$client = creerClient('test@exemple.fr', 'motdepasse123', 'A', 'B');
+$adresse = ['ligne1' => '1 rue', 'code_postal' => '31000', 'ville' => 'Toulouse', 'pays' => 'FR'];
+$cmd = commandeCreer($client, $avec, $adresse);
+$lignes = commandeLignes($cmd['id']);
+$s['commande_lignes'] = array_map(fn ($l) => [$l['libelle'], (int) $l['total_cents']], $lignes);
+$s['commande_total'] = [(int) commandeParId($cmd['id'])['total_cents'], $avec['total_cents']];
+$retrait = commandeCreer($client, panierRecalcule([['type' => 'boite', 'remorque' => 'Erdé|Classic 163']], 'retrait-toulouse'), $adresse);
+$s['retrait_ligne'] = array_map(fn ($l) => (int) $l['total_cents'], commandeLignes($retrait['id']));
+echo json_encode($s, JSON_UNESCAPED_UNICODE);
+`;
+	const l = JSON.parse(execFileSync("php", ["-r", PHP_LIVRAISON], { encoding: "utf-8" }));
+
+	console.log("\n### livraison");
+	verifie("trois modes : 0 €, 200 €, 400 €", [["retrait-toulouse", 0], ["livraison-toulouse", 20000], ["livraison-france", 40000]], l.modes);
+	verifie("autour de Toulouse : adresse en Haute-Garonne acceptée", null, l.toulouse_31);
+	verifie("autour de Toulouse : adresse à Lille refusée", true, l.toulouse_59);
+	verifie("France : Corse acceptée", null, l.france_corse);
+	verifie("France : outre-mer refusé", true, l.france_reunion);
+	verifie("France : autre pays refusé", true, l.france_belgique);
+	verifie("sans choix de livraison : rien compté", [null, 0, l.sans[2]], l.sans);
+	verifie("livraison en France : 400 € ajoutés au total", ["livraison-france", 40000, 40000], l.avec);
+	verifie("mode inconnu : ignoré", [null, 0], l.inconnu);
+	verifie("commande : la livraison est une ligne à part", ["Livraison — Livraison en France métropolitaine", 40000], l.commande_lignes[1]);
+	verifie("commande : total enregistré = total recalculé", l.commande_total[1], l.commande_total[0]);
+	verifie("retrait : ligne à 0 € conservée dans la commande", 0, l.retrait_ligne[1]);
+
+	// Accessoires du catalogue Équipements (27/09/2026) : marge, lecture des
+	// anciens prix en texte, frais de port facturés à part, accord TS / PHP.
+	const catalogue = JSON.parse(readFileSync(path.join(bac, "data", "equipements.default.json"), "utf-8"));
+	catalogue[0].frais_port_cents = 850; // antivol : 8,50 € de port pour le test
+	catalogue.push({ id: "ancien", domaine: "toit", titre: "Fiche d'avant", prix: "À partir de 79,99 € la paire", description: "", medias: [] });
+	catalogue.push({ id: "sans-prix", domaine: "toit", titre: "Sur devis", prix: "Sur devis", description: "", medias: [] });
+	writeFileSync(path.join(bac, "data", "equipements.default.json"), JSON.stringify(catalogue));
+
+	const PHP_ACCESSOIRES = `
+require '${path.join(bac, "lib", "commandes.php").replace(/\\/g, "/")}';
+require '${path.join(bac, "lib", "clients.php").replace(/\\/g, "/")}';
+$s = [];
+$s['textes'] = array_map(fn ($t) => equipementLireMontant($t)['cents'] ?? null, ['À partir de 29,99 €', '1 249 € TTC', 'À partir de 20 € l’unité', 'Sur devis']);
+$s['ventes'] = array_map(fn ($i) => [$i['id'], ($e = equipementPrixEstimeCents($i)) === null ? null : equipementPrixVenteCents($e)], equipementsCatalogue());
+$ancien = equipementPublic(equipementParId('ancien'));
+$s['ancien'] = [$ancien['prix_cents'], $ancien['precision']];
+$s['public_sans_cout'] = array_diff(array_keys(equipementPublic(equipementParId('ancien'))), ['id', 'domaine', 'titre', 'description', 'medias', 'prix_cents', 'port_cents', 'precision']);
+$p = panierRecalcule([
+	['type' => 'boite', 'remorque' => 'Erdé|Classic 163'],
+	['type' => 'equipement', 'id' => '8b3c57d6de01547e', 'quantite' => 2],
+	['type' => 'equipement', 'id' => 'sans-prix'],
+]);
+$s['panier'] = [
+	$p['lignes'][1]['total_cents'] ?? null,
+	$p['port_accessoires_cents'],
+	$p['total_cents'] - $p['sous_total_cents'],
+	count($p['refusees']),
+];
+$propre = panierRecalcule([
+	['type' => 'boite', 'remorque' => 'Erdé|Classic 163'],
+	['type' => 'equipement', 'id' => '8b3c57d6de01547e', 'quantite' => 2],
+], 'retrait-toulouse');
+$client = creerClient('accessoires@exemple.fr', 'motdepasse123', 'A', 'B');
+$cmd = commandeCreer($client, $propre, ['ligne1' => '1 rue', 'code_postal' => '31000', 'ville' => 'Toulouse', 'pays' => 'FR']);
+$lignes = commandeLignes($cmd['id']);
+$s['commande'] = [array_map(fn ($l) => [$l['libelle'], (int) $l['total_cents']], $lignes), (int) commandeParId($cmd['id'])['total_cents'], array_sum(array_map(fn ($l) => (int) $l['total_cents'], $lignes))];
+echo json_encode($s, JSON_UNESCAPED_UNICODE);
+`;
+	const acc = JSON.parse(execFileSync("php", ["-r", PHP_ACCESSOIRES], { encoding: "utf-8" }));
+	const { prixVenteAccessoireCents } = await import("../src/data/accessoires.ts");
+	const marge = regles.accessoires.marge_pourcent;
+
+	console.log("\n### accessoires");
+	verifie("anciens prix en texte lus en centimes", [2999, 124900, 2000, null], acc.textes);
+	verifie("marge de 20 % : antivol 29,99 € → 35,99 €", 3599, acc.ventes.find((v) => v[0] === "8b3c57d6de01547e")[1]);
+	verifie("tente 1 249 € → 1 498,80 €", 149880, acc.ventes.find((v) => v[0] === "5c61b61d450ac98b")[1]);
+	verifie(
+		"TypeScript et PHP d'accord sur tout le catalogue",
+		acc.ventes.filter((v) => v[1] !== null).map(([id, c]) => [id, c]),
+		catalogue
+			.filter((i) => i.prix_estime_cents || i.prix)
+			.filter((i) => i.id !== "sans-prix")
+			.map((i) => [i.id, prixVenteAccessoireCents(i.prix_estime_cents ?? 7999, marge)]),
+	);
+	verifie("fiche d'avant : prix lu dans le texte, précision gardée", [9599, "la paire"], acc.ancien);
+	verifie("rien d'autre que le public ne sort (ni coût, ni texte d'origine)", [], Object.values(acc.public_sans_cout));
+	verifie("panier : 2 antivols à 35,99 €", 7198, acc.panier[0]);
+	verifie("panier : port 2 × 8,50 € facturé à part", 1700, acc.panier[1]);
+	verifie("panier : total = articles + port", 1700, acc.panier[2]);
+	verifie("panier : accessoire sans prix écarté", 1, acc.panier[3]);
+	verifie(
+		"commande : ligne de port à part",
+		["Frais de port des accessoires", 1700],
+		acc.commande[0].find((l) => l[0] === "Frais de port des accessoires"),
+	);
+	verifie("commande : total enregistré = somme des lignes", acc.commande[2], acc.commande[1]);
 
 	// Bornes : un plafond bas doit faire refuser la configuration plutôt que
 	// facturer un montant que personne n'a décidé.

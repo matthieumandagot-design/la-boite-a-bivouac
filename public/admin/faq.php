@@ -21,55 +21,10 @@ if (!is_file($configPath)) {
 
 require $configPath;
 
-function denyAccess(): void
-{
-	header('WWW-Authenticate: Basic realm="Administration"');
-	http_response_code(401);
-	echo 'Accès refusé.';
-	exit;
-}
-
-/**
- * Sur PHP en CGI/FastCGI (courant en hébergement mutualisé), l'en-tête
- * Authorization n'est pas exposé via PHP_AUTH_USER/PHP_AUTH_PW : il faut le
- * relire manuellement dans HTTP_AUTHORIZATION (voir .htaccess ci-contre qui
- * force Apache à le transmettre).
- */
-function basicAuthCredentials(): ?array
-{
-	if (isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'])) {
-		return [$_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']];
-	}
-
-	$header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null;
-	if ($header === null && function_exists('apache_request_headers')) {
-		$headers = apache_request_headers();
-		$header = $headers['Authorization'] ?? $headers['authorization'] ?? null;
-	}
-
-	if ($header !== null && stripos($header, 'Basic ') === 0) {
-		$decoded = base64_decode(substr($header, 6), true);
-		if ($decoded !== false && str_contains($decoded, ':')) {
-			return explode(':', $decoded, 2);
-		}
-	}
-
-	return null;
-}
-
-[$user, $pass] = basicAuthCredentials() ?? [null, null];
-
-if ($user === null || $pass === null) {
-	denyAccess();
-}
-
-// hash_equals pour une comparaison de l'identifiant à temps constant, comme password_verify pour le mot de passe.
-if (!hash_equals(ADMIN_USERNAME, $user) || !password_verify($pass, ADMIN_PASSWORD_HASH)) {
-	denyAccess();
-}
-
-// Authentification confirmée : on en garde la trace pour le mode aperçu.
-marquerSessionAdmin();
+// Mot de passe ou session admin ouverte ; sinon, retour au formulaire de
+// connexion de /admin/ (voir api/lib/admin-auth.php).
+require_once __DIR__ . '/../api/lib/admin-auth.php';
+exigerAdminPage();
 
 if (empty($_SESSION['csrf_token'])) {
 	$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -295,6 +250,9 @@ $answeredQuestions = array_filter($allQuestions, static fn(array $q): bool => ($
 					<a href="/admin/commandes.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
 						<span aria-hidden="true">🧾</span> Commandes
 					</a>
+					<a href="/admin/clients.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
+						<span aria-hidden="true">👥</span> Clients
+					</a>
 					<a href="/admin/parametres.php" style="display:flex;align-items:center;gap:.6rem;padding:.65rem .75rem;border-radius:.5rem;margin-bottom:.25rem;text-decoration:none;font-size:.9rem;font-weight:500;color:#e8e0c8;">
 						<span aria-hidden="true">⚙️</span> Paramètres
 					</a>
@@ -364,8 +322,8 @@ $answeredQuestions = array_filter($allQuestions, static fn(array $q): bool => ($
 						<span aria-hidden="true">📌</span> Pinterest
 					</a>
 				</nav>
-				<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);font-size:.75rem;color:#babba8;">
-					Fermez l'onglet pour vous déconnecter (authentification navigateur).
+				<div style="padding:1rem 1.25rem;border-top:1px solid rgba(232,224,200,0.12);">
+					<a href="/admin/?deconnexion=1" style="display:block;text-align:center;border:1px solid rgba(232,224,200,0.3);color:#e8e0c8;border-radius:.5rem;padding:.5rem;font-size:.85rem;text-decoration:none;">Déconnexion</a>
 				</div>
 			</aside>
 

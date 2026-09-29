@@ -1,22 +1,33 @@
 {
-	"_AVERTISSEMENT": "VALEURS FACTICES — AUCUN PRIX RÉEL. Placeholders autorisés par Matthieu le 25/09/2026 pour débloquer le développement, en attendant la réponse à la question 1 de docs/SPEC-module-commercial.md (modèle de prix de la Boîte : fixe, selon dimensions, ou selon options). Tant que provisoire vaut true, toute interface affichant ces montants doit les signaler comme indicatifs.",
-	"provisoire": true,
+	"_AVERTISSEMENT": "Prix de la Boîte : modèle décidé par Matthieu le 27/09/2026, formule A (voir boite._note), affiché TTC, hors frais de livraison. provisoire vaut false depuis : la mention « À DÉFINIR » n'apparaît plus. Le repasser à true réaffiche partout l'avertissement de montants factices.",
+	"provisoire": false,
 	"devise": "EUR",
-	"_note_tva": "Question 4 non tranchée (franchise en base ou non). Les montants ci-dessous sont traités comme TTC, comme le prix de 2 000 € déjà affiché publiquement sur /la-boite. À revoir dès que le régime est connu.",
+	"_note_tva": "Tous les prix sont affichés TTC (décision de Matthieu du 27/09/2026) : le montant affiché est celui encaissé par Stripe, TVA comprise s'il y en a. Si l'entreprise est en franchise de TVA, ajouter la mention « TVA non applicable, art. 293 B du CGI » sur les factures.",
+	"mention_prix": "TTC, hors frais de livraison",
 	"mention_provisoire": "À DÉFINIR",
-	"explication_provisoire": "Montant factice, affiché uniquement pour que le panier fonctionne. Le modèle de prix de la Boîte n'est pas arrêté (question 1 de docs/SPEC-module-commercial.md). Rien ici n'est contractuel.",
+	"explication_provisoire": "Utilisée seulement si provisoire repasse à true : montants factices, rien de contractuel.",
 
 	"boite": {
-		"_note": "Le prix de base reprend les 2 000 € annoncés sur le site pour rester cohérent avec ce qu'un visiteur a déjà pu lire. C'est le seul point de contact avec la réalité ; tout le reste est arbitraire.",
-		"prix_base_cents": 200000,
+		"_note": "Modèle de prix décidé par Matthieu le 27/09/2026 (formule A) : 1 200 € fixes + 200 € + 2,80 € par cm de LONGUEUR INTÉRIEURE DE LA REMORQUE au-delà de 100 cm + 3,20 € par cm de HAUTEUR DE LA BOÎTE au-delà de 35 cm. Aucune des deux parties ne descend sous zéro. Soit 1 400 € pour 1 m × 35 cm et 3 088 € pour le maximum (4 m × 3 m). Remplace le modèle du matin (1 000 € + variable sur la longueur de la Boîte).",
+		"prix_base_cents": 120000,
+		"variable": {
+			"base_cents": 20000,
+			"longueur_remorque": { "a_partir_de_cm": 100, "cents_par_cm": 280 },
+			"hauteur_boite": { "a_partir_de_cm": 35, "cents_par_cm": 320 }
+		},
 
-		"_note_dimensions": "Composante liée à la taille, à zéro tant que le modèle n'est pas arrêté. Laisser à 0 revient à un prix fixe, ce qui est le comportement le plus prudent : aucun client ne se verra facturer un supplément inventé.",
+		"_note_dimensions": "Composantes au volume et à la hauteur, inutilisées par le modèle actuel : à zéro.",
 		"supplement_par_litre_cents": 0,
 		"supplement_par_cm_hauteur_cents": 0,
 
 		"_note_bornes": "Garde-fous du recalcul serveur. Un total sorti de cet intervalle signale une erreur de configuration plutôt qu'une commande légitime : mieux vaut refuser que facturer n'importe quoi.",
 		"total_min_cents": 100000,
 		"total_max_cents": 500000
+	},
+
+	"accessoires": {
+		"_note": "Accessoires du catalogue Équipements (27/09/2026) : prix de vente = prix estimé saisi dans /admin/equipements.php + cette marge, arrondi au centime. Les frais de port estimés ne sont pas margés : ils sont facturés à part, au panier et à la commande.",
+		"marge_pourcent": 20
 	},
 
 	"options": {
@@ -26,8 +37,31 @@
 	},
 
 	"livraison": {
-		"_note": "Question 3 non tranchée (livraison, retrait à l'atelier, frais de port). Zéro en attendant — ne facturer aucun port est le choix le moins risqué face à un client.",
-		"forfait_cents": 0,
-		"retrait_atelier_possible": true
+		"_note": "Modes de livraison décidés par Matthieu le 27/09/2026. L'acheteur choisit dans le tunnel de commande ; le retrait est proposé par défaut. Le montant s'ajoute à la commande comme une ligne à part. « departements » : deux premiers chiffres du code postal acceptés pour ce mode (garde-fou, à ajuster au besoin) ; « pays » : codes pays acceptés ; « codes_postaux_exclus » : préfixes refusés.",
+		"modes": [
+			{
+				"id": "retrait-toulouse",
+				"libelle": "Retrait à l'atelier, à Toulouse",
+				"description": "Vous venez chercher votre Boîte ; nous convenons ensemble du rendez-vous.",
+				"prix_cents": 0
+			},
+			{
+				"id": "livraison-toulouse",
+				"libelle": "Livraison autour de Toulouse",
+				"description": "À 100 km maximum de Toulouse.",
+				"prix_cents": 20000,
+				"pays": ["FR"],
+				"departements": ["09", "11", "31", "32", "81", "82"]
+			},
+			{
+				"id": "livraison-france",
+				"libelle": "Livraison en France métropolitaine",
+				"description": "Partout en France métropolitaine, Corse comprise.",
+				"prix_cents": 40000,
+				"pays": ["FR"],
+				"codes_postaux_exclus": ["97", "98"]
+			}
+		]
 	}
+
 }

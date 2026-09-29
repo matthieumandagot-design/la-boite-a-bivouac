@@ -99,7 +99,7 @@ Développée derrière l'interrupteur, testée en production en mode aperçu adm
 - Messages d'erreur génériques (ne jamais révéler si un email existe).
 - Espace « Mon compte » : coordonnées, adresses, historique des commandes avec statut.
 - Suppression de compte : anonymisation du client, commandes conservées (obligations comptables).
-- P1 : vérification de l'email à l'inscription.
+- P1 : vérification de l'email à l'inscription. Livré le 26/09/2026.
 
 ### 6.2 Catalogue
 
@@ -144,8 +144,8 @@ Développée derrière l'interrupteur, testée en production en mode aperçu adm
 ### 6.6 Admin commandes et clients
 
 - Commandes : liste filtrable par statut et par mode (test / réel), détail (client, lignes, configuration, adresse, identifiant de paiement), changement de statut, export CSV.
-- P1 : email automatique au client à chaque changement de statut.
-- P1 : liste et recherche des clients.
+- P1 : email automatique au client à chaque changement de statut. Livré le 27/09/2026 : En fabrication, Prête, Expédiée, Livrée, Annulée, Remboursée ; case « Prévenir le client » cochée par défaut dans l’admin.
+- P1 : liste et recherche des clients. Livré le 27/09/2026 : `/admin/clients.php`, consultation seule.
 
 ### 6.7 Mesure
 
