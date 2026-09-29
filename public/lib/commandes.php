@@ -350,6 +350,10 @@ function commandePublique(array $commande, array $lignes = []): array
 		'total_cents' => (int) $commande['total_cents'],
 		'payment_mode' => (string) $commande['payment_mode'],
 		'created_at' => (string) $commande['created_at'],
+		// Date du dernier changement de statut : elle date la dernière étape du
+		// suivi affiché au client. La base ne conserve pas l'historique complet
+		// des transitions, seulement la plus récente.
+		'updated_at' => (string) ($commande['updated_at'] ?? ''),
 		'adresse_livraison' => (string) $commande['adresse_livraison'],
 		'lignes' => array_map(static fn (array $ligne): array => [
 			'libelle' => (string) $ligne['libelle'],
