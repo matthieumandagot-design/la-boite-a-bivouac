@@ -29,7 +29,7 @@ Mise en « À VÉRIFIER » : chevauchement détecté par les contrôles, pièce 
 1. **Fichiers du dépôt** : `atelier/`, `.github/workflows/dossier-atelier.yml`, `public/api/dossier-atelier.php`
    (voir PROMPT_CLAUDE_CODE.md pour l'intégration au configurateur et aux commandes).
 2. **Secrets GitHub** (dépôt → Settings → Secrets and variables → Actions) :
-   `SMTP_HOST`, `SMTP_PORT` (465 ou 587), `SMTP_USER` (contact@laboiteabivouac.fr), `SMTP_PASSWORD`, `DEST_EMAIL`.
+   `ATELIER_SMTP_HOST`, `ATELIER_SMTP_PORT` (465 ou 587), `ATELIER_SMTP_USER` (contact@laboiteabivouac.fr), `ATELIER_SMTP_PASSWORD`, `ATELIER_DEST_EMAIL`. Prefixe ATELIER_ volontaire : `SMTP_PASSWORD` sert deja au relais Brevo de la newsletter, le reutiliser la casserait.
    Serveur SMTP : celui indiqué dans le manager OVH pour la boîte Zimbra.
 3. **Jeton GitHub** : Settings (compte) → Developer settings → Fine-grained tokens → accès au seul dépôt
    `la-boite-a-bivouac`, permission *Contents : Read and write*. Le coller directement dans le fichier OVH ci-dessous.

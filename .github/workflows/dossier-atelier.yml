@@ -136,12 +136,17 @@ jobs:
 
       - name: Envoyer le dossier par e-mail
         if: always()
+        # Secrets prefixes ATELIER_ : le depot utilise deja SMTP_PASSWORD et
+        # SMTP_LOGIN pour le relais Brevo de la newsletter. Reprendre les memes
+        # noms pour le SMTP de l'atelier aurait ecrase la configuration de la
+        # newsletter sans que rien ne le signale. Les variables passees a
+        # envoyer_dossier.py gardent, elles, les noms qu'il attend.
         env:
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          DEST_EMAIL: ${{ secrets.DEST_EMAIL }}
+          SMTP_HOST: ${{ secrets.ATELIER_SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.ATELIER_SMTP_PORT }}
+          SMTP_USER: ${{ secrets.ATELIER_SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.ATELIER_SMTP_PASSWORD }}
+          DEST_EMAIL: ${{ secrets.ATELIER_DEST_EMAIL }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 atelier/envoyer_dossier.py dossier
 
