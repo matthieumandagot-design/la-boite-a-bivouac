@@ -15,6 +15,7 @@ exigerCommerceActif();
 
 require_once __DIR__ . '/lib/commerce-api.php';
 require_once __DIR__ . '/../lib/verification-email.php';
+require_once __DIR__ . '/../lib/oauth.php';
 
 apiExigerMethode('GET');
 
@@ -25,6 +26,9 @@ $csrf = jetonCsrfClient();
 $client = null;
 /** Adresse confirmée ? Conditionne le passage de commande, pas la connexion. */
 $verifie = false;
+/** Comptes Google/Facebook rattachés, et existence d'un mot de passe. */
+$identites = [];
+$motDePasseDefini = true;
 $id = clientConnecteId();
 
 if ($id !== null) {
@@ -37,6 +41,11 @@ if ($id !== null) {
 	if ($ligne !== null && $ligne['anonymise_a'] === null) {
 		$client = clientPublic($ligne);
 		$verifie = emailVerifie($ligne);
+		$identites = array_map(
+			static fn (array $i): array => ['fournisseur' => (string) $i['fournisseur'], 'email' => (string) $i['email']],
+			identitesDuClient((int) $ligne['id'])
+		);
+		$motDePasseDefini = (int) ($ligne['password_defini'] ?? 1) === 1;
 	} else {
 		// Compte supprimé ou anonymisé pendant que la session vivait.
 		deconnecterClient();
@@ -49,4 +58,9 @@ apiJson(200, [
 	'csrf' => $csrf,
 	'client' => $client,
 	'email_verifie' => $verifie,
+	// Les boutons de connexion sociale ne s'affichent que pour les fournisseurs
+	// réellement configurés : mieux vaut aucun bouton qu'un bouton qui échoue.
+	'fournisseurs' => oauthFournisseursDisponibles(),
+	'identites' => $identites,
+	'mot_de_passe_defini' => $motDePasseDefini,
 ]);

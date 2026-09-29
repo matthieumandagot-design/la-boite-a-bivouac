@@ -35,9 +35,20 @@ apiExigerCsrf();
 
 $donnees = apiCorpsJson();
 $motDePasse = is_string($donnees['motdepasse'] ?? null) ? $donnees['motdepasse'] : '';
+$confirmation = is_string($donnees['email'] ?? null) ? normaliserEmail($donnees['email']) : '';
 
-if ($motDePasse === '' || authentifierClient((string) $client['email'], $motDePasse) === null) {
-	apiJson(403, ['error' => 'Mot de passe incorrect.']);
+/*
+ * Un compte créé par Google ou Facebook n'a pas de mot de passe : lui en
+ * demander un rendrait la suppression impossible. On confirme alors en
+ * retapant son adresse email — ce qui reste une action délibérée, et reste
+ * protégé par la session et le jeton CSRF.
+ */
+if ((int) ($client['password_defini'] ?? 1) === 1) {
+	if ($motDePasse === '' || authentifierClient((string) $client['email'], $motDePasse) === null) {
+		apiJson(403, ['error' => 'Mot de passe incorrect.']);
+	}
+} elseif ($confirmation === '' || !hash_equals(normaliserEmail((string) $client['email']), $confirmation)) {
+	apiJson(403, ['error' => 'Saisissez votre adresse email pour confirmer.']);
 }
 
 $clientId = (int) $client['id'];

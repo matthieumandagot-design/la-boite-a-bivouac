@@ -29,6 +29,59 @@ import PageCommerce from "../components/PageCommerce.astro";
 	let jeton: string | null = null;
 
 	type Client = { id: number; email: string; prenom: string; nom: string };
+	type Fournisseur = { id: string; nom: string };
+	type Identite = { fournisseur: string; email: string };
+
+	/**
+	 * Messages de retour d'une connexion Google ou Facebook.
+	 *
+	 * Le motif arrive en clair dans l'URL (`?oauth=…`) parce que le fournisseur
+	 * nous renvoie par une redirection : il n'y a pas de réponse JSON à lire.
+	 * Rien de sensible n'y transite, seulement un code d'issue.
+	 */
+	const MESSAGES_OAUTH: Record<string, string> = {
+		bienvenue: "Bienvenue ! Votre compte est créé.",
+		connecte: "",
+		lie: "Compte rattaché.",
+		"deja-lie": "Ce compte est déjà rattaché à un autre client.",
+		"compte-existant":
+			"Un compte existe déjà avec cette adresse email. Connectez-vous avec votre mot de passe, " +
+			"puis rattachez ce service depuis votre espace client.",
+		"sans-email":
+			"Ce service ne nous a communiqué aucune adresse email. Créez un compte avec une adresse : " +
+			"nous devons pouvoir vous joindre au sujet d'une commande.",
+		"compte-ferme": "Ce compte a été supprimé.",
+		refus: "Connexion annulée.",
+		etat: "La connexion a expiré. Réessayez.",
+		echange: "Connexion impossible pour le moment.",
+		profil: "Connexion impossible pour le moment.",
+		indisponible: "Ce mode de connexion n'est pas disponible.",
+	};
+
+	/** Boutons « Continuer avec … », pour les fournisseurs réellement configurés. */
+	function boutonsSociaux(fournisseurs: Fournisseur[], retour: string): HTMLElement | null {
+		if (fournisseurs.length === 0) return null;
+
+		const bloc = el("div", "mt-5 grid gap-2");
+		fournisseurs.forEach((f) => {
+			const lien = el(
+				"a",
+				"inline-flex items-center justify-center gap-2 rounded-full border border-ardoise/40 px-5 py-2.5 font-semibold text-brun-700 transition-colors hover:border-rouille-400 hover:text-rouille-500",
+				`Continuer avec ${f.nom}`,
+			);
+			lien.href = `/api/oauth-demarrer.php?fournisseur=${encodeURIComponent(f.id)}&retour=${encodeURIComponent(retour)}`;
+			bloc.append(lien);
+		});
+
+		const note = el(
+			"p",
+			"t-petit mt-1 text-brun-400",
+			"Nous ne recevons que votre nom et votre adresse email, et rien n'est publié à votre place.",
+		);
+		bloc.append(note);
+
+		return bloc;
+	}
 	type Adresse = {
 		id: number;
 		libelle: string;
@@ -128,11 +181,18 @@ import PageCommerce from "../components/PageCommerce.astro";
 
 	// ── Écrans ───────────────────────────────────────────────────────────
 
-	function ecranConnexion(): HTMLElement {
+	function ecranConnexion(fournisseurs: Fournisseur[]): HTMLElement {
 		const bloc = el("div");
 
 		// Connexion
 		const connexion = carte("Se connecter");
+
+		// Les boutons sociaux d'abord : c'est le chemin le plus court pour qui en
+		// dispose, et il évite un mot de passe de plus à retenir.
+		const sociaux = boutonsSociaux(fournisseurs, "/compte/");
+		if (sociaux) {
+			connexion.append(sociaux, el("p", "t-petit mt-5 text-brun-400", "ou avec une adresse email"));
+		}
 		const fConnexion = el("form");
 		fConnexion.append(champ("email", "Adresse email", "email"), champ("motdepasse", "Mot de passe", "password"));
 		const msgConnexion = messagerie();
@@ -337,7 +397,82 @@ import PageCommerce from "../components/PageCommerce.astro";
 		return bloc;
 	}
 
-	function ecranClient(client: Client, adresses: Adresse[], commandes: Commande[], verifie: boolean): HTMLElement {
+	/** Carte « Comptes liés » : rattacher ou détacher Google et Facebook. */
+	function carteIdentites(fournisseurs: Fournisseur[], identites: Identite[], motDePasseDefini: boolean): HTMLElement {
+		const bloc = carte("Connexion avec Google ou Facebook");
+		const message = el("p", "t-petit mt-3");
+		message.setAttribute("role", "status");
+		message.hidden = true;
+
+		if (fournisseurs.length === 0) {
+			bloc.append(el("p", "t-petit mt-4 text-brun-400", "Aucun service de connexion n'est disponible."));
+			return bloc;
+		}
+
+		fournisseurs.forEach((f) => {
+			const liee = identites.find((i) => i.fournisseur === f.id);
+			const ligne = el("div", "mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ardoise/20 pt-4");
+
+			const texte = el("div");
+			texte.append(el("p", "font-display font-semibold text-brun-700", f.nom));
+			texte.append(
+				el("p", "t-petit text-brun-500", liee ? `Rattaché — ${liee.email}` : "Non rattaché"),
+			);
+			ligne.append(texte);
+
+			if (liee) {
+				const detacher = lienBouton("Détacher");
+				detacher.addEventListener("click", async () => {
+					const reponse = await envoyer(
+						`/api/compte-identite.php?fournisseur=${encodeURIComponent(f.id)}`,
+						"DELETE",
+					);
+					if (reponse.ok) {
+						void afficher();
+						return;
+					}
+					message.textContent = reponse.donnees.error ?? "Impossible de détacher ce compte.";
+					message.className = "t-petit mt-3 text-rouille-500";
+					message.hidden = false;
+				});
+				ligne.append(detacher);
+			} else {
+				const rattacher = el(
+					"a",
+					"t-petit text-brun-500 underline transition-colors hover:text-rouille-500",
+					"Rattacher",
+				);
+				rattacher.href = `/api/oauth-demarrer.php?fournisseur=${encodeURIComponent(f.id)}&retour=/compte/`;
+				ligne.append(rattacher);
+			}
+
+			bloc.append(ligne);
+		});
+
+		if (!motDePasseDefini) {
+			bloc.append(
+				el(
+					"p",
+					"t-petit mt-4 text-brun-500",
+					"Votre compte n'a pas de mot de passe. Pour en définir un, utilisez « mot de passe oublié » " +
+						"depuis la page de connexion : le lien reçu par email vous permettra d'en choisir un.",
+				),
+			);
+		}
+
+		bloc.append(message);
+		return bloc;
+	}
+
+	function ecranClient(
+		client: Client,
+		adresses: Adresse[],
+		commandes: Commande[],
+		verifie: boolean,
+		fournisseurs: Fournisseur[],
+		identites: Identite[],
+		motDePasseDefini: boolean,
+	): HTMLElement {
 		const bloc = el("div");
 		if (!verifie) bloc.append(bandeauVerification());
 
@@ -445,6 +580,8 @@ import PageCommerce from "../components/PageCommerce.astro";
 		});
 		bloc.append(historique);
 
+		bloc.append(carteIdentites(fournisseurs, identites, motDePasseDefini));
+
 		// Suppression
 		const fin = carte("Supprimer mon compte");
 		fin.append(
@@ -455,7 +592,14 @@ import PageCommerce from "../components/PageCommerce.astro";
 			),
 		);
 		const fSuppression = el("form", "mt-2");
-		fSuppression.append(champ("motdepasse", "Confirmez avec votre mot de passe", "password"));
+		// Un compte créé par Google ou Facebook n'a pas de mot de passe : lui en
+		// demander un rendrait la suppression impossible. On confirme alors en
+		// retapant son adresse, ce qui reste une action délibérée.
+		fSuppression.append(
+			motDePasseDefini
+				? champ("motdepasse", "Confirmez avec votre mot de passe", "password")
+				: champ("email", "Confirmez en saisissant votre adresse email", "email"),
+		);
 		const msgSuppression = messagerie();
 		const boutonSuppression = boutonPrincipal("Supprimer définitivement");
 		boutonSuppression.className = boutonSuppression.className.replace("bg-rouille-500", "bg-brun-700").replace("hover:bg-rouille-400", "hover:bg-brun-600");
@@ -467,9 +611,13 @@ import PageCommerce from "../components/PageCommerce.astro";
 			evenement.preventDefault();
 			if (!window.confirm("Supprimer définitivement votre compte ?")) return;
 			msgSuppression.dire("Suppression…");
-			const reponse = await envoyer("/api/compte-suppression.php", "POST", {
-				motdepasse: valeur(fSuppression, "motdepasse"),
-			});
+			const reponse = await envoyer(
+				"/api/compte-suppression.php",
+				"POST",
+				motDePasseDefini
+					? { motdepasse: valeur(fSuppression, "motdepasse") }
+					: { email: valeur(fSuppression, "email") },
+			);
 			if (reponse.ok) {
 				void afficher();
 			} else {
@@ -506,8 +654,20 @@ import PageCommerce from "../components/PageCommerce.astro";
 		}
 
 		const etat = await envoyer("/api/compte.php", "GET");
+		const fournisseurs = (etat.donnees.fournisseurs ?? []) as Fournisseur[];
+
+		// Retour d'une connexion Google ou Facebook : le motif arrive dans l'URL,
+		// le fournisseur nous ayant renvoyés par une redirection.
+		const motifOauth = parametres.get("oauth");
+		const messageOauth = motifOauth ? (MESSAGES_OAUTH[motifOauth] ?? "Connexion impossible.") : "";
+		if (motifOauth) {
+			history.replaceState(null, "", window.location.pathname + (parametres.get("retour") ? `?retour=${parametres.get("retour")}` : ""));
+		}
+
 		if (!etat.ok || etat.donnees.connecte !== true) {
-			zone.replaceChildren(ecranConnexion());
+			const ecran = ecranConnexion(fournisseurs);
+			if (messageOauth !== "") ecran.prepend(bandeauMessage(messageOauth));
+			zone.replaceChildren(ecran);
 			return;
 		}
 
@@ -523,14 +683,26 @@ import PageCommerce from "../components/PageCommerce.astro";
 		const carnet = await envoyer("/api/compte-adresses.php", "GET");
 		const historique = await envoyer("/api/commandes.php", "GET");
 
-		zone.replaceChildren(
-			ecranClient(
-				etat.donnees.client as Client,
-				(carnet.donnees.adresses ?? []) as Adresse[],
-				(historique.donnees.commandes ?? []) as Commande[],
-				etat.donnees.email_verifie === true,
-			),
+		const ecran = ecranClient(
+			etat.donnees.client as Client,
+			(carnet.donnees.adresses ?? []) as Adresse[],
+			(historique.donnees.commandes ?? []) as Commande[],
+			etat.donnees.email_verifie === true,
+			fournisseurs,
+			(etat.donnees.identites ?? []) as Identite[],
+			etat.donnees.mot_de_passe_defini !== false,
 		);
+		if (messageOauth !== "") ecran.prepend(bandeauMessage(messageOauth));
+
+		zone.replaceChildren(ecran);
+	}
+
+	/** Bandeau d'information en tête d'écran, pour un retour de connexion sociale. */
+	function bandeauMessage(texte: string): HTMLElement {
+		const bloc = el("div", "mb-6 rounded-2xl border border-ardoise/30 bg-sable/50 p-4");
+		bloc.setAttribute("role", "status");
+		bloc.append(el("p", "t-petit text-brun-600", texte));
+		return bloc;
 	}
 
 	/** Date ISO-8601 UTC rendue lisible en heure locale. */

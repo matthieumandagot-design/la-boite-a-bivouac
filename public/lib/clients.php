@@ -206,11 +206,17 @@ function authentifierClient(string $email, string $motDePasse): ?array
 	return $client;
 }
 
-/** Remplace le mot de passe d'un compte. */
+/**
+ * Remplace le mot de passe d'un compte.
+ *
+ * Pose aussi password_defini : un compte créé par Google ou Facebook n'en avait
+ * pas, et « mot de passe oublié » est précisément le chemin qui lui permet d'en
+ * obtenir un — il peut ensuite se connecter sans le fournisseur.
+ */
 function changerMotDePasse(int $clientId, string $motDePasse): void
 {
 	$requete = bdCommerce()->prepare(
-		'UPDATE customers SET password_hash = :hash, updated_at = :maj WHERE id = :id'
+		'UPDATE customers SET password_hash = :hash, password_defini = 1, updated_at = :maj WHERE id = :id'
 	);
 	$requete->execute([
 		':hash' => password_hash($motDePasse, PASSWORD_DEFAULT),

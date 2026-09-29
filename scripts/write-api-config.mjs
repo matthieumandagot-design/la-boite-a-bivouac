@@ -6,6 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.join(__dirname, "..", "dist", "api");
 const OUTPUT_PATH = path.join(OUTPUT_DIR, "config.php");
 const STRIPE_PATH = path.join(OUTPUT_DIR, "config-stripe.php");
+const SOCIAL_PATH = path.join(OUTPUT_DIR, "config-social.php");
 
 const { ADMIN_USERNAME, ADMIN_PASSWORD_HASH, SMTP_LOGIN, SMTP_PASSWORD, NEWSLETTER_TOKEN_SALT } = process.env;
 
@@ -117,6 +118,64 @@ ${lignes.join("\n")}
 	);
 }
 
+/**
+ * Identifiants d'application Google et Facebook, pour la connexion sociale.
+ *
+ * Optionnels et par paire : un identifiant sans son secret ne sert à rien, et
+ * un fournisseur à moitié configuré afficherait un bouton qui échoue. On écrit
+ * donc une paire ou rien, et lib/oauth.php ne propose que ce qui est complet.
+ *
+ * Fichier séparé de config.php pour les mêmes raisons que les clés Stripe :
+ * pas de collision de constantes, et les endpoints qui n'en ont pas besoin ne
+ * chargent pas ces secrets.
+ */
+const PAIRES_SOCIALES = [
+	{ nom: "Google", constantes: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"] },
+	{ nom: "Facebook", constantes: ["FACEBOOK_APP_ID", "FACEBOOK_APP_SECRET"] },
+];
+
+async function ecrireConfigSocial() {
+	const lignes = [];
+	const retenus = [];
+
+	for (const { nom, constantes } of PAIRES_SOCIALES) {
+		const valeurs = constantes.map((c) => (process.env[c] ?? "").trim());
+
+		if (valeurs.every((v) => v === "")) {
+			continue;
+		}
+		if (valeurs.some((v) => v === "")) {
+			console.warn(
+				`[write-api-config] ${nom} ignoré : ${constantes.join(" et ")} doivent être fournis tous les deux. ` +
+					"Un fournisseur à moitié configuré afficherait un bouton qui échoue.",
+			);
+			continue;
+		}
+
+		constantes.forEach((c, i) => lignes.push(`define('${c}', '${escapeSingleQuoted(valeurs[i])}');`));
+		retenus.push(nom);
+	}
+
+	if (lignes.length === 0) {
+		console.log("[write-api-config] Aucun fournisseur de connexion sociale configuré.");
+		return;
+	}
+
+	const content = `<?php
+declare(strict_types=1);
+
+// Généré au déploiement par scripts/write-api-config.mjs, jamais commité.
+// Seuls les fournisseurs entièrement configurés sont définis ; lib/oauth.php
+// n'en propose aucun autre. L'URL de retour déclarée chez chaque fournisseur
+// doit être exactement https://laboiteabivouac.fr/api/oauth-retour.php
+${lignes.join("\n")}
+`;
+
+	await writeFile(SOCIAL_PATH, content, "utf-8");
+
+	console.log(`[write-api-config] ${path.relative(process.cwd(), SOCIAL_PATH)} écrit (${retenus.join(", ")}).`);
+}
+
 /** Écrit dist/api/config.php : SMTP, identifiants admin et sel de désinscription. */
 async function ecrireConfigApi() {
 	if (!ADMIN_USERNAME || !ADMIN_PASSWORD_HASH || !SMTP_LOGIN || !SMTP_PASSWORD || !NEWSLETTER_TOKEN_SALT) {
@@ -156,6 +215,7 @@ define('UNSUBSCRIBE_SALT', '${escapeSingleQuoted(NEWSLETTER_TOKEN_SALT)}');
 async function main() {
 	await mkdir(OUTPUT_DIR, { recursive: true });
 	await ecrireConfigStripe();
+	await ecrireConfigSocial();
 	await ecrireConfigApi();
 }
 
