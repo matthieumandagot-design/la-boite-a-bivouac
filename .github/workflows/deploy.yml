@@ -1,4 +1,4 @@
-name: Deploy to OVH (FTP)
+name: Deploy to OVH (FTPS)
 
 on:
   push:
@@ -83,12 +83,19 @@ jobs:
           STRIPE_LIVE_SECRET_KEY: ${{ secrets.STRIPE_LIVE_SECRET_KEY }}
           STRIPE_LIVE_WEBHOOK_SECRET: ${{ secrets.STRIPE_LIVE_WEBHOOK_SECRET }}
 
-      - name: Deploy via FTP
+      # FTPS explicite : la connexion passe en TLS avant l'envoi du mot de
+      # passe, et les fichiers transitent chiffrés eux aussi. « strict » refuse
+      # un certificat invalide ou émis pour un autre nom : un serveur qui se
+      # ferait passer pour OVH ne recevrait pas les identifiants, qui donnent
+      # accès à tout l'hébergement (dont frette/).
+      - name: Deploy via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          security: strict
           local-dir: ./dist/
           server-dir: ./laboiteabivouac/
           # data/faq.json, data/questions.json, data/subscribers.json,
