@@ -5,23 +5,34 @@ export const TAGLINE = "L'aventure tient dans une boîte";
 // seul — 20 caractères, aucun mot-clé — alors que c'est la page la plus
 // importante du site. On garde la marque en tête, suivie de ce que le
 // produit est réellement, pour rester sous les ~60 caractères affichés.
-export const HOME_TITLE = "La Boîte à Bivouac — Module de bivouac pour votre remorque";
+export const HOME_TITLE = "La Boîte à Bivouac — Plans gratuits d'un module de bivouac pour remorque";
+/**
+ * Modèle libre (26/10/2026) : la Boîte n'est plus vendue. Le site offre le
+ * dossier de fabrication sur mesure, sous licence CC BY-SA 4.0.
+ */
 export const SITE_DESCRIPTION =
-	"La Boîte à Bivouac conçoit un box modulaire à installer sur une remorque que vous possédez déjà. Le même module s'adapte au bivouac, à la montagne et à la mer, avec une structure renforcée capable d'accueillir une tente de toit et un VTT XXL. Conçu et fabriqué en Occitanie.";
+	"La Boîte à Bivouac est un module amovible qui transforme une remorque utilitaire standard en base de bivouac. Ses plans sont libres et gratuits : configurez la Boîte aux cotes de votre remorque et recevez son dossier de fabrication complet. Conçue en Occitanie.";
 export const HOME_DESCRIPTION =
-	"Nous concevons et fabriquons en Occitanie des modules de bivouac et leurs équipements, à installer sur la remorque que vous avez déjà. Du matériel réparable, à partir de 1 400 €.";
+	"Configurez une Boîte à Bivouac aux cotes de votre remorque et recevez gratuitement son dossier de fabrication : plan A3, modèles 3D STEP et FreeCAD, liste de débit. Plans libres, sous licence CC BY-SA 4.0.";
+
+/** Licence des plans et des modèles 3D, citée partout où le dossier est évoqué. */
+export const LICENCE = {
+	nom: "CC BY-SA 4.0",
+	complet: "Creative Commons Attribution – Partage dans les mêmes conditions 4.0 International",
+	url: "https://creativecommons.org/licenses/by-sa/4.0/deed.fr",
+};
 
 /**
- * Tant que la boutique est fermée, la vitrine (prix, panier) est ouverte à tous
- * mais pas la commande : ce message l'explique à qui ajoute au panier ou tente
- * de commander (décision du 27/09/2026). À changer ici seulement.
+ * Conservé pour les composants du module commercial, aujourd'hui hors parcours
+ * (panier, commande) : la Boîte n'est plus vendue.
  */
-export const MESSAGE_OUVERTURE_COMMANDES = "Les commandes ouvriront au printemps 2027.";
+export const MESSAGE_OUVERTURE_COMMANDES =
+	"La Boîte n'est plus vendue : ses plans sont désormais offerts depuis le configurateur.";
 
 export const NAV_LINKS = [
 	{ href: "/", label: "Accueil" },
 	{ href: "/la-boite/", label: "La Boîte" },
-	{ href: "/configurateur/", label: "Configurateur" },
+	{ href: "/configurateur/", label: "Plans gratuits" },
 	{ href: "/equipements/", label: "Équipements" },
 	{ href: "/faq/", label: "FAQ" },
 	{ href: "/contact/", label: "Contact" },

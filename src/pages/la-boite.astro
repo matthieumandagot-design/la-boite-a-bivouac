@@ -1,7 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
-import { SITE_TITLE, SOCIAL_LINKS } from "../consts";
+import { SITE_TITLE, SOCIAL_LINKS, LICENCE } from "../consts";
 import SubscribeForm from "../components/SubscribeForm.astro";
 import BivouacExplorer from "../components/BivouacExplorer.astro";
 import VideoYouTube from "../components/VideoYouTube.astro";
@@ -13,7 +13,7 @@ import canoe from "../components/icons/canoe.svg?raw";
 import { toJsonLd } from "../utils/jsonld";
 
 const PAGE_DESCRIPTION =
-	"La Boîte à Bivouac : caisse modulaire en acier et OSB qui s'installe dans votre remorque standard. Tente de toit, vélos, matériel. V2 en octobre 2026.";
+	"La Boîte à Bivouac : caisse modulaire en acier et bois qui s'installe dans votre remorque standard. Tente de toit, vélos, matériel. Plans de fabrication libres et gratuits, sous licence CC BY-SA 4.0.";
 
 // Les six points clés du produit, rendus en blocs identiques. Trois s'appuient
 // sur une icône Tabler (`icon`), trois sur nos pictogrammes maison inlinés
@@ -124,35 +124,10 @@ const productSchema = {
 		"@type": "Organization",
 		name: SITE_TITLE,
 	},
-	offers: {
-		"@type": "Offer",
-		// Prix d'entrée : 1 200 € fixes + 200 € de variable pour une remorque de
-		// 100 cm et une Boîte de 35 cm (formule A du 27/09/2026,
-		// data/pricing.json), hors frais de livraison, comme l'indique la section
-		// prix de la page. Prix TTC (décision du 27/09/2026).
-		price: "1400",
-		priceCurrency: "EUR",
-		priceSpecification: {
-			"@type": "PriceSpecification",
-			minPrice: "1400",
-			priceCurrency: "EUR",
-			valueAddedTaxIncluded: true,
-		},
-		// Tant que le prix reste indicatif, on borne sa validité : sans cette
-		// date, Google considère l'offre comme périmée au bout de quelques mois
-		// et peut cesser d'afficher le résultat enrichi.
-		priceValidUntil: "2026-12-31",
-		itemCondition: "https://schema.org/NewCondition",
-		// Pas de propriété availability : la page annonce « elle sera disponible
-		// en pré-commande à l'automne », et aucun tunnel de commande n'existe
-		// aujourd'hui. Déclarer PreOrder laisserait entendre qu'on peut commander
-		// dès maintenant. À repasser à https://schema.org/PreOrder le jour où les
-		// pré-commandes ouvrent réellement.
-		//
-		// Barre oblique finale : sans elle, la donnée structurée pointait vers
-		// une redirection 301.
-		url: new URL("/la-boite/", Astro.site).href,
-	},
+	// Modèle libre (26/10/2026) : plus d'offre commerciale. Ce qui est offert,
+	// ce sont les plans ; la licence le dit aux moteurs comme aux visiteurs.
+	url: new URL("/la-boite/", Astro.site).href,
+	license: LICENCE.url,
 };
 ---
 
@@ -313,19 +288,19 @@ const productSchema = {
 			</div>
 			<div class="lg:order-1" data-reveal="left" style="--reveal-delay: 120ms">
 				<span class="inline-block rounded-full bg-rouille-500 px-4 py-1 t-menu font-medium uppercase tracking-widest text-ecru-50">
-					Octobre 2026
+					Projet ouvert
 				</span>
 				<h2 class="mt-4 t-titre font-display font-semibold text-brun-700">
-					V2 — Ce qui arrive en octobre
+					Des plans qui continuent d'évoluer
 				</h2>
 				<p class="t-corps mt-4 max-w-[70ch] text-brun-500">
-					La V2 intègre les retours des tests terrain. Plus légère, plus aérodynamique, avec un vrai
-					système de fixation à la remorque conçu pour être installé et retiré en moins de
-					10 minutes. Elle sera disponible en pré-commande à l'automne.
+					Les plans intègrent les retours des tests terrain de la V1. Ils continueront d'évoluer avec
+					les vôtres&nbsp;: une Boîte fabriquée, une amélioration, une erreur repérée sur un plan,
+					partagez-la. C'est tout l'intérêt d'un projet libre.
 				</p>
 				<div class="mt-6">
 					<p class="t-petit font-semibold text-brun-700">Restez informé</p>
-					<p class="t-petit mt-1 text-brun-400">Recevez un email dès que la V2 est disponible.</p>
+					<p class="t-petit mt-1 text-brun-400">Recevez un email à chaque nouvelle version des plans.</p>
 					<div class="mt-3">
 						<SubscribeForm />
 					</div>
@@ -334,26 +309,68 @@ const productSchema = {
 		</div>
 	</section>
 
-	<section class="border-t border-ardoise/30 bg-ecru-50 px-6 py-20 text-center sm:px-8 lg:px-12">
-		<div class="mx-auto max-w-[min(70ch,100%)]">
+	{/* Remplace « Le juste prix » (26/10/2026) : la Boîte n'est plus vendue. */}
+	<section id="licence" class="scroll-mt-24 border-t border-ardoise/30 bg-ecru-50 px-6 py-20 sm:px-8 lg:px-12">
+		<div class="mx-auto max-w-[min(70ch,100%)] text-center">
 			<h2 class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>
-				Le juste prix
+				Pourquoi c'est gratuit
 			</h2>
 			<p
 				class="mt-4 t-titre font-display font-semibold text-brun-700"
 				data-reveal
 				style="--reveal-delay: 90ms"
 			>
-				À partir de 1&nbsp;400&nbsp;€&nbsp;TTC.
+				Les plans sont offerts, et ils le resteront.
 			</p>
-			<p class="t-corps mt-4 max-w-[70ch] text-brun-500" data-reveal style="--reveal-delay: 180ms">
-				Nous voulons que partir à quatre ou cinq reste accessible. C'est ce qui guide nos
-				choix&nbsp;: des matériaux simples, un assemblage que nous maîtrisons, et le prix le plus
-				bas que nous puissions tenir sans rogner sur la solidité.
+			<p class="t-corps mt-4 text-brun-500" data-reveal style="--reveal-delay: 180ms">
+				La Boîte à Bivouac est née d'une envie simple&nbsp;: partir à quatre ou cinq sans acheter de van.
+				Plutôt que de la vendre, nous partageons tout le travail de conception — cotes, plans, modèles
+				3D — pour que chacun puisse la fabriquer, l'adapter et l'améliorer.
 			</p>
-			<p class="t-petit mt-6 text-brun-400" data-reveal style="--reveal-delay: 240ms">
-				*Prix TTC de la Boîte seule, calculé selon la longueur de la remorque et la hauteur de la
-				Boîte, hors frais de livraison. Les équipements ne sont pas compris.
+		</div>
+
+		<div class="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-2">
+			<div class="rounded-2xl border border-ardoise/30 bg-sable/40 p-6" data-reveal="left">
+				<p class="flex items-center gap-3 font-display font-semibold text-brun-700">
+					<span class="flex h-10 w-10 items-center justify-center rounded-full bg-mousse text-sable">
+						<Icon name="tabler:license" class="h-5 w-5" />
+					</span>
+					Licence {LICENCE.nom}
+				</p>
+				<p class="t-petit mt-3 text-brun-500">
+					Plans, modèles 3D et listes de débit sont diffusés sous licence{" "}
+					<a href={LICENCE.url} target="_blank" rel="license noopener noreferrer" class="text-rouille-500 underline-offset-4 hover:underline">{LICENCE.complet}</a>.
+					Vous pouvez les utiliser, les modifier et les partager, y compris pour fabriquer des Boîtes,
+					à deux conditions&nbsp;: citer La Boîte à Bivouac, et partager vos versions modifiées sous la
+					même licence.
+				</p>
+			</div>
+			<div class="rounded-2xl border border-ardoise/30 bg-sable/40 p-6" data-reveal="right" style="--reveal-delay: 120ms">
+				<p class="flex items-center gap-3 font-display font-semibold text-brun-700">
+					<span class="flex h-10 w-10 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
+						<Icon name="tabler:alert-triangle" class="h-5 w-5" />
+					</span>
+					Avant de fabriquer
+				</p>
+				<p class="t-petit mt-3 text-brun-500">
+					Le dossier est un avant-projet généré automatiquement, fourni tel quel, sans garantie. Faites-le
+					relire par un professionnel. La tenue des barres de toit n'a pas été validée par calcul ni par
+					essai certifié&nbsp;: respectez la charge de votre remorque (PTAC) et le code de la route. La
+					fabrication et l'usage restent sous votre responsabilité.
+				</p>
+			</div>
+		</div>
+
+		<div class="mt-12 text-center" data-reveal>
+			<a
+				href="/configurateur/"
+				class="inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
+			>
+				Configurer ma Boîte et recevoir les plans
+				<Icon name="tabler:arrow-right" class="h-4 w-4" />
+			</a>
+			<p class="t-petit mt-4 text-brun-400">
+				Vous préférez ne pas chercher d'atelier&nbsp;? <a href="/contact/" class="text-rouille-500 underline-offset-4 hover:underline">Écrivez-nous</a>&nbsp;: nous pouvons prendre en charge la fabrication.
 			</p>
 		</div>
 	</section>

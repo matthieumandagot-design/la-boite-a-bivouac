@@ -3,3 +3,7 @@ RewriteRule ^produit/?$ /la-boite [R=301,L]
 # Ancienne adresse du configurateur (renommé le 27/09/2026) : les liens
 # existants et le référencement suivent la redirection permanente.
 RewriteRule ^compatibilite/?$ /configurateur/ [R=301,L]
+# Modèle libre (26/10/2026) : la Boîte n'est plus vendue. Boutique, panier et
+# tunnel de commande renvoient vers le configurateur, qui offre les plans. Les
+# pages restent dans le code (module commercial en sommeil), hors parcours.
+RewriteRule ^(boutique|panier|commande)/?$ /configurateur/ [R=301,L]

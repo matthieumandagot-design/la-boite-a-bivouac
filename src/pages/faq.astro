@@ -7,7 +7,7 @@ import { toJsonLd } from "../utils/jsonld";
 // repli (voir syncFaq() plus bas) : les questions sont désormais rendues dans
 // le HTML dès le build — affichage immédiat, et la page reste lisible sans JS.
 // Le fetch ne sert plus qu'à refléter les éditions live faites via /admin/faq.php
-// (public/data/faq.json, non versionné) : penser à resynchroniser
+// (public/data/faq-libre.json, non versionné) : penser à resynchroniser
 // public/data/faq.default.json après toute édition FAQ en production, pour que
 // le contenu rendu au build et le JSON-LD restent exacts.
 import faqData from "../../public/data/faq.default.json";
@@ -31,7 +31,7 @@ const faqSchema = {
 <Layout
 	title="FAQ"
 	fullTitle="FAQ — La Boîte à Bivouac"
-	description="Compatibilité remorque, prix, installation, dimensions, garantie : 20 réponses aux questions les plus posées sur La Boîte à Bivouac."
+	description="Plans gratuits, licence, fabrication, compatibilité remorque, dimensions : les réponses aux questions les plus posées sur La Boîte à Bivouac."
 >
 	<script type="application/ld+json" set:html={toJsonLd(faqSchema)} />
 	<ScrollReveal />
@@ -51,7 +51,7 @@ const faqSchema = {
 				data-reveal
 				style="--reveal-delay: 120ms"
 			>
-				{faqItems.length} réponses sur la compatibilité, le prix, l'installation et l'entretien de
+				{faqItems.length} réponses sur les plans gratuits, leur fabrication, la compatibilité et l'installation de
 				La Boîte à Bivouac.
 			</p>
 
@@ -392,7 +392,7 @@ const faqSchema = {
 
 		let live: unknown;
 		try {
-			const response = await fetch("/data/faq.json", { cache: "no-store" });
+			const response = await fetch("/data/faq-libre.json", { cache: "no-store" });
 			if (!response.ok) return;
 			live = await response.json();
 		} catch {

@@ -1,5 +1,5 @@
 # La Boîte à Bivouac — génération automatique du dossier atelier
-# Déclenché par le site (commande validée ou bouton admin) via repository_dispatch,
+# Déclenché par le site (dossier offert depuis le configurateur, commande ou bouton admin) via repository_dispatch,
 # ou à la main depuis l'onglet Actions de GitHub (workflow_dispatch).
 # Produit : modèle FreeCAD, STEP soudé, STEP d'ensemble, plan PDF A3, débit CSV, aperçus, rapport.
 
@@ -78,8 +78,30 @@ jobs:
           ref = ''.join(c if c.isalnum() or c in '-_' else '-' for c in str(cfg.get('reference', 'sans-ref')))[:40]
           with open(os.environ['GITHUB_ENV'], 'a') as f:
               f.write('REF=%s\n' % ref)
-          print(json.dumps(cfg, ensure_ascii=False, indent=2))
+          # Cotes seules : le destinataire chiffré d'un dossier offert n'a rien à faire dans le journal.
+          print(json.dumps({k: v for k, v in cfg.items() if k != 'destinataire_chiffre'}, ensure_ascii=False, indent=2))
           PY
+
+      # Dossier offert (modèle libre) : le site transmet l'adresse du demandeur chiffrée
+      # (public/lib/dossier-gratuit.php). Elle est déchiffrée ici, masquée dans tous les
+      # journaux qui suivent, puis passée à l'étape d'envoi par GITHUB_ENV. Le script
+      # valide l'adresse (aucun espace ni retour à la ligne) : pas d'injection possible
+      # dans GITHUB_ENV. Échec de déchiffrement : le dossier part à l'adresse interne seule.
+      - name: Destinataire du dossier offert
+        env:
+          CLE_EMAIL: ${{ secrets.ATELIER_CLE_EMAIL }}
+        run: |
+          if python3 -c "import json,sys; sys.exit(0 if json.load(open('config.json')).get('destinataire_chiffre') else 1)"; then
+            if DEST=$(python3 atelier/dechiffrer_destinataire.py config.json) && [ -n "$DEST" ]; then
+              echo "::add-mask::$DEST"
+              echo "DEST_DEMANDEUR=$DEST" >> "$GITHUB_ENV"
+              echo "Dossier offert : destinataire déchiffré."
+            else
+              echo "::warning::Destinataire illisible (secret ATELIER_CLE_EMAIL absent ou différent de CLE_EMAIL sur OVH) : envoi à l'adresse interne seule."
+            fi
+          else
+            echo "Dossier atelier (commande ou lancement manuel) : envoi à l'adresse interne."
+          fi
 
       - name: Installer l'affichage virtuel
         run: |

@@ -78,3 +78,7 @@ public/data/settings.json
 public/data/private/*.sqlite
 public/data/private/*.sqlite-wal
 public/data/private/*.sqlite-shm
+# Copies locales de la config du dossier atelier (contiennent des secrets)
+config-dossier-atelier.*.php
+!config-dossier-atelier.example.php
+publication-resultat.txt

@@ -1,0 +1,120 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+
+/**
+ * /dossier/ — confirmation d'une demande de dossier offert
+ * (public/lib/dossier-gratuit.php).
+ *
+ * Le lien de l'email mène ici avec le jeton signé dans ?t=. La génération ne
+ * part qu'au clic sur le bouton, en POST : les antivirus de messagerie ouvrent
+ * les liens d'eux-mêmes, et un simple GET aurait confirmé à la place du
+ * destinataire. Page hors index : elle n'a de sens qu'avec un jeton.
+ */
+---
+
+<Layout
+	title="Votre dossier de fabrication"
+	description="Confirmez votre demande pour recevoir le dossier de fabrication de votre Boîte à Bivouac."
+	noindex
+>
+	<section class="border-b border-ardoise/30 bg-sable/50 px-6 py-16 sm:px-8 lg:px-12">
+		<div class="mx-auto max-w-[min(70ch,100%)]">
+			<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">Dossier de fabrication</p>
+			<h1 class="mt-3 t-hero font-display font-semibold text-brun-700">Plus qu'un clic</h1>
+
+			<div class="mt-8 rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm sm:p-8">
+				<div id="dossier-pret">
+					<p class="t-corps text-brun-500">
+						Confirmez votre demande&nbsp;: nous générons les plans de votre Boîte à vos cotes, puis nous
+						vous les envoyons par email. Comptez 10 à 15 minutes.
+					</p>
+					<button
+						id="dossier-confirmer"
+						type="button"
+						class="mt-6 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-7 py-3.5 text-base font-semibold text-ecru-50 shadow-md transition-colors hover:bg-rouille-400 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						Lancer la génération de mon dossier
+						<Icon name="tabler:arrow-right" class="h-4 w-4" />
+					</button>
+				</div>
+
+				<div id="dossier-resultat" role="status" aria-live="polite" hidden>
+					<p id="dossier-titre" class="t-sous font-display font-semibold text-brun-700"></p>
+					<p id="dossier-texte" class="t-corps mt-3 text-brun-500"></p>
+				</div>
+
+				<p id="dossier-sans-jeton" class="t-corps text-brun-500" hidden>
+					Ce lien est incomplet. Ouvrez celui de l'email de confirmation en entier, ou refaites votre
+					demande depuis le <a href="/configurateur/" class="text-rouille-500 underline underline-offset-4">configurateur</a>.
+				</p>
+			</div>
+
+			<p class="t-petit mt-6 text-brun-400">
+				Une question sur vos plans, ou envie que nous fabriquions la Boîte pour vous&nbsp;?{" "}
+				<a href="/contact/" class="text-rouille-500 underline-offset-4 hover:underline">Écrivez-nous</a>.
+			</p>
+		</div>
+	</section>
+</Layout>
+
+<script>
+	const jeton = new URLSearchParams(location.search).get("t") ?? "";
+	const pret = document.getElementById("dossier-pret");
+	const bouton = document.getElementById("dossier-confirmer") as HTMLButtonElement | null;
+	const resultat = document.getElementById("dossier-resultat");
+	const titre = document.getElementById("dossier-titre");
+	const texte = document.getElementById("dossier-texte");
+	const sansJeton = document.getElementById("dossier-sans-jeton");
+
+	function montrer(t: string, corps: string, garderBouton = false): void {
+		if (!resultat || !titre || !texte || !pret) return;
+		titre.textContent = t;
+		texte.innerHTML = corps;
+		resultat.hidden = false;
+		pret.hidden = !garderBouton;
+	}
+
+	if (!jeton.includes(".")) {
+		if (pret) pret.hidden = true;
+		if (sansJeton) sansJeton.hidden = false;
+	} else {
+		// Le jeton n'a plus rien à faire dans la barre d'adresse ni dans l'historique.
+		history.replaceState(null, "", location.pathname);
+
+		bouton?.addEventListener("click", async () => {
+			bouton.disabled = true;
+			bouton.textContent = "Lancement…";
+			try {
+				const reponse = await fetch("/api/dossier-gratuit.php", {
+					method: "POST",
+					cache: "no-store",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ action: "confirmer", jeton }),
+				});
+				const donnees = (await reponse.json().catch(() => ({}))) as { ok?: boolean; message?: string };
+				if (reponse.ok && donnees.ok) {
+					montrer(
+						"C'est lancé.",
+						"Vos plans sont en cours de génération. Ils arrivent par email d'ici 10 à 15 minutes, avec le plan PDF, les modèles 3D et la liste de débit. Pensez à regarder vos indésirables. Bon bivouac&nbsp;!",
+					);
+				} else if (reponse.status === 409) {
+					montrer("Déjà en route.", donnees.message ?? "");
+				} else if (reponse.status === 410 || reponse.status === 400) {
+					montrer(
+						"Lien inutilisable.",
+						`${donnees.message ?? ""} <a href="/configurateur/" class="text-rouille-500 underline underline-offset-4">Retour au configurateur</a>.`,
+					);
+				} else {
+					bouton.disabled = false;
+					bouton.textContent = "Réessayer";
+					montrer("Un contretemps.", donnees.message ?? "La génération n'a pas pu être lancée. Réessayez dans quelques minutes.", true);
+				}
+			} catch {
+				bouton.disabled = false;
+				bouton.textContent = "Réessayer";
+				montrer("Connexion impossible.", "Vérifiez votre réseau et réessayez.", true);
+			}
+		});
+	}
+</script>

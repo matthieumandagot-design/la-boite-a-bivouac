@@ -35,7 +35,7 @@ const DOSSIER_DATA = path.join(__dirname, "..", "public", "data");
 const SITE = process.env.SITE_URL ?? "https://laboiteabivouac.fr";
 
 const CIBLES = [
-	{ nom: "FAQ", source: "faq.json", repli: "faq.default.json" },
+	{ nom: "FAQ", source: "faq-libre.json", repli: "faq.default.json" },
 	{ nom: "Équipements", source: "equipements.json", repli: "equipements.default.json" },
 ];
 

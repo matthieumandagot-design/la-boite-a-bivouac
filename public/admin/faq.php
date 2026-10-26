@@ -32,7 +32,9 @@ if (empty($_SESSION['csrf_token'])) {
 $csrfToken = $_SESSION['csrf_token'];
 
 $dataDir = __DIR__ . '/../data';
-$liveFaqPath = $dataDir . '/faq.json';
+// Modèle libre (26/10/2026) : nouvelle FAQ, nouveau fichier live. L'ancien
+// data/faq.json (FAQ de vente) reste sur le serveur, plus lu par personne.
+$liveFaqPath = $dataDir . '/faq-libre.json';
 $defaultFaqPath = $dataDir . '/faq.default.json';
 $questionsPath = $dataDir . '/questions.json';
 

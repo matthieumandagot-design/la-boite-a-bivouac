@@ -7,7 +7,9 @@ import { Icon } from "astro-icon/components";
 // rendus dans le HTML dès le build — affichage immédiat et page lisible sans
 // JS. Le fetch de /api/accessoires.php (voir plus bas) ne sert qu'à refléter
 // ce qui a été saisi depuis /admin/equipements.php, fichier non versionné.
-// Prix affiché = prix estimé + marge ; le prix estimé, lui, n'est jamais publié.
+// Modèle libre (26/10/2026) : plus rien n'est vendu ici. La marge de
+// data/pricing.json est à zéro : le prix affiché est le prix constaté, à titre
+// indicatif, et le bouton d'ajout au panier a disparu.
 // Penser à resynchroniser public/data/equipements.default.json après une
 // campagne d'ajouts, pour que le HTML servi aux moteurs reste exact.
 import equipementsData from "../../public/data/equipements.default.json";
@@ -15,7 +17,6 @@ import pricing from "../../public/data/pricing.json";
 import {
 	prixVenteAccessoireCents,
 	libellePrixAccessoire,
-	libellePortAccessoire,
 } from "../data/accessoires";
 
 /** Marge sur les prix estimés (27/09/2026) : voir data/pricing.json. */
@@ -85,7 +86,7 @@ const parDomaine = Object.fromEntries(
 
 <Layout
 	title="Équipements"
-	description="Tente de toit, porte-vélos, rangements : les équipements compatibles avec votre remorque, avec La Boîte à Bivouac et avec ses barres de toit."
+	description="Tente de toit, porte-vélos, rangements : les équipements testés avec La Boîte à Bivouac, sa remorque et ses barres de toit, avec un prix indicatif. À acheter où vous voulez."
 >
 	<ScrollReveal />
 	<Lightbox />
@@ -102,10 +103,11 @@ const parDomaine = Object.fromEntries(
 			</h1>
 			<p class="t-corps mt-6 max-w-[80ch] text-brun-500" data-reveal style="--reveal-delay: 120ms">
 				La Boîte à Bivouac n'est qu'un point de départ. Choisissez d'abord où vous voulez ajouter
-				du matériel&nbsp;: nous vous montrons ensuite ce qui s'y monte.
+				du matériel&nbsp;: nous vous montrons ce que nous avons testé et ce qui s'y monte.
 			</p>
 			<p class="t-petit mt-3 text-brun-400" data-reveal style="--reveal-delay: 160ms">
-				Tous les prix sont indiqués TTC.
+				Nous ne vendons rien&nbsp;: les prix sont indicatifs, constatés TTC, et ce matériel s'achète chez le
+				revendeur de votre choix.
 			</p>
 		</div>
 	</section>
@@ -209,17 +211,9 @@ const parDomaine = Object.fromEntries(
 										<div class="eq-carte-corps">
 											<h2 class="eq-carte-titre">{item.titre}</h2>
 											{prixVente(item) !== null && (
-												<p class="eq-carte-prix">{libellePrixAccessoire(prixVente(item)!, item.precision ?? "")}</p>
-											)}
-											{(item.frais_port_cents ?? 0) > 0 && (
-												<p class="eq-carte-port">{libellePortAccessoire(item.frais_port_cents!)}</p>
+												<p class="eq-carte-prix">Environ {libellePrixAccessoire(prixVente(item)!, item.precision ?? "")}</p>
 											)}
 											<p class="eq-carte-texte">{item.description}</p>
-											{prixVente(item) !== null && (
-												<button type="button" class="eq-carte-ajouter" data-ajouter-equipement={item.id}>
-													Ajouter au panier
-												</button>
-											)}
 										</div>
 									</article>
 									);
@@ -735,15 +729,8 @@ const parDomaine = Object.fromEntries(
 		if (typeof item.prix_cents === "number") {
 			const prix = document.createElement("p");
 			prix.className = "eq-carte-prix";
-			prix.textContent = `${formaterCents(item.prix_cents)} TTC${item.precision ? ` ${item.precision}` : ""}`;
+			prix.textContent = `Environ ${formaterCents(item.prix_cents)} TTC${item.precision ? ` ${item.precision}` : ""}`;
 			corps.append(prix);
-		}
-
-		if ((item.port_cents ?? 0) > 0) {
-			const port = document.createElement("p");
-			port.className = "eq-carte-port";
-			port.textContent = `+ ${formaterCents(item.port_cents!)} de frais de port`;
-			corps.append(port);
 		}
 
 		const texte = document.createElement("p");
@@ -751,15 +738,6 @@ const parDomaine = Object.fromEntries(
 		texte.textContent = item.description;
 		corps.append(texte);
 
-		// Le clic est traité par src/scripts/features.ts, pour toutes les pages.
-		if (typeof item.prix_cents === "number") {
-			const ajouter = document.createElement("button");
-			ajouter.type = "button";
-			ajouter.className = "eq-carte-ajouter";
-			ajouter.dataset.ajouterEquipement = item.id;
-			ajouter.textContent = "Ajouter au panier";
-			corps.append(ajouter);
-		}
 
 		carte.append(corps);
 		return carte;

@@ -17,7 +17,7 @@ export default defineConfig({
       // indexé. Elles portent aussi noindex (voir src/components/PageCommerce.astro).
       filter: (page) =>
         !page.includes('/admin') &&
-        !['/panier/', '/compte/', '/commande/', '/boutique/'].some((chemin) =>
+        !['/panier/', '/compte/', '/commande/', '/boutique/', '/dossier/'].some((chemin) =>
           page.endsWith(chemin),
         ),
     }),

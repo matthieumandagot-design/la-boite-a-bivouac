@@ -1,82 +1,94 @@
 [
 	{
-		"question": "La Boîte à Bivouac est-elle vendue avec la remorque ?",
-		"answer": "Non. La Boîte à Bivouac est une caisse modulaire qui s'installe dans une remorque standard que vous possédez déjà. Elle est vendue seule, sans la remorque."
+		"question": "Les plans de La Boîte à Bivouac sont-ils vraiment gratuits ?",
+		"answer": "Oui. La Boîte à Bivouac n'est plus vendue : nous offrons son dossier de fabrication complet, généré aux cotes de votre remorque. Pas de compte à créer, pas de paiement, pas d'abonnement.\r\n\r\nNous avons étudié le marché et fait le choix de partager tout le travail de conception plutôt que de le garder pour nous."
+	},
+	{
+		"question": "Que contient le dossier de fabrication ?",
+		"answer": "Le dossier comprend :\r\n- un plan de fabrication A3 en PDF : vues, cotes, débit, rivetage et liste d'achats ;\r\n- les modèles 3D au format STEP, lisibles par tous les logiciels de CAO (pièces soudées seules, et ensemble complet avec charnières, verrous et loquets) ;\r\n- le modèle paramétrique FreeCAD, modifiable ;\r\n- la liste de débit et d'achats au format CSV, pour un tableur ;\r\n- des aperçus de votre Boîte en image."
+	},
+	{
+		"question": "Comment recevoir les plans ?",
+		"answer": "Dans le configurateur, choisissez votre remorque ou saisissez ses cotes intérieures, réglez la hauteur de la Boîte, puis indiquez votre adresse email. Vous recevez un lien de confirmation : un clic, et le dossier arrive par email 10 à 15 minutes plus tard.\r\n\r\nPensez à regarder vos indésirables si rien n'arrive."
+	},
+	{
+		"question": "Puis-je fabriquer et vendre des Boîtes à partir de ces plans ?",
+		"answer": "Oui. Les plans sont sous licence Creative Commons BY-SA 4.0 : vous pouvez les utiliser, les modifier et les partager, y compris pour fabriquer des Boîtes et les vendre.\r\n\r\nDeux conditions : citer La Boîte à Bivouac, et partager vos versions modifiées des plans sous la même licence."
+	},
+	{
+		"question": "Qui peut fabriquer ma Boîte ?",
+		"answer": "Vous-même si vous soudez, ou n'importe quel atelier de soudure, de métallerie ou de chaudronnerie. Transférez-lui simplement l'email reçu : le plan PDF suffit pour chiffrer et fabriquer, et les fichiers STEP s'ouvrent dans tous les logiciels de CAO.\r\n\r\nLe dossier a été pensé pour un atelier : tubes acier de longueurs standard, panneaux vissés, quincaillerie du commerce."
+	},
+	{
+		"question": "Pouvez-vous fabriquer la Boîte pour moi ?",
+		"answer": "C'est possible. Si vous préférez ne pas chercher d'atelier, écrivez-nous depuis la page Contact avec votre configuration : nous regarderons ensemble ce qu'il est possible de faire et à quelles conditions."
 	},
 	{
 		"question": "Avec quelles remorques est-elle compatible ?",
-		"answer": "La Boîte à Bivouac est conçue pour les remorques utilitaires standards. Elle peut également être fabriquée sur mesure pour une remorque artisanale, à condition que ses dimensions et sa structure permettent une installation sûre.\r\n\r\nVotre remorque est-elle compatible ? Faites une première analyse avec notre configurateur en ligne. La compatibilité définitive sera confirmée avant toute commande ou fabrication."
-	},
-	{
-		"question": "Combien de temps faut-il pour installer ou retirer la caisse ?",
-		"answer": "L’installation et le retrait sont pensés pour être simples et rapides, sans modification permanente de la remorque.\r\n\r\nLe temps dépendra du système de fixation retenu et de la configuration de la remorque, mais l’objectif est de pouvoir installer ou retirer la caisse en moins de 10 minutes avec un minimum d’outillage."
-	},
-	{
-		"question": "Quel poids les barres de toit peuvent-elles supporter ?",
-		"answer": "Les barres de toit sont prévues pour supporter jusqu’à 100 kg en roulant et 400 kg à l’arrêt."
-	},
-	{
-		"question": "La caisse est-elle verrouillable ?",
-		"answer": "Oui. La caisse est équipée d'un système de fermeture. L'intérieur est fermé et sécurisé pour protéger votre matériel pendant le transport et sur le camping."
+		"answer": "La Boîte à Bivouac est conçue pour les remorques utilitaires standards à ridelles. Le configurateur propose des modèles relevés chez plusieurs marques ; si le vôtre n'y est pas, saisissez vos cotes intérieures : le calcul est le même.\r\n\r\nLes plans automatiques couvrent aujourd'hui les caisses de 92 à 262 cm de long intérieur et de 72 à 142 cm de large, avec des ridelles de 17 à 60 cm et une Boîte de 60 à 120 cm de haut. En dehors, écrivez-nous : nous regarderons votre cas."
 	},
 	{
 		"question": "Quelles sont les dimensions de la caisse ?",
-		"answer": "Chaque caisse est fabriquée sur mesure : sa longueur et sa largeur sont adaptées aux dimensions intérieures de votre remorque, avec 1 cm de jeu de chaque côté pour faciliter son installation et son retrait.\r\n\r\nLa hauteur standard est de 90 cm. Elle peut être ajustée selon vos besoins, sans être inférieure à la hauteur des ridelles ni dépasser la longueur intérieure de la remorque.\r\n\r\nPour étudier votre configuration, utilisez notre configurateur.\r\n\r\nLa V1 mesure environ 1 830 mm de long × 1 130 mm de large × 1 000 mm de haut (dimensions extérieures). Ces dimensions sont susceptibles d'évoluer sur la V2."
+		"answer": "Chaque Boîte est dessinée sur mesure : sa longueur et sa largeur reprennent les dimensions intérieures de votre remorque, moins 1 cm de jeu de chaque côté pour faciliter son installation et son retrait.\r\n\r\nLa hauteur standard est de 90 cm. Elle se règle dans le configurateur, sans descendre sous la hauteur des ridelles.\r\n\r\nPour information, la V1 mesure environ 1 830 mm de long × 1 130 mm de large × 1 000 mm de haut (dimensions extérieures)."
 	},
 	{
 		"question": "Quel est le poids de La Boîte à Bivouac ?",
-		"answer": "La V1 est un prototype en acier et OSB. La V2 sera optimisée pour être plus légère. Le poids définitif sera communiqué à la sortie de la version commerciale.\r\n\r\nL’objectif est de rester sous les 90 kg pour la caisse seule."
+		"answer": "Il dépend de vos dimensions : la masse théorique de la structure est calculée et indiquée dans chaque dossier de fabrication.\r\n\r\nAjoutez-y le chargement et l'éventuelle tente de toit, et vérifiez que l'ensemble reste sous la charge autorisée de votre remorque (PTAC)."
 	},
 	{
-		"question": "N'importe quelle tente de toit peut-elle s'installer ?",
-		"answer": "Oui, les barres de toit sont standard et compatibles avec la majorité des tentes de toit du marché."
+		"question": "Quel poids les barres de toit peuvent-elles supporter ?",
+		"answer": "Les barres de toit de la V1 ont été prévues pour environ 100 kg en roulant et 400 kg à l'arrêt.\r\n\r\nCes valeurs n'ont pas été validées par un calcul ni par un essai certifié : faites vérifier la structure par un professionnel avant d'y installer une tente de toit, et respectez les charges indiquées par le fabricant de la tente."
 	},
 	{
-		"question": "Peut-on transporter des vélos à l'intérieur ?",
-		"answer": "Oui. La V1 permet de transporter facilement jusqu’à 4 vélos à l’intérieur, à l’abri des intempéries et des regards.\r\n\r\nPour augmenter encore la capacité, il est également possible d’ajouter un porte-vélos sur le timon de la remorque, pour transporter 2 vélos supplémentaires."
+		"question": "Avec quels logiciels ouvrir les fichiers ?",
+		"answer": "Le plan PDF s'ouvre partout. Les fichiers STEP s'ouvrent dans tous les logiciels de CAO (FreeCAD, Fusion, SolidWorks, Onshape…). Le fichier FCStd est le modèle paramétrique de FreeCAD, logiciel libre et gratuit. La liste de débit au format CSV s'ouvre dans Excel, LibreOffice ou Google Sheets."
 	},
 	{
-		"question": "Combien de personnes peut-on loger ?",
-		"answer": "La capacité de couchage dépend principalement de la tente de toit choisie, généralement de 2 à 4 personnes.\r\n\r\nEt comme les vélos, bagages et équipements sont transportés dans La Boîte à Bivouac plutôt que dans le coffre, il devient aussi possible d’aménager la voiture pour y faire dormir 1 à 2 personnes supplémentaires."
+		"question": "Les plans sont-ils garantis ?",
+		"answer": "Non. Le dossier est un avant-projet généré automatiquement, fourni tel quel, sans garantie. Faites-le relire par un professionnel avant fabrication.\r\n\r\nLa fabrication, l'installation et l'usage de la Boîte restent sous votre responsabilité, notamment le respect de la charge de votre remorque et du code de la route."
 	},
 	{
-		"question": "Peut-on rouler avec la caisse installée ?",
-		"answer": "Oui, c'est l'usage normal. La caisse est conçue pour être transportée chargée sur route et autoroute."
+		"question": "Combien de temps faut-il pour installer ou retirer la caisse ?",
+		"answer": "L'installation et le retrait sont pensés pour être simples et rapides, sans modification permanente de la remorque.\r\n\r\nLe temps dépend du système de fixation et de la configuration de la remorque ; l'objectif est de pouvoir installer ou retirer la caisse en moins de 10 minutes avec un minimum d'outillage."
 	},
 	{
 		"question": "Faut-il modifier la remorque ?",
 		"answer": "Non. Aucune modification permanente de la remorque n'est nécessaire. Quand la caisse est retirée, votre remorque redevient une remorque standard utilisable normalement."
 	},
 	{
-		"question": "Où est fabriquée La Boîte à Bivouac ?",
-		"answer": "La Boîte à Bivouac est conçue et développée près de Toulouse, en Occitanie.\r\n\r\nLe premier prototype a été fabriqué localement, et l’objectif est de conserver une fabrication française, au plus près du projet, avec des partenaires capables d’assurer la production en petite série."
+		"question": "La caisse est-elle verrouillable ?",
+		"answer": "Oui. Les plans prévoient des verrous et des loquets : l'intérieur est fermé pour protéger votre matériel pendant le transport et sur le camping."
+	},
+	{
+		"question": "N'importe quelle tente de toit peut-elle s'installer ?",
+		"answer": "Les barres de toit sont de section standard et conviennent à la majorité des tentes de toit du marché. Vérifiez les fixations et la charge admissible de votre tente avant de la monter."
+	},
+	{
+		"question": "Peut-on transporter des vélos à l'intérieur ?",
+		"answer": "Oui. La V1 permet de transporter jusqu'à 4 vélos à l'intérieur, à l'abri des intempéries et des regards.\r\n\r\nPour augmenter la capacité, il est aussi possible d'ajouter un porte-vélos sur le timon de la remorque, pour 2 vélos supplémentaires."
+	},
+	{
+		"question": "Combien de personnes peut-on loger ?",
+		"answer": "La capacité de couchage dépend surtout de la tente de toit choisie, généralement de 2 à 4 personnes.\r\n\r\nEt comme les vélos, bagages et équipements voyagent dans la Boîte plutôt que dans le coffre, la voiture peut aussi accueillir 1 à 2 couchages supplémentaires."
+	},
+	{
+		"question": "Peut-on rouler avec la caisse installée ?",
+		"answer": "Oui, c'est l'usage prévu : la caisse est transportée chargée sur route et autoroute. Respectez la charge de votre remorque et vérifiez l'arrimage avant de partir. Le configurateur indique aussi la hauteur hors tout de l'ensemble et la classe de péage correspondante."
 	},
 	{
 		"question": "De quels matériaux est-elle faite ?",
-		"answer": "La V1 est principalement composée d’une structure en acier soudé et de panneaux en bois, avec des barres de toit en acier.\r\n\r\nCe choix apporte un bon compromis entre résistance, simplicité de fabrication et coût.\r\n\r\nPour la V2, certains matériaux et sections pourront évoluer afin de réduire le poids et améliorer l’aérodynamisme, tout en conservant la robustesse nécessaire."
+		"answer": "D'une structure en tubes d'acier soudés, de panneaux en bois et de barres de toit en acier. Ce choix apporte un bon compromis entre résistance, simplicité de fabrication et coût. Le détail des sections et des quantités figure dans la liste de débit de votre dossier."
 	},
 	{
 		"question": "Peut-on personnaliser la caisse ?",
-		"answer": "Oui. La Boîte à Bivouac est pensée pour être personnalisable selon les usages et les envies.\r\n\r\nLes possibilités pourront notamment concerner les aménagements intérieurs, les rangements, les systèmes de fixation, certains équipements extérieurs ou encore les finitions.\r\n\r\nL’objectif est de proposer une base commune robuste, puis des options adaptées à chaque type d’aventure."
+		"answer": "Oui, c'est même l'intérêt de plans libres. Le modèle FreeCAD est paramétrique : vous pouvez adapter cotes, aménagements, rangements ou fixations. Si vous améliorez les plans, partagez votre version : elle pourra profiter à d'autres."
 	},
 	{
-		"question": "Quelle est la différence entre la V1 et la V2 ?",
-		"answer": "La V1 est le prototype qui a validé le concept après plusieurs semaines de test terrain.\r\n \r\nLa V2, prévue en octobre 2026, sera plus légère, plus aérodynamique, avec un système de fixation rapide et une compatibilité élargie."
+		"question": "Où a été conçue La Boîte à Bivouac ?",
+		"answer": "Près de Toulouse, en Occitanie. Le premier prototype y a été fabriqué à la main et testé pendant des semaines sur le terrain avant que les plans ne soient partagés."
 	},
 	{
-		"question": "Quel est le prix ?",
-		"answer": "La Boîte à Bivouac est proposée à partir de 1 400 € TTC, hors frais de livraison. Le prix dépend de la longueur de votre remorque et de la hauteur choisie pour la Boîte, hors tente de toit et options.\r\n\r\nLivraison au choix : retrait gratuit à notre atelier de Toulouse, 200 € dans un rayon de 100 km autour de Toulouse, 400 € ailleurs en France métropolitaine (prix TTC).\r\n\r\nL’objectif est de proposer une solution simple, robuste et polyvalente, bien plus accessible qu’un van aménagé, une caravane ou une remorque dédiée au camping."
-	},
-	{
-		"question": "Comment s'inscrire à la liste d'attente ?",
-		"answer": "Écrivez-nous à contact@laboiteabivouac.fr pour exprimer votre intérêt et être notifié en priorité à l'ouverture des pré-commandes à l'automne 2026."
-	},
-	{
-		"question": "Livrez-vous partout en France ?",
-		"answer": "Oui. La Boîte à Bivouac pourra être livrée partout en France métropolitaine.\r\n\r\nLes modalités et le coût de livraison dépendront de la distance, du format de la caisse et du transporteur choisi.\r\n\r\nPour les clients proches de Toulouse, un retrait sur place pourra également être proposé afin de réduire les frais."
-	},
-	{
-		"question": "Y a-t-il une garantie ?",
-		"answer": "La Boîte à Bivouac sera livrée avec une garantie constructeur. En tant que fabricant direct, nous restons disponibles pour toute intervention ou question après achat."
+		"question": "Que faites-vous de mon adresse email ?",
+		"answer": "Elle sert uniquement à vous envoyer le lien de confirmation puis le dossier. Elle transite chiffrée vers le service qui génère les plans, et nous recevons une copie de la notification d'envoi pour suivre l'usage du service. Elle n'est ni revendue ni utilisée pour de la publicité ; vous n'êtes inscrit à la newsletter que si vous le demandez."
 	}
 ]

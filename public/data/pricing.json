@@ -26,8 +26,8 @@
 	},
 
 	"accessoires": {
-		"_note": "Accessoires du catalogue Équipements (27/09/2026) : prix de vente = prix estimé saisi dans /admin/equipements.php + cette marge, arrondi au centime. Les frais de port estimés ne sont pas margés : ils sont facturés à part, au panier et à la commande.",
-		"marge_pourcent": 20
+		"_note": "Accessoires du catalogue Équipements (27/09/2026) : prix affiché = prix estimé saisi dans /admin/equipements.php + cette marge, arrondi au centime. Modèle libre (26/10/2026) : plus rien n'est vendu, la marge est à zéro et la page affiche le prix constaté, à titre indicatif. Les frais de port ne sont plus affichés.",
+		"marge_pourcent": 0
 	},
 
 	"options": {

@@ -108,6 +108,7 @@ jobs:
           # c'est lui qui interdit l'accès HTTP à la base.
           exclude: |
             **/data/faq.json
+            **/data/faq-libre.json
             **/data/questions.json
             **/data/subscribers.json
             **/data/rate-limits.json

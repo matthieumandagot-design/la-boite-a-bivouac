@@ -2,7 +2,6 @@
 import Layout from "../layouts/Layout.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
 import { Icon } from "astro-icon/components";
-import SuggestionAccessoires from "../components/SuggestionAccessoires.astro";
 import {
 	REMORQUES,
 	HAUTEUR_DEFAUT_CM,
@@ -13,24 +12,23 @@ import {
 	LARGEUR_REMORQUE_MIN_CM,
 	type Remorque,
 } from "../data/remorques";
-import pricing from "../../public/data/pricing.json";
 
 /**
- * Options du configurateur (SPEC §7, question 6).
- *
- * Lues au build depuis le MÊME fichier que le PHP lit à l'exécution : aucune
- * règle de prix n'est écrite deux fois. Le fichier vit dans `public/data/` et
- * non dans `src/` comme le suggère la spécification, parce que `src/` n'est pas
- * déployé — le serveur ne pourrait jamais l'y lire.
- *
- * La liste est vide tant que les options ne sont pas arrêtées ; la mécanique,
- * elle, est prête. Aucun prix n'est affiché ici : seul le serveur chiffre.
+ * Modèle libre (26/10/2026) : la Boîte n'est plus vendue. Le configurateur
+ * aboutit au dossier de fabrication, offert et envoyé par email — celui que
+ * l'atelier de soudure aurait reçu pour une commande (lib/dossier-gratuit.php).
+ * Le panier et le prix ont disparu de la page.
  */
-const OPTIONS: { id: string; libelle: string; description?: string }[] =
-	Array.isArray(pricing.options?.disponibles) ? pricing.options.disponibles : [];
-
 const PAGE_DESCRIPTION =
-	"Configurez votre Boîte à Bivouac sur mesure : choisissez votre remorque ou saisissez vos cotes, réglez la hauteur, et obtenez les dimensions exactes, le volume et le schéma de votre Boîte.";
+	"Configurez votre Boîte à Bivouac sur mesure et recevez gratuitement son dossier de fabrication : plan A3, modèles 3D STEP et FreeCAD, liste de débit. Prêt à confier à un atelier de soudure.";
+
+/** Ce que contient le dossier envoyé (atelier/envoyer_dossier.py). */
+const CONTENU_DOSSIER = [
+	{ icon: "tabler:file-type-pdf", titre: "Plan de fabrication A3", texte: "Vues, cotes, débit, rivetage et liste d'achats." },
+	{ icon: "tabler:box-model-2", titre: "Modèles 3D", texte: "STEP pour toute CAO, et le modèle FreeCAD paramétrique." },
+	{ icon: "tabler:table", titre: "Liste de débit", texte: "Tubes, panneaux et quincaillerie, à ouvrir dans un tableur." },
+	{ icon: "tabler:photo", titre: "Aperçus", texte: "Votre Boîte en image, portes et plateau ouverts." },
+];
 
 /** Regroupement par marque pour les <optgroup> du sélecteur. */
 const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
@@ -41,10 +39,6 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 ---
 
 <Layout title="Configurateur" description={PAGE_DESCRIPTION}>
-	{/* Proposée après l'ajout d'une Boîte au panier : jamais visible autrement,
-	    puisque le bouton d'ajout n'existe que boutique ouverte ou en aperçu. */}
-	<SuggestionAccessoires />
-
 	<ScrollReveal />
 
 	<section class="border-b border-ardoise/30 bg-sable/50 px-6 py-16 sm:px-8 lg:px-12">
@@ -56,7 +50,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			data-reveal
 			style="--reveal-delay: 60ms"
 		>
-			Configurez votre Boîte à Bivouac
+			Configurez votre Boîte, recevez ses plans
 		</h1>
 		{/* Seule contrainte de largeur de la page : une ligne de prose au-delà de
 		    ~80 caractères devient pénible à lire. Le reste suit la fenêtre. */}
@@ -65,9 +59,11 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			data-reveal
 			style="--reveal-delay: 120ms"
 		>
-			Chaque Boîte est fabriquée sur mesure pour votre remorque. Choisissez votre modèle ou
-			saisissez vos cotes, réglez la hauteur, indiquez si vous posez une tente de toit&nbsp;:
-			dimensions, volume et hauteur hors tout s'affichent aussitôt, avec un schéma à l'échelle.
+			Chaque Boîte se dessine aux cotes de votre remorque. Choisissez votre modèle ou saisissez vos
+			mesures, réglez la hauteur, indiquez si vous posez une tente de toit&nbsp;: dimensions, volume
+			et hauteur hors tout s'affichent aussitôt, avec un schéma à l'échelle. Puis recevez{" "}
+			<strong class="font-semibold text-brun-600">gratuitement</strong> le dossier de fabrication
+			complet de votre Boîte, prêt à confier à un atelier de soudure.
 		</p>
 		<p
 			class="t-corps mt-4 max-w-[80ch] text-brun-500"
@@ -76,16 +72,6 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 		>
 			La Boîte reprend l'intérieur de votre caisse, moins {JEU_PAR_COTE_CM}&nbsp;cm de jeu de chaque
 			côté pour la poser et la retirer facilement. Sa hauteur standard est de {HAUTEUR_DEFAUT_CM}&nbsp;cm.
-		</p>
-		{/* Seulement quand la boutique est ouverte (ou en mode aperçu) : sans elle,
-		    annoncer une commande en ligne serait faux. */}
-		<p
-			data-feature="commerce"
-			hidden
-			class="t-corps mt-4 max-w-[80ch] font-medium text-brun-600"
-		>
-			Votre Boîte est prête&nbsp;? Ajoutez-la au panier pour la commander&nbsp;: elle sera fabriquée
-			à ces dimensions.
 		</p>
 	</section>
 
@@ -263,30 +249,6 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 						</div>
 				</div>
 
-				{/* Étape 2 du configurateur (SPEC §7). Masquée avec le reste du
-				    module commercial, et absente tant qu'aucune option n'est
-				    proposée dans data/pricing.json (27/09/2026) : un bloc vide
-				    n'apprend rien au visiteur. */}
-				{
-					OPTIONS.length > 0 && (
-						<div data-feature="commerce" hidden class="mt-8 border-t border-ardoise/30 pt-6">
-							<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">Options</p>
-							<div class="mt-3 grid gap-2">
-								{OPTIONS.map((option) => (
-									<label class="flex cursor-pointer items-start gap-3">
-										<input type="checkbox" class="mt-1 option-boite" value={option.id} />
-										<span>
-											<span class="text-brun-700">{option.libelle}</span>
-											{option.description && (
-												<span class="t-petit block text-brun-400">{option.description}</span>
-											)}
-										</span>
-									</label>
-								))}
-							</div>
-						</div>
-					)
-				}
 
 			</div>
 		</div>
@@ -296,37 +258,76 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 				<!-- rempli par le script -->
 			</div>
 
-			{/* Étape 3 : le prix et la mise au panier. Hors de #resultat, que le
-			    script réécrit entièrement à chaque frappe.
-
-			    Visible de tous depuis le 27/09/2026, boutique fermée comprise :
-			    l'ajout au panier fonctionne, et la fenêtre qui suit annonce
-			    l'ouverture des commandes (voir SuggestionAccessoires.astro).
-
-			    Aucun prix n'est calculé ici : le montant affiché vient de
-			    /api/panier.php, exactement celui qui sera facturé. */}
+			{/* Aboutissement de la page : le dossier offert. Hors de #resultat, que le
+			    script réécrit entièrement à chaque frappe. Fond vert forêt de la
+			    marque, bouton rouille, comme l'était le bloc prix qu'il remplace. */}
 			<div
-				class="mt-6 rounded-2xl bg-brun-600 p-6 text-ecru-50 shadow-lg ring-1 ring-mousse/40 sm:p-8"
+				id="dossier"
+				class="mt-6 scroll-mt-24 rounded-2xl bg-brun-600 p-6 text-ecru-50 shadow-lg ring-1 ring-mousse/40 sm:p-8"
 			>
-				{/* Fond vert forêt de la marque : c'est l'aboutissement de la page, il
-				    doit se détacher des cartes crème qui l'entourent. Prix en doré,
-				    bouton rouille : les deux seules couleurs vives du site. */}
-				<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-					<div>
-						<p class="t-menu font-medium uppercase tracking-widest text-ecru-200">Prix de votre Boîte</p>
-						<p id="prix-configuration" class="mt-1 font-display text-4xl font-semibold text-[#e8b428] tabular-nums sm:text-5xl">—</p>
-						<p id="prix-mention" class="t-petit mt-1 text-rouille-400" hidden></p>
-					</div>
-
-					<button
-						id="ajouter-configuration"
-						type="button"
-						class="inline-flex items-center gap-2 rounded-full bg-rouille-500 px-7 py-3.5 text-base font-semibold text-ecru-50 shadow-md transition-colors hover:bg-rouille-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ecru-50 disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						Ajouter au panier
-					</button>
+				<div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+					<p class="t-menu font-medium uppercase tracking-widest text-ecru-200">Dossier de fabrication</p>
+					<p class="font-display text-3xl font-semibold text-[#e8b428] sm:text-4xl">Offert</p>
 				</div>
-				<p id="achat-message" class="t-petit mt-3 text-ecru-200" role="status" hidden></p>
+				<h2 class="mt-2 t-sous font-display font-semibold">Recevez les plans de votre Boîte par email</h2>
+				<ul class="mt-5 grid gap-3 sm:grid-cols-2">
+					{
+						CONTENU_DOSSIER.map((item) => (
+							<li class="flex gap-3">
+								<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ecru-50/10 text-[#e8b428]">
+									<Icon name={item.icon} class="h-5 w-5" />
+								</span>
+								<span>
+									<span class="block font-semibold">{item.titre}</span>
+									<span class="t-petit block text-ecru-200">{item.texte}</span>
+								</span>
+							</li>
+						))
+					}
+				</ul>
+
+				<form id="form-dossier" class="mt-6 border-t border-ecru-50/15 pt-6" novalidate>
+					<label for="dossier-email" class="block text-sm font-medium text-ecru-100">Votre adresse email</label>
+					<div class="mt-2 flex flex-wrap gap-3">
+						<input
+							id="dossier-email"
+							name="email"
+							type="email"
+							autocomplete="email"
+							required
+							placeholder="vous@exemple.fr"
+							class="min-w-0 flex-1 basis-60 rounded-full border border-ecru-50/30 bg-ecru-50 px-5 py-3 text-brun-700 placeholder:text-brun-400 focus:outline-none focus:ring-2 focus:ring-[#e8b428]"
+						/>
+						<button
+							id="dossier-envoyer"
+							type="submit"
+							class="inline-flex items-center gap-2 rounded-full bg-rouille-500 px-7 py-3 text-base font-semibold text-ecru-50 shadow-md transition-colors hover:bg-rouille-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ecru-50 disabled:cursor-not-allowed disabled:opacity-50"
+						>
+							Recevoir mon dossier
+							<Icon name="tabler:send" class="h-4 w-4" />
+						</button>
+					</div>
+					{/* Champ piège : invisible pour un humain, rempli par les robots. */}
+					<div class="absolute -left-[9999px]" aria-hidden="true">
+						<label for="dossier-site">Site web</label>
+						<input id="dossier-site" name="site_web" type="text" tabindex="-1" autocomplete="off" />
+					</div>
+					<label class="mt-4 flex cursor-pointer items-start gap-3 text-sm text-ecru-100">
+						<input id="dossier-accord" type="checkbox" required class="mt-0.5 h-4 w-4 shrink-0 accent-[#e8b428]" />
+						<span>
+							J'ai compris que ce dossier est un avant-projet fourni sans garantie, à faire relire par
+							un professionnel, et que sa fabrication comme son usage restent sous ma responsabilité.
+							Les plans sont sous licence{" "}
+							<a href="/la-boite/#licence" class="underline underline-offset-2 hover:text-[#e8b428]">CC BY-SA 4.0</a>.
+						</span>
+					</label>
+					<p id="dossier-gabarit" class="t-petit mt-4 rounded-xl bg-rouille-500/20 px-4 py-3 text-ecru-50" hidden></p>
+					<p id="dossier-message" class="t-petit mt-4" role="status" hidden></p>
+					<p class="t-petit mt-4 text-ecru-200/80">
+						Vous recevrez d'abord un lien de confirmation, puis le dossier 10 à 15 minutes après.
+						Votre adresse ne sert qu'à cet envoi&nbsp;: <a href="/confidentialite/" class="underline underline-offset-2 hover:text-[#e8b428]">en savoir plus</a>.
+					</p>
+				</form>
 			</div>
 		</div>
 	</section>
@@ -336,11 +337,12 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 		    caractères devient pénible à suivre. Même mesure que sur La Boîte. */}
 		<div class="mx-auto max-w-[min(70ch,100%)] text-center">
 			<h2 class="t-titre font-display font-semibold text-brun-700" data-reveal>
-				Un doute sur vos cotes&nbsp;?
+				Un doute sur vos cotes, ou envie qu'on la fabrique pour vous&nbsp;?
 			</h2>
 			<p class="mt-4 text-brun-500" data-reveal style="--reveal-delay: 60ms">
 				Envoyez-nous la marque, le modèle et vos mesures&nbsp;: nous vérifions avec vous et nous
-				vous répondons personnellement.
+				vous répondons personnellement. Et si vous préférez ne pas chercher d'atelier, dites-le-nous&nbsp;:
+				nous pouvons prendre en charge la fabrication de votre Boîte.
 			</p>
 			<a
 				href="/contact/"
@@ -426,10 +428,17 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 		calculeBoite,
 		type Remorque,
 	} from "../data/remorques";
-	// Le panier et le formatage des montants sont déjà chargés partout par
-	// features.ts : les réutiliser ne coûte rien et évite une seconde façon
-	// d'écrire un prix.
-	import { ajouter, formaterCents, commandesOuvertes } from "../scripts/panier";
+	/**
+	 * Limites du générateur automatique de plans, plus serrées que celles du
+	 * configurateur. Alignées sur DA_BORNES (public/api/dossier-atelier.php) et
+	 * atelier/generer_boite.py ; le serveur les revérifie de toute façon.
+	 */
+	const GENERATEUR = {
+		longueur: [92, 262],
+		largeur: [72, 142],
+		ridelle: [17, 60],
+		hauteur: [60, 120],
+	} as const;
 
 	const donnees = document.getElementById("donnees-remorques");
 	const sortie = document.getElementById("resultat");
@@ -734,7 +743,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			const verdict = ok
 				? `<p class="flex items-start gap-2 text-sm font-semibold text-green-800">
 				     <span aria-hidden="true">✓</span>
-				     <span>Compatible — nous fabriquons cette boîte aux cotes de votre remorque.</span></p>`
+				     <span>Compatible — les plans de cette Boîte se génèrent aux cotes de votre remorque.</span></p>`
 				: `<p class="flex items-start gap-2 text-sm font-semibold text-rouille-500">
 				     <span aria-hidden="true">!</span>
 				     <span>Hors gabarit courant (${b.horsGabarit.join(", ")}) — écrivez-nous, nous étudierons
@@ -766,7 +775,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 						? ""
 						: `<p class="mt-4 rounded-xl bg-sable/60 px-4 py-3 text-sm text-brun-600">
 						     Cotes rapportées par un tiers&nbsp;: ce vendeur ne laisse pas consulter sa fiche
-						     automatiquement. Confirmez-les avant de commander.</p>`
+						     automatiquement. Confirmez-les avant de faire fabriquer.</p>`
 				}
 			  <div class="mt-6 rounded-xl border ${teinte} px-4 py-3">
 			    <p class="font-display font-semibold text-brun-700">${classe.libelle}</p>
@@ -791,53 +800,138 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			  <p class="mt-6 text-xs text-brun-400">
 			    Schéma à l'échelle, hors épaisseur des parois ; le jeu de ${JEU_PAR_COTE_CM} cm par côté y est
 			    épaissi pour rester visible. Roues, timon et roue jockey sont dessinés de façon
-			    indicative. Mesurez votre remorque avant de commander.
+			    indicative. Mesurez votre remorque avant de faire fabriquer.
 			    ${source ? `<a href="${source}" target="_blank" rel="noopener noreferrer" class="text-rouille-500 underline-offset-4 hover:underline">Fiche constructeur</a>.` : ""}
 			  </p>
 			</div>`;
 
 			majUrl();
-			void majAchat();
+			majGabarit(longueur, largeur, ridelle, b.hauteur, ok);
 		}
 
-		// ── Configurateur : lien partageable et mise au panier (SPEC §7) ──────
+		// ── Configurateur : lien partageable et dossier offert ────────────────
 
-		const champPrix = document.getElementById("prix-configuration");
-		const champMention = document.getElementById("prix-mention");
-		const boutonAjouter = document.getElementById("ajouter-configuration") as HTMLButtonElement | null;
-		const messageAchat = document.getElementById("achat-message");
-
-		/** Identifiants des options cochées, dans l'ordre du catalogue. */
-		function optionsChoisies(): string[] {
-			return [...document.querySelectorAll<HTMLInputElement>(".option-boite:checked")].map((c) => c.value);
-		}
+		const formDossier = document.getElementById("form-dossier") as HTMLFormElement | null;
+		const champEmail = document.getElementById("dossier-email") as HTMLInputElement | null;
+		const champSite = document.getElementById("dossier-site") as HTMLInputElement | null;
+		const caseAccord = document.getElementById("dossier-accord") as HTMLInputElement | null;
+		const boutonDossier = document.getElementById("dossier-envoyer") as HTMLButtonElement | null;
+		const messageDossier = document.getElementById("dossier-message");
+		const avisGabarit = document.getElementById("dossier-gabarit");
+		let horsGenerateur = false;
 
 		/**
 		 * La configuration courante, au format que le serveur attend.
 		 *
-		 * Ne contient que des CHOIX : remorque ou cotes, hauteur, options. Aucun
-		 * prix, aucune dimension calculée — le serveur refait tout.
+		 * Ne contient que des CHOIX : remorque ou cotes, hauteur. Aucune
+		 * dimension calculée — le serveur refait tout.
 		 */
 		function configurationCourante() {
-			const base = {
-				type: "boite" as const,
-				quantite: 1,
-				hauteur: Number(inputHauteur!.value) || HAUTEUR_DEFAUT_CM,
-				options: optionsChoisies(),
-			};
-
+			const hauteur = Number(inputHauteur!.value) || HAUTEUR_DEFAUT_CM;
 			if (mode === "modele") {
-				return { ...base, remorque: select!.value };
+				return { remorque: select!.value, hauteur };
 			}
-
 			const { ridelle } = remorqueCourante();
 			return {
-				...base,
 				longueur: Number(inputLongueur!.value) || 0,
 				largeur: Number(inputLargeur!.value) || 0,
 				ridelle,
+				hauteur,
 			};
 		}
+
+		/**
+		 * Prévient avant l'envoi quand la configuration sort de ce que le
+		 * générateur sait dessiner : mieux vaut le dire ici qu'au retour du
+		 * serveur. Le visiteur est alors invité à écrire.
+		 */
+		function majGabarit(
+			longueur: number,
+			largeur: number,
+			ridelle: number | null,
+			hauteur: number,
+			compatible: boolean,
+		): void {
+			if (!avisGabarit || !boutonDossier) return;
+			const rid = ridelle ?? 35;
+			const hors: string[] = [];
+			const dans = (v: number, [min, max]: readonly [number, number]) => v >= min && v <= max;
+			if (!dans(longueur, GENERATEUR.longueur)) hors.push(`longueur intérieure de ${GENERATEUR.longueur[0]} à ${GENERATEUR.longueur[1]} cm`);
+			if (!dans(largeur, GENERATEUR.largeur)) hors.push(`largeur intérieure de ${GENERATEUR.largeur[0]} à ${GENERATEUR.largeur[1]} cm`);
+			if (!dans(rid, GENERATEUR.ridelle)) hors.push(`ridelles de ${GENERATEUR.ridelle[0]} à ${GENERATEUR.ridelle[1]} cm`);
+			if (!dans(hauteur, GENERATEUR.hauteur)) hors.push(`hauteur de Boîte de ${GENERATEUR.hauteur[0]} à ${GENERATEUR.hauteur[1]} cm`);
+			// Cadre de plateau d'au moins 150 mm (même calcul que da_valider).
+			if (hors.length === 0 && hauteur * 10 - 30 - (rid * 10 + 10) - 9 < 150) {
+				hors.push("au moins 20 cm de Boîte au-dessus des ridelles");
+			}
+			horsGenerateur = !compatible || hors.length > 0;
+			avisGabarit.hidden = !horsGenerateur;
+			if (horsGenerateur) {
+				avisGabarit.innerHTML = compatible
+					? `Les plans automatiques couvrent pour l'instant&nbsp;: ${hors.join(", ")}. Pour votre configuration, <a href="/contact/" class="underline underline-offset-2">écrivez-nous</a>&nbsp;: nous regarderons votre cas.`
+					: `Cette configuration sort du gabarit. <a href="/contact/" class="underline underline-offset-2">Écrivez-nous</a>&nbsp;: nous regarderons votre cas.`;
+			}
+			boutonDossier.disabled = horsGenerateur;
+		}
+
+		function afficherMessage(texte: string, succes: boolean): void {
+			if (!messageDossier) return;
+			messageDossier.innerHTML = texte;
+			messageDossier.hidden = false;
+			messageDossier.className = succes
+				? "t-petit mt-4 rounded-xl bg-mousse/25 px-4 py-3 text-ecru-50"
+				: "t-petit mt-4 rounded-xl bg-rouille-500/25 px-4 py-3 text-ecru-50";
+		}
+
+		formDossier?.addEventListener("submit", async (event) => {
+			event.preventDefault();
+			if (!champEmail || !caseAccord || !boutonDossier || horsGenerateur) return;
+
+			const email = champEmail.value.trim();
+			if (!champEmail.checkValidity() || email === "") {
+				afficherMessage("Indiquez une adresse email valide.", false);
+				champEmail.focus();
+				return;
+			}
+			if (!caseAccord.checked) {
+				afficherMessage("Cochez la case pour confirmer que vous avez pris connaissance des conditions.", false);
+				caseAccord.focus();
+				return;
+			}
+
+			boutonDossier.disabled = true;
+			const libelle = boutonDossier.innerHTML;
+			boutonDossier.textContent = "Envoi…";
+			try {
+				const reponse = await fetch("/api/dossier-gratuit.php", {
+					method: "POST",
+					cache: "no-store",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						action: "demander",
+						email,
+						accord: true,
+						site_web: champSite?.value ?? "",
+						configuration: configurationCourante(),
+					}),
+				});
+				const donnees = (await reponse.json().catch(() => ({}))) as { ok?: boolean; message?: string; details?: string[] };
+				if (reponse.ok && donnees.ok) {
+					afficherMessage(
+						`<strong>C'est parti.</strong> Un email vient de partir vers ${email.replace(/[<>&"]/g, "")}&nbsp;: cliquez sur le lien qu'il contient pour lancer la génération de vos plans. Pensez à regarder vos indésirables.`,
+						true,
+					);
+					formDossier.reset();
+				} else {
+					afficherMessage(donnees.message ?? "La demande n'a pas pu aboutir. Réessayez dans quelques minutes.", false);
+				}
+			} catch {
+				afficherMessage("Connexion impossible. Vérifiez votre réseau et réessayez.", false);
+			} finally {
+				boutonDossier.innerHTML = libelle;
+				boutonDossier.disabled = horsGenerateur;
+			}
+		});
 
 		/**
 		 * Reflète la configuration dans l'URL, sans empiler d'entrées d'historique.
@@ -858,8 +952,6 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 
 			p.set("hauteur", inputHauteur!.value);
 			if (caseTente!.checked) p.set("tente", String(tenteCourante()));
-			const options = optionsChoisies();
-			if (options.length > 0) p.set("options", options.join(","));
 
 			history.replaceState(null, "", `${location.pathname}?${p}`);
 		}
@@ -895,85 +987,6 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 				inputTente!.value = p.get("tente") ?? inputTente!.value;
 				curseurTente!.value = inputTente!.value;
 			}
-
-			const options = (p.get("options") ?? "").split(",").filter(Boolean);
-			for (const c of document.querySelectorAll<HTMLInputElement>(".option-boite")) {
-				c.checked = options.includes(c.value);
-			}
-		}
-
-		/**
-		 * Demande le prix au serveur.
-		 *
-		 * Différé : `rendu()` s'exécute à chaque frappe, et un aller-retour par
-		 * caractère saturerait le serveur pour rien. Public depuis le 27/09/2026 :
-		 * le prix s'affiche même boutique fermée ; seule la commande attend.
-		 */
-		let minuteurPrix: number | undefined;
-
-		function majAchat(): void {
-			if (!champPrix || !boutonAjouter) return;
-
-			window.clearTimeout(minuteurPrix);
-			minuteurPrix = window.setTimeout(async () => {
-				try {
-					const reponse = await fetch("/api/panier.php", {
-						method: "POST",
-						cache: "no-store",
-						credentials: "same-origin",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ lignes: [configurationCourante()] }),
-					});
-					if (!reponse.ok) throw new Error(String(reponse.status));
-
-					const donnees = await reponse.json();
-					const ligne = donnees.lignes?.[0];
-
-					if (!ligne) {
-						champPrix.textContent = "—";
-						boutonAjouter.disabled = true;
-						if (champMention) {
-							champMention.textContent = donnees.refusees?.[0]?.motif ?? "Configuration non chiffrable.";
-							champMention.hidden = false;
-							champMention.classList.add("text-rouille-400");
-							champMention.classList.remove("text-ecru-200");
-						}
-						return;
-					}
-
-					champPrix.textContent = formaterCents(ligne.total_cents);
-					boutonAjouter.disabled = false;
-					if (champMention) {
-						// Montants factices : la mention d'avertissement prime. Sinon,
-						// « TTC, hors frais de livraison », qui accompagne le prix de la Boîte.
-						champMention.textContent = donnees.provisoire ? donnees.mention : (donnees.mention_prix ?? "");
-						champMention.hidden = champMention.textContent === "";
-						champMention.classList.toggle("text-rouille-400", donnees.provisoire);
-						champMention.classList.toggle("text-ecru-200", !donnees.provisoire);
-					}
-				} catch {
-					champPrix.textContent = "—";
-					boutonAjouter.disabled = true;
-				}
-			}, 400);
-		}
-
-		boutonAjouter?.addEventListener("click", () => {
-			ajouter(configurationCourante());
-			// Propose les accessoires, et annonce l'ouverture des commandes tant
-			// que la boutique est fermée : voir SuggestionAccessoires.astro.
-			void commandesOuvertes().then((ouvert) =>
-				window.dispatchEvent(new CustomEvent("bab:boite-ajoutee", { detail: { ouvert } })),
-			);
-			if (messageAchat) {
-				messageAchat.textContent = "Ajouté au panier.";
-				messageAchat.hidden = false;
-				window.setTimeout(() => (messageAchat.hidden = true), 3000);
-			}
-		});
-
-		for (const c of document.querySelectorAll<HTMLInputElement>(".option-boite")) {
-			c.addEventListener("change", rendu);
 		}
 
 		for (const bouton of boutons) {

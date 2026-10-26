@@ -1,6 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
-import { SITE_TITLE, TAGLINE, NAV_LINKS, SOCIAL_LINKS } from "../consts";
+import { SITE_TITLE, TAGLINE, NAV_LINKS, SOCIAL_LINKS, LICENCE } from "../consts";
 import SubscribeForm from "./SubscribeForm.astro";
 const year = new Date().getFullYear();
 ---
@@ -22,7 +22,7 @@ const year = new Date().getFullYear();
 
 			<div class="max-w-xs">
 				<p class="text-sm font-semibold text-brun-700">Restez informé</p>
-				<p class="mt-1 text-xs text-brun-400">Recevez nos actus par email.</p>
+				<p class="mt-1 text-xs text-brun-400">Nouvelles versions des plans et retours de fabrication, par email.</p>
 				<div class="mt-3">
 					<SubscribeForm />
 				</div>
@@ -66,7 +66,8 @@ const year = new Date().getFullYear();
 		</div>
 
 		<p class="mt-8 border-t border-ardoise/30 pt-5 text-brun-500">
-			&copy; {year} {SITE_TITLE} — Conçu et fabriqué en Occitanie.
+			&copy; {year} {SITE_TITLE} — Conçu en Occitanie, partagé librement. Plans et modèles 3D sous
+			licence <a href={LICENCE.url} target="_blank" rel="license noopener noreferrer" class="underline-offset-4 hover:text-rouille-500 hover:underline">{LICENCE.nom}</a>.
 		</p>
 		<p class="mt-2 text-xs text-brun-500/50">
 			<a href="/mentions-legales/" class="hover:text-brun-500">Mentions légales</a>

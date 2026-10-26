@@ -55,36 +55,8 @@ const socialIconPaths: Record<string, string> = {
 		</nav>
 
 		<div class="col-start-3 flex items-center justify-self-end gap-3">
-			{/* Accès au module commercial. Écrits masqués dans le HTML statique :
-			    src/scripts/features.ts ne les révèle qu'après confirmation du
-			    serveur que la boutique est ouverte, ou qu'un admin est reconnu.
-			    Le masquage est un confort d'affichage, pas une protection — celle-ci
-			    est dans public/lib/commerce-guard.php. */}
-			<a
-				href="/compte/"
-				data-feature="commerce"
-				hidden
-				class="t-menu font-medium text-brun-600 transition-colors hover:text-rouille-500"
-			>
-				Mon compte
-			</a>
-			{/* Le panier, lui, est visible de tous depuis le 27/09/2026 : on peut
-			    le remplir boutique fermée, seule la commande attend. */}
-			<a
-				href="/panier/"
-				aria-label="Panier"
-				class="relative flex h-9 w-9 items-center justify-center rounded-full text-brun-600 transition-colors hover:bg-sable hover:text-rouille-500"
-			>
-				<Icon name="tabler:shopping-cart" class="h-5 w-5" />
-				{/* Nombre d'articles, renseigné par src/scripts/panier.ts depuis le
-				    localStorage. Masqué tant que le panier est vide : une pastille
-				    à zéro n'apprend rien. */}
-				<span
-					data-panier-compte
-					hidden
-					class="absolute -right-0.5 -top-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rouille-500 px-1 text-[0.65rem] font-semibold text-ecru-50"
-				>0</span>
-			</a>
+			{/* Modèle libre (26/10/2026) : plus de compte ni de panier dans l'en-tête,
+			    la Boîte n'est plus vendue. Les pages restent en place, hors parcours. */}
 			<ul class="hidden items-center gap-3 md:flex">
 				{
 					NAVBAR_SOCIAL_LINKS.map((social) => (

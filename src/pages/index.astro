@@ -5,30 +5,52 @@ import { HOME_DESCRIPTION, HOME_TITLE } from "../consts";
 import HeroVideo from "../components/HeroVideo.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
 
+/** Le parcours, en trois temps : de la remorque au dossier, du dossier à la Boîte. */
+const ETAPES = [
+	{
+		icon: "tabler:ruler-measure",
+		titre: "Configurez",
+		texte:
+			"Choisissez votre remorque parmi les modèles relevés, ou saisissez ses cotes intérieures. Réglez la hauteur de la Boîte : dimensions, volume et hauteur hors tout s'affichent aussitôt.",
+	},
+	{
+		icon: "tabler:mail-opened",
+		titre: "Recevez le dossier",
+		texte:
+			"Le plan de fabrication A3, les modèles 3D STEP et FreeCAD, la liste de débit et des aperçus, générés à vos cotes et envoyés par email. Gratuitement.",
+	},
+	{
+		icon: "tabler:flame",
+		titre: "Faites fabriquer",
+		texte:
+			"Soudez-la vous-même ou transférez le dossier à l'atelier de soudure de votre choix : le plan suffit pour chiffrer et fabriquer.",
+	},
+];
+
 const ENGAGEMENTS = [
+	{
+		icon: "tabler:gift",
+		titre: "Libre et gratuit",
+		texte:
+			"Les plans sont sous licence CC BY-SA 4.0 : utilisez-les, modifiez-les, partagez-les, y compris pour fabriquer, en citant le projet et en partageant vos améliorations.",
+	},
 	{
 		icon: "tabler:arrow-loop-left",
 		titre: "Équiper plutôt qu'acheter",
 		texte:
-			"Vous avez déjà une remorque ? Elle suffit. Pas besoin d'un van, d'une caravane ou d'une remorque aménagée de plus : nous équipons ce que vous possédez.",
+			"Vous avez déjà une remorque ? Elle suffit. Pas besoin d'un van, d'une caravane ou d'une remorque aménagée : la Boîte s'installe dans ce que vous possédez.",
 	},
 	{
 		icon: "tabler:map-pin",
-		titre: "Fabriqué en Occitanie",
+		titre: "Fabriquée près de chez vous",
 		texte:
-			"Conception, soudure et assemblage se font dans notre atelier. Rien qui arrive par conteneur de l'autre bout du monde.",
+			"Un dossier lisible par n'importe quel atelier de soudure : votre Boîte se fabrique au plus près de chez vous, plutôt qu'à l'autre bout du monde.",
 	},
 	{
 		icon: "tabler:tool",
 		titre: "Réparable, donc durable",
 		texte:
-			"Acier soudé, panneaux vissés, pièces remplaçables. Un choc ou une usure se réparent : rien n'oblige à tout remplacer.",
-	},
-	{
-		icon: "tabler:tag",
-		titre: "Un budget raisonnable",
-		texte:
-			"Le prix d'un équipement, pas celui d'un véhicule aménagé. Ce que vous payez part dans la matière et dans le travail, pas dans un réseau de distribution.",
+			"Acier soudé, panneaux vissés, pièces standard. Un choc ou une usure se réparent : vous avez les plans de chaque pièce.",
 	},
 ];
 ---
@@ -40,17 +62,50 @@ const ENGAGEMENTS = [
 	<section class="bg-ecru-100 px-6 py-20 sm:px-8 lg:px-12">
 		<div>
 			<p class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>
-				Ce que nous proposons
+				Comment ça marche
 			</p>
 			<h2
 				class="mt-3 t-titre font-display font-semibold text-brun-700"
 				data-reveal
 				style="--reveal-delay: 60ms"
 			>
-				Commencez par la Boîte. Complétez plus tard.
+				De vos cotes à votre Boîte, en trois temps.
 			</h2>
 
-			<div class="mt-10 grid gap-6 lg:grid-cols-3">
+			<ol class="mt-10 grid gap-6 md:grid-cols-3">
+				{
+					ETAPES.map((etape, index) => (
+						<li
+							class="relative rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm"
+							data-reveal
+							style={`--reveal-delay: ${index * 90}ms`}
+						>
+							<span class="flex items-center gap-3">
+								<span class="flex h-11 w-11 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
+									<Icon name={etape.icon} class="h-5 w-5" />
+								</span>
+								<span class="font-display text-sm font-semibold uppercase tracking-widest text-brun-400">
+									Étape {index + 1}
+								</span>
+							</span>
+							<h3 class="mt-4 t-sous font-display font-semibold text-brun-700">{etape.titre}</h3>
+							<p class="t-petit mt-2 text-brun-500">{etape.texte}</p>
+						</li>
+					))
+				}
+			</ol>
+
+			<div class="mt-8" data-reveal>
+				<a
+					href="/configurateur/"
+					class="inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
+				>
+					Configurer ma Boîte et recevoir les plans
+					<Icon name="tabler:arrow-right" class="h-4 w-4" />
+				</a>
+			</div>
+
+			<div class="mt-14 grid gap-6 lg:grid-cols-3">
 				<a
 					href="/la-boite/"
 					class="group overflow-hidden rounded-2xl border border-ardoise/30 bg-ecru-50 shadow-sm transition-all hover:-translate-y-1 hover:border-rouille-400 hover:shadow-lg lg:col-span-2"
@@ -66,7 +121,7 @@ const ENGAGEMENTS = [
 					/>
 					<div class="p-8">
 						<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">
-							Notre produit
+							Le projet
 						</p>
 						<h3 class="mt-3 t-titre font-display font-semibold text-brun-700">
 							La Boîte à Bivouac
@@ -74,7 +129,7 @@ const ENGAGEMENTS = [
 						<p class="mt-3 text-brun-500">
 							Une caisse amovible qui s'installe dans votre remorque standard et la transforme
 							en base de bivouac. Quand l'aventure est finie, elle se retire et la remorque
-							redevient une remorque.
+							redevient une remorque. Conçue, fabriquée et testée en Occitanie, puis partagée.
 						</p>
 						<span class="mt-6 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-5 py-2.5 text-sm font-semibold text-ecru-50 transition-colors group-hover:bg-rouille-400">
 							Découvrir la Boîte
@@ -96,13 +151,12 @@ const ENGAGEMENTS = [
 						<Icon name="tabler:tent" class="h-5 w-5" />
 					</span>
 					<p class="mt-5 t-menu font-medium uppercase tracking-widest text-brun-400">
-						En option
+						Pour aller plus loin
 					</p>
 					<h3 class="mt-2 t-sous font-display font-semibold text-brun-700">Les équipements</h3>
 					<p class="t-petit mt-3 flex-1 text-brun-500">
-						Tente de toit, porte-vélos, rangements : du matériel à ajouter selon vos besoins, sur
-						la remorque, dans la Boîte ou sur ses barres de toit. La Boîte fonctionne très bien
-						sans.
+						Tente de toit, porte-vélos, rangements : le matériel que nous avons testé, avec un
+						prix indicatif, à acheter où vous voulez. La Boîte fonctionne très bien sans.
 					</p>
 					<span class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-rouille-500">
 						Voir les équipements
@@ -119,14 +173,14 @@ const ENGAGEMENTS = [
 	<section class="bg-graphite px-6 py-20 text-ecru-50 sm:px-8 lg:px-12">
 		<div>
 			<p class="t-menu font-medium uppercase tracking-widest text-mousse" data-reveal>
-				Notre façon de faire
+				L'esprit du projet
 			</p>
 			<h2
 				class="t-titre mt-3 max-w-[80ch] font-display font-semibold"
 				data-reveal
 				style="--reveal-delay: 60ms"
 			>
-				Du matériel fabriqué ici, fait pour durer et pour se réparer.
+				Un projet ouvert, pour du matériel qui dure et se répare.
 			</h2>
 
 			<div class="mt-12 grid gap-10 sm:grid-cols-2">
@@ -147,11 +201,11 @@ const ENGAGEMENTS = [
 
 			<div class="mt-16 border-t border-ecru-50/15 pt-14 text-center">
 				<h2 class="t-titre font-display font-semibold" data-reveal>
-					Vous avez une remorque. On a une boîte.
+					Vous avez une remorque. On vous donne la boîte.
 				</h2>
 				<p class="t-corps mx-auto mt-4 max-w-[80ch] text-ecru-100/80" data-reveal style="--reveal-delay: 90ms">
-					Parlez-nous de votre projet, de votre usage, de ce que vous transportez. On construira
-					la suite ensemble.
+					Une question sur les plans, une amélioration à partager, ou vous préférez que nous
+					prenions en charge la fabrication&nbsp;? Écrivez-nous, chaque message reçoit une réponse.
 				</p>
 				<a
 					href="/contact/"

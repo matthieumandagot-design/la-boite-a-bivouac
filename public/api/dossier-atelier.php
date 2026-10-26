@@ -11,7 +11,8 @@
  *             -H "X-Cle-Admin: <ADMIN_KEY>" -H "Content-Type: application/json" \
  *             -d '{"reference":"CMD-2026-0042","longueur_int_cm":185,"largeur_int_cm":115,"hauteur_ridelle_cm":40,"hauteur_boite_cm":90}'
  *
- * Seules la référence et les cotes partent chez GitHub : aucune donnée personnelle du client.
+ * Seules la référence et les cotes partent chez GitHub : aucune donnée personnelle en clair. Pour un
+ * dossier offert, l'adresse du demandeur s'y ajoute, chiffrée (voir lib/dossier-gratuit.php).
  * Les secrets sont dans config-dossier-atelier.php, HORS du dossier web (voir README).
  */
 
@@ -102,6 +103,17 @@ function da_valider(array $e): array
         $d[$cle] = da_tronquer(trim(strip_tags((string)($e[$cle] ?? ''))), 40);
     }
     $d['ridelle_estimee'] = !empty($e['ridelle_estimee']);
+    // Dossier offert (modèle libre) : adresse du demandeur, CHIFFRÉE par
+    // lib/dossier-gratuit.php. Jamais d'adresse en clair dans la charge
+    // envoyée à GitHub, qui la journalise.
+    if (isset($e['destinataire_chiffre'])) {
+        $chiffre = (string)$e['destinataire_chiffre'];
+        if (preg_match('/^[A-Za-z0-9_-]{80,400}$/', $chiffre) !== 1) {
+            $err[] = 'Destinataire chiffré invalide';
+        } else {
+            $d['destinataire_chiffre'] = $chiffre;
+        }
+    }
     return [$d, $err];
 }
 
