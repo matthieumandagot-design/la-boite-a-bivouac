@@ -36,7 +36,7 @@ const faqSchema = {
 	<script type="application/ld+json" set:html={toJsonLd(faqSchema)} />
 	<ScrollReveal />
 
-	<section class="bg-ecru-100 px-6 pt-16 pb-8 sm:px-8 lg:px-12">
+	<section class="bg-ecru-100 pt-16 pb-8 cadre-x">
 		<div>
 			<p class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>FAQ</p>
 			<h1
@@ -47,7 +47,7 @@ const faqSchema = {
 				Questions fréquentes
 			</h1>
 			<p
-				class="t-corps mt-6 max-w-[80ch] text-brun-500"
+				class="t-corps mt-6 max-w-[60ch] text-brun-500"
 				data-reveal
 				style="--reveal-delay: 120ms"
 			>
@@ -72,7 +72,7 @@ const faqSchema = {
 		</div>
 	</section>
 
-	<section class="bg-ecru-100 px-6 pb-16 sm:px-8 lg:px-12">
+	<section class="bg-ecru-100 pb-16 cadre-x">
 		<div>
 			<p id="faq-count" class="text-sm text-brun-400" aria-live="polite">
 				{faqItems.length} questions
@@ -133,7 +133,7 @@ const faqSchema = {
 		</div>
 	</section>
 
-	<section id="poser-une-question" class="scroll-mt-24 bg-ecru-100 px-6 pb-20 sm:px-8 lg:px-12">
+	<section id="poser-une-question" class="scroll-mt-24 bg-ecru-100 pb-20 cadre-x">
 		<div
 			class="rounded-3xl bg-graphite px-6 py-10 text-ecru-50 shadow-sm sm:px-10"
 			data-reveal

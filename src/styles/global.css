@@ -24,9 +24,21 @@
 
 	--color-graphite: #122218;
 	--color-mousse: #b88a18;
+	/* Or OSB de la charte (brand.css --color-gold) : texte d'accent sur le
+	   vert forêt, contraste 8,9:1. */
+	--color-or: #e8b428;
 	--color-terracotta: #b85438;
 	--color-sable: #e8e0c8;
 	--color-ardoise: #c0c8c8;
+
+	/* Mouvement (refonte v2, 11/11/2026) : courbes franches, communes à tout
+	   le site. --ease-out pour ce qui entre ou répond à un geste, --ease-in-out
+	   pour ce qui se déplace à l'écran. Les utilitaires transition-* de
+	   Tailwind en héritent par défaut. */
+	--ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+	--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+	--default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+	--default-transition-duration: 180ms;
 }
 
 html {
@@ -38,41 +50,115 @@ body {
 	color: var(--color-brun-700);
 }
 
-/* Typographie fluide, commune à toutes les pages : la taille suit la largeur
-   de la fenêtre, entre un plancher lisible sur téléphone et un plafond qui
-   évite les titres démesurés sur grand écran. Le pas de vw reste faible, le
-   gros du travail est fait par les bornes.
+/* Échelle typographique (refonte v2, 11/11/2026) : la même que macklos.com
+   (v86, relevée sur apple.com). Trois paliers fixes plutôt qu'une taille qui
+   grossit sans fin avec la fenêtre : 734 px et 1068 px. La base du document
+   reste à 100 % : sur un écran de 2 500 px, un titre de page fait 48 px, pas 70.
 
    Ne pas cumuler avec un utilitaire Tailwind de taille (text-2xl et consorts) :
-   à spécificité égale, c'est l'ordre de déclaration qui trancherait. Une seule
-   des deux familles par élément. */
+   une seule des deux familles par élément. */
 .t-hero {
-	font-size: clamp(1.875rem, 1.4rem + 2.2vw, 3.75rem);
-	line-height: 1.08;
+	font-size: 2rem; /* 32 */
+	line-height: 1.07;
+	letter-spacing: -0.02em;
 }
-
 .t-titre {
-	font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.75rem);
-	line-height: 1.16;
+	font-size: 1.75rem; /* 28 */
+	line-height: 1.12;
+	letter-spacing: -0.015em;
 }
-
 .t-sous {
-	font-size: clamp(1.125rem, 1rem + 0.6vw, 1.6rem);
+	font-size: 1.1875rem; /* 19 */
 	line-height: 1.3;
 }
-
 .t-corps {
-	font-size: clamp(1rem, 0.95rem + 0.25vw, 1.25rem);
-	line-height: 1.65;
-}
-
-.t-petit {
-	font-size: clamp(0.875rem, 0.84rem + 0.17vw, 1.05rem);
+	font-size: 1.0625rem; /* 17 */
 	line-height: 1.6;
 }
-
+.t-petit {
+	font-size: 0.9375rem; /* 15 */
+	line-height: 1.6;
+}
 .t-menu {
-	font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.875rem);
+	font-size: 0.875rem; /* 14 */
+}
+.t-chapo {
+	font-size: 1.1875rem; /* 19 */
+	line-height: 1.5;
+	max-width: 40em;
+}
+
+@media (min-width: 734px) {
+	.t-hero { font-size: 3rem; } /* 48 */
+	.t-titre { font-size: 2rem; } /* 32 */
+}
+
+@media (min-width: 1068px) {
+	.t-hero { font-size: 3.5rem; } /* 56 */
+	.t-titre { font-size: 2.5rem; } /* 40 */
+	.t-sous { font-size: 1.3125rem; } /* 21 */
+	.t-chapo { font-size: 1.3125rem; } /* 21 */
+}
+
+/* Cadre de contenu (refonte v2) : les fonds restent d'un bord à l'autre, le
+   contenu s'arrête à 128 rem (environ 2 200 px), centré, avec une marge qui
+   suit l'écran (24 px sur téléphone, jusqu'à 144 px). Le calcul par padding
+   évite un conteneur de plus : la section garde son fond pleine largeur. */
+.cadre-x {
+	padding-inline: max(clamp(1.5rem, 5vw, 9rem), calc((100% - 128rem) / 2));
+}
+
+@layer base {
+	/* Colonne de lecture : 60 caractères au plus. En couche base, donc tout
+	   utilitaire max-w-* posé sur l'élément garde la main. */
+	main p,
+	main li > p,
+	main dd {
+		max-width: 60ch;
+	}
+
+	h1,
+	h2,
+	h3 {
+		text-wrap: balance;
+	}
+}
+
+/* Plus de césure dans les titres et les listes sur grand écran. */
+@media (min-width: 64rem) {
+	h1,
+	h2,
+	h3,
+	li {
+		hyphens: manual;
+	}
+}
+
+/* ── Retour au clic (refonte v2) ─────────────────────────────────────────
+   Tout bouton et tout lien en pastille se tasse à 97 % quand on appuie : le
+   visiteur sent que le clic est pris. Hors couche : passe devant les
+   utilitaires transition-colors et transition-all, qui n'animaient pas la
+   transformation (et « all » animait tout le reste pour rien). */
+button,
+a[class*="rounded-full"],
+.btn {
+	transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+	transition-duration: 160ms;
+	transition-timing-function: var(--ease-out);
+}
+
+button:not(:disabled):active,
+a[class*="rounded-full"]:active,
+.btn:active {
+	transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	button:not(:disabled):active,
+	a[class*="rounded-full"]:active,
+	.btn:active {
+		transform: none;
+	}
 }
 
 /* Micro-typo de la charte graphique : labels/boutons courts en capitales */

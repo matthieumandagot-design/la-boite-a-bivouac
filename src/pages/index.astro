@@ -2,29 +2,42 @@
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
 import { HOME_DESCRIPTION, HOME_TITLE } from "../consts";
-import HeroVideo from "../components/HeroVideo.astro";
+import Hero from "../components/Hero.astro";
 import ScrollReveal from "../components/ScrollReveal.astro";
 
 /** Le parcours, en trois temps : de la remorque au dossier, du dossier à la Boîte. */
 const ETAPES = [
 	{
-		icon: "tabler:ruler-measure",
 		titre: "Configurez",
 		texte:
 			"Choisissez votre remorque parmi les modèles relevés, ou saisissez ses cotes intérieures. Réglez la hauteur de la Boîte : dimensions, volume et hauteur hors tout s'affichent aussitôt.",
 	},
 	{
-		icon: "tabler:mail-opened",
 		titre: "Recevez le dossier",
 		texte:
 			"Le plan de fabrication A3, les modèles 3D STEP et FreeCAD, la liste de débit et des aperçus, générés à vos cotes et envoyés par email. Gratuitement.",
 	},
 	{
-		icon: "tabler:flame",
 		titre: "Faites fabriquer",
 		texte:
 			"Soudez-la vous-même ou transférez le dossier à l'atelier de soudure de votre choix : le plan suffit pour chiffrer et fabriquer.",
 	},
+];
+
+/** Contenu du dossier, avec le format réel de chaque fichier (voir
+ *  atelier/Exporter_pour_atelier.FCMacro). */
+const DOSSIER = [
+	{ format: "PDF", label: "Plan de fabrication A3" },
+	{ format: "STEP", label: "Modèles 3D STEP et FreeCAD" },
+	{ format: "CSV", label: "Liste de débit et d'achats" },
+	{ format: "PNG", label: "Aperçus de votre Boîte" },
+];
+
+/** Les trois familles de la page Équipements (mêmes libellés). */
+const FAMILLES_EQUIPEMENTS = [
+	{ icon: "tabler:caravan", label: "La remorque", texte: "Antivols, cales, béquilles." },
+	{ icon: "tabler:box", label: "La Boîte à Bivouac", texte: "Supports de vélos, rangements." },
+	{ icon: "tabler:tent", label: "Les barres de toit", texte: "Tente de toit, porte-vélos." },
 ];
 
 const ENGAGEMENTS = [
@@ -56,165 +69,190 @@ const ENGAGEMENTS = [
 ---
 
 <Layout fullTitle={HOME_TITLE} description={HOME_DESCRIPTION}>
-	<HeroVideo />
+	<Hero />
 	<ScrollReveal />
 
-	<section class="bg-ecru-100 px-6 py-20 sm:px-8 lg:px-12">
-		<div>
-			<p class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>
-				Comment ça marche
-			</p>
-			<h2
-				class="mt-3 t-titre font-display font-semibold text-brun-700"
-				data-reveal
-				style="--reveal-delay: 60ms"
-			>
-				De vos cotes à votre Boîte, en trois temps.
+	{/* Fiche du dossier : posée à cheval sur le bas du hero. */}
+	<section class="cadre-x relative -mt-8 sm:-mt-10" aria-labelledby="titre-dossier">
+		<div
+			class="flex flex-wrap items-center gap-x-10 gap-y-5 rounded-3xl border border-brun-700/10 bg-ecru-100 px-6 py-6 shadow-sm sm:px-8"
+		>
+			<h2 id="titre-dossier" class="font-display text-lg font-semibold text-brun-700">
+				Dans le dossier
 			</h2>
-
-			<ol class="mt-10 grid gap-6 md:grid-cols-3">
+			<ul class="grid min-w-0 flex-1 basis-[36rem] grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-x-8 gap-y-4">
 				{
-					ETAPES.map((etape, index) => (
-						<li
-							class="relative rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm"
-							data-reveal
-							style={`--reveal-delay: ${index * 90}ms`}
-						>
-							<span class="flex items-center gap-3">
-								<span class="flex h-11 w-11 items-center justify-center rounded-full bg-rouille-500 text-ecru-50">
-									<Icon name={etape.icon} class="h-5 w-5" />
-								</span>
-								<span class="font-display text-sm font-semibold uppercase tracking-widest text-brun-400">
-									Étape {index + 1}
-								</span>
+					DOSSIER.map((piece) => (
+						<li class="flex items-center gap-3">
+							<span class="shrink-0 rounded-md bg-graphite px-2 py-1 font-mono text-xs font-medium text-or">
+								{piece.format}
 							</span>
-							<h3 class="mt-4 t-sous font-display font-semibold text-brun-700">{etape.titre}</h3>
-							<p class="t-petit mt-2 text-brun-500">{etape.texte}</p>
+							<span class="font-medium text-brun-700">{piece.label}</span>
 						</li>
 					))
 				}
-			</ol>
-
-			<div class="mt-8" data-reveal>
-				<a
-					href="/configurateur/"
-					class="inline-flex items-center gap-2 rounded-full bg-rouille-500 px-6 py-3 text-sm font-semibold text-ecru-50 shadow-sm transition-colors hover:bg-rouille-400"
-				>
-					Configurer ma Boîte et recevoir les plans
-					<Icon name="tabler:arrow-right" class="h-4 w-4" />
-				</a>
-			</div>
-
-			<div class="mt-14 grid gap-6 lg:grid-cols-3">
-				<a
-					href="/la-boite/"
-					class="group overflow-hidden rounded-2xl border border-ardoise/30 bg-ecru-50 shadow-sm transition-all hover:-translate-y-1 hover:border-rouille-400 hover:shadow-lg lg:col-span-2"
-					data-reveal
-				>
-					<img
-						src="/images/accueil-tente.webp"
-						alt="La Boîte à Bivouac sur sa remorque, tente de toit déployée"
-						width="1280"
-						height="720"
-						loading="lazy"
-						class="aspect-[16/9] w-full object-cover"
-					/>
-					<div class="p-8">
-						<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">
-							Le projet
-						</p>
-						<h3 class="mt-3 t-titre font-display font-semibold text-brun-700">
-							La Boîte à Bivouac
-						</h3>
-						<p class="mt-3 text-brun-500">
-							Une caisse amovible qui s'installe dans votre remorque standard et la transforme
-							en base de bivouac. Quand l'aventure est finie, elle se retire et la remorque
-							redevient une remorque. Conçue, fabriquée et testée en Occitanie, puis partagée.
-						</p>
-						<span class="mt-6 inline-flex items-center gap-2 rounded-full bg-rouille-500 px-5 py-2.5 text-sm font-semibold text-ecru-50 transition-colors group-hover:bg-rouille-400">
-							Découvrir la Boîte
-							<Icon
-								name="tabler:arrow-right"
-								class="h-4 w-4 transition-transform group-hover:translate-x-1"
-							/>
-						</span>
-					</div>
-				</a>
-
-				<a
-					href="/equipements/"
-					class="group flex flex-col rounded-2xl border border-dashed border-ardoise/50 bg-sable/40 p-8 transition-all hover:border-rouille-400 hover:bg-sable/60"
-					data-reveal
-					style="--reveal-delay: 120ms"
-				>
-					<span class="flex h-11 w-11 items-center justify-center rounded-full bg-ecru-50 text-rouille-500">
-						<Icon name="tabler:tent" class="h-5 w-5" />
-					</span>
-					<p class="mt-5 t-menu font-medium uppercase tracking-widest text-brun-400">
-						Pour aller plus loin
-					</p>
-					<h3 class="mt-2 t-sous font-display font-semibold text-brun-700">Les équipements</h3>
-					<p class="t-petit mt-3 flex-1 text-brun-500">
-						Tente de toit, porte-vélos, rangements : le matériel que nous avons testé, avec un
-						prix indicatif, à acheter où vous voulez. La Boîte fonctionne très bien sans.
-					</p>
-					<span class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-rouille-500">
-						Voir les équipements
-						<Icon
-							name="tabler:arrow-right"
-							class="h-4 w-4 transition-transform group-hover:translate-x-1"
-						/>
-					</span>
-				</a>
-			</div>
+			</ul>
 		</div>
 	</section>
 
-	<section class="bg-graphite px-6 py-20 text-ecru-50 sm:px-8 lg:px-12">
-		<div>
-			<p class="t-menu font-medium uppercase tracking-widest text-mousse" data-reveal>
-				L'esprit du projet
-			</p>
-			<h2
-				class="t-titre mt-3 max-w-[80ch] font-display font-semibold"
+	<section class="cadre-x py-20 lg:py-24">
+		<div class="flex flex-wrap items-end justify-between gap-6">
+			<div class="max-w-[40em]">
+				<p class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>
+					Comment ça marche
+				</p>
+				<h2 class="mt-3 t-titre font-display font-bold text-brun-700" data-reveal style="--reveal-delay: 60ms">
+					De vos cotes à votre Boîte, en trois temps.
+				</h2>
+			</div>
+			<a
+				href="/configurateur/"
+				class="group inline-flex min-h-12 items-center gap-2 rounded-full bg-rouille-500 px-6 text-sm font-semibold text-ecru-50 hover:bg-rouille-400"
 				data-reveal
-				style="--reveal-delay: 60ms"
+				style="--reveal-delay: 120ms"
 			>
-				Un projet ouvert, pour du matériel qui dure et se répare.
-			</h2>
+				Configurer ma Boîte
+				<Icon name="tabler:arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
+			</a>
+		</div>
 
-			<div class="mt-12 grid gap-10 sm:grid-cols-2">
+		<ol class="mt-12 grid border-t-2 border-brun-700 md:grid-cols-3 md:gap-10">
+			{
+				ETAPES.map((etape, index) => (
+					<li
+						class="flex flex-col gap-3 border-b border-brun-700/15 py-7 md:border-b-0 md:pb-0"
+						data-reveal
+						style={`--reveal-delay: ${index * 90}ms`}
+					>
+						<span class="font-display text-5xl leading-none font-bold text-rouille-500 tabular-nums" aria-hidden="true">
+							{String(index + 1).padStart(2, "0")}
+						</span>
+						<h3 class="t-sous font-display font-semibold text-brun-700">
+							<span class="sr-only">Étape {index + 1} : </span>{etape.titre}
+						</h3>
+						<p class="t-corps text-brun-500">{etape.texte}</p>
+					</li>
+				))
+			}
+		</ol>
+	</section>
+
+	{/* Projet et équipements : deux cartes de même hauteur, sans vide. */}
+	<section class="cadre-x pb-20 lg:pb-24">
+		<div class="grid gap-6 lg:grid-cols-3">
+			<a
+				href="/la-boite/"
+				class="group grid overflow-hidden rounded-3xl bg-ecru-100 transition hover:-translate-y-0.5 hover:shadow-lg sm:grid-cols-2 lg:col-span-2"
+				data-reveal
+			>
+				<div class="overflow-hidden">
+					<img
+						src="/images/produit-remorque.jpeg"
+						alt="La Boîte à Bivouac fermée, posée sur une remorque standard"
+						width="1600"
+						height="1200"
+						loading="lazy"
+						class="h-full min-h-64 w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+					/>
+				</div>
+				<div class="flex flex-col justify-center gap-4 p-8 lg:p-10">
+					<p class="t-menu font-medium uppercase tracking-widest text-rouille-500">Le projet</p>
+					<h3 class="t-titre font-display font-bold text-brun-700">Une caisse qui s'installe, puis se retire.</h3>
+					<p class="t-corps text-brun-500">
+						Elle transforme votre remorque standard en base de bivouac. Quand l'aventure est finie,
+						la remorque redevient une remorque. Conçue, fabriquée et testée en Occitanie, puis
+						partagée.
+					</p>
+					<span class="inline-flex min-h-11 items-center gap-2 font-semibold text-rouille-500">
+						Découvrir la Boîte
+						<Icon name="tabler:arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
+					</span>
+				</div>
+			</a>
+
+			<a
+				href="/equipements/"
+				class="group flex flex-col justify-between gap-8 rounded-3xl bg-graphite p-8 text-ecru-50 transition hover:-translate-y-0.5 hover:shadow-lg lg:p-10"
+				data-reveal
+				style="--reveal-delay: 90ms"
+			>
+				<div class="flex flex-col gap-4">
+					<p class="t-menu font-medium uppercase tracking-widest text-or">Pour aller plus loin</p>
+					<h3 class="t-titre font-display font-bold">Les équipements testés</h3>
+					<p class="t-corps text-ecru-100/80">
+						Le matériel que nous avons testé, avec un prix indicatif, à acheter où vous voulez. La
+						Boîte fonctionne très bien sans.
+					</p>
+					<ul class="mt-2 border-t border-ecru-50/15">
+						{
+							FAMILLES_EQUIPEMENTS.map((famille) => (
+								<li class="flex items-start gap-3 border-b border-ecru-50/15 py-3">
+									<Icon name={famille.icon} class="mt-0.5 h-5 w-5 shrink-0 text-or" />
+									<span class="flex flex-col">
+										<span class="font-medium">{famille.label}</span>
+										<span class="t-petit text-ecru-100/65">{famille.texte}</span>
+									</span>
+								</li>
+							))
+						}
+					</ul>
+				</div>
+				<span class="inline-flex min-h-11 items-center gap-2 font-semibold text-or">
+					Voir les équipements
+					<Icon name="tabler:arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
+				</span>
+			</a>
+		</div>
+	</section>
+
+	<section class="cadre-x bg-graphite py-20 text-ecru-50 lg:py-24">
+		<div class="grid gap-12 min-[100rem]:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
+			<div class="max-w-[40em]">
+				<p class="t-menu font-medium uppercase tracking-widest text-or" data-reveal>L'esprit du projet</p>
+				<h2 class="t-titre mt-3 font-display font-bold" data-reveal style="--reveal-delay: 60ms">
+					Un projet ouvert, pour du matériel qui dure et se répare.
+				</h2>
+			</div>
+
+			{/* Au-delà de 1 600 px : 4 colonnes plutôt que 2 colonnes étirées. */}
+			<div class="grid gap-x-10 gap-y-10 sm:grid-cols-2 min-[100rem]:grid-cols-4">
 				{
 					ENGAGEMENTS.map((item, index) => (
-						<div class="flex items-start gap-4" data-reveal style={`--reveal-delay: ${index * 80}ms`}>
-							<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mousse text-sable">
-								<Icon name={item.icon} class="h-6 w-6" />
-							</span>
-							<div>
-								<h3 class="t-sous font-display font-semibold">{item.titre}</h3>
-								<p class="mt-1 text-ecru-100/80">{item.texte}</p>
-							</div>
+						<div class="flex flex-col gap-3 border-t border-ecru-50/20 pt-6" data-reveal style={`--reveal-delay: ${index * 80}ms`}>
+							<Icon name={item.icon} class="h-6 w-6 text-or" />
+							<h3 class="t-sous font-display font-semibold">{item.titre}</h3>
+							<p class="t-corps text-ecru-100/75">{item.texte}</p>
 						</div>
 					))
 				}
 			</div>
+		</div>
+	</section>
 
-			<div class="mt-16 border-t border-ecru-50/15 pt-14 text-center">
-				<h2 class="t-titre font-display font-semibold" data-reveal>
+	<section class="cadre-x bg-rouille-500 py-16 text-ecru-50 lg:py-20">
+		<div class="flex flex-wrap items-center justify-between gap-8">
+			<div class="flex max-w-[48em] min-w-0 flex-1 basis-[28rem] flex-col gap-4">
+				<h2 class="t-titre font-display font-bold" data-reveal>
 					Vous avez une remorque. On vous donne la boîte.
 				</h2>
-				<p class="t-corps mx-auto mt-4 max-w-[80ch] text-ecru-100/80" data-reveal style="--reveal-delay: 90ms">
-					Une question sur les plans, une amélioration à partager, ou vous préférez que nous
-					prenions en charge la fabrication&nbsp;? Écrivez-nous, chaque message reçoit une réponse.
+				<p class="t-corps text-ecru-50/90" data-reveal style="--reveal-delay: 60ms">
+					Une question sur les plans, une amélioration à partager, ou vous préférez que nous prenions
+					en charge la fabrication&nbsp;? Écrivez-nous, chaque message reçoit une réponse.
 				</p>
+			</div>
+			<div class="flex flex-wrap gap-3" data-reveal style="--reveal-delay: 120ms">
+				<a
+					href="/configurateur/"
+					class="group inline-flex min-h-12 items-center gap-2 rounded-full bg-or px-6 text-base font-semibold text-brun-700 hover:bg-[#f2c84a]"
+				>
+					Obtenir mes plans
+					<Icon name="tabler:arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
+				</a>
 				<a
 					href="/contact/"
-					class="bg-gold text-forest mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-sm transition-opacity hover:opacity-90"
-					data-reveal
-					style="--reveal-delay: 180ms"
+					class="inline-flex min-h-12 items-center rounded-full border border-ecru-50/60 px-6 text-base font-medium text-ecru-50 hover:bg-ecru-50/10"
 				>
 					Prendre contact
-					<Icon name="tabler:arrow-right" class="h-4 w-4" />
 				</a>
 			</div>
 		</div>

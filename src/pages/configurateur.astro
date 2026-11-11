@@ -41,7 +41,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 <Layout title="Configurateur" description={PAGE_DESCRIPTION}>
 	<ScrollReveal />
 
-	<section class="border-b border-ardoise/30 bg-sable/50 px-6 py-16 sm:px-8 lg:px-12">
+	<section class="border-b border-ardoise/30 bg-sable/50 py-16 cadre-x">
 		<p class="t-menu font-medium uppercase tracking-widest text-rouille-500" data-reveal>
 			Configurateur
 		</p>
@@ -55,7 +55,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 		{/* Seule contrainte de largeur de la page : une ligne de prose au-delà de
 		    ~80 caractères devient pénible à lire. Le reste suit la fenêtre. */}
 		<p
-			class="t-corps mt-6 max-w-[80ch] text-brun-500"
+			class="t-corps mt-6 max-w-[60ch] text-brun-500"
 			data-reveal
 			style="--reveal-delay: 120ms"
 		>
@@ -66,7 +66,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 			complet de votre Boîte, prêt à confier à un atelier de soudure.
 		</p>
 		<p
-			class="t-corps mt-4 max-w-[80ch] text-brun-500"
+			class="t-corps mt-4 max-w-[60ch] text-brun-500"
 			data-reveal
 			style="--reveal-delay: 160ms"
 		>
@@ -77,7 +77,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 
 	{/* Réglages à gauche, résultat et schémas à droite : chaque changement se
 	    voit immédiatement, sans avoir à faire défiler la page. */}
-	<section class="grid gap-8 px-6 py-16 sm:px-8 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-10 lg:px-12">
+	<section class="grid gap-8 py-16 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-10 cadre-x">
 		<div
 			class="self-start rounded-2xl border border-ardoise/30 bg-ecru-50 p-6 shadow-sm lg:sticky lg:top-24"
 			data-reveal
@@ -332,7 +332,7 @@ const PAR_MARQUE = REMORQUES.reduce<Record<string, Remorque[]>>((acc, r) => {
 		</div>
 	</section>
 
-	<section class="border-t border-ardoise/30 bg-sable/50 px-6 py-16 sm:px-8 lg:px-12">
+	<section class="border-t border-ardoise/30 bg-sable/50 py-16 cadre-x">
 		{/* Bloc centré : une ligne de prose centrée au-delà d'environ 70
 		    caractères devient pénible à suivre. Même mesure que sur La Boîte. */}
 		<div class="mx-auto max-w-[min(70ch,100%)] text-center">

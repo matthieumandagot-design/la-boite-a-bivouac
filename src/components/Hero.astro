@@ -1,0 +1,224 @@
+---
+/**
+ * Hero.astro — Haut de l'accueil (refonte v2, 11/11/2026)
+ *
+ * Remplace HeroVideo.astro. La vidéo de fond, couverte d'un voile crème,
+ * rendait la photo délavée et passait sous le texte : le haut de page pose
+ * maintenant le texte sur le vert forêt de la charte, à côté d'une vraie
+ * photo de la Boîte, nette. La vidéo reste disponible, à la demande, dans
+ * une fenêtre (bouton « Voir la Boîte en vidéo »).
+ *
+ * Mouvement : une seule entrée, au chargement — le texte monte en cascade
+ * (60 ms entre éléments), la photo se dévoile du haut vers le bas. Mouvement
+ * réduit demandé : un simple fondu, la photo s'affiche d'emblée.
+ */
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	videoSrc?: string;
+	posterSrc?: string;
+}
+
+const { videoSrc = "/videos/hero.mp4", posterSrc = "/images/accueil-tente.webp" } = Astro.props;
+---
+
+<section class="hero bg-graphite text-ecru-50">
+	<div
+		class="cadre-x grid items-center gap-10 py-14 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-16 lg:py-20"
+	>
+		<div class="flex min-w-0 flex-col items-start gap-6">
+			<p class="hero-in font-display text-xs font-semibold uppercase tracking-[0.16em] text-or">
+				Plans libres · CC BY-SA 4.0
+			</p>
+
+			<h1 class="hero-in t-hero font-display font-bold" style="--i: 1">
+				Les plans de votre Boîte à Bivouac, <span class="text-or">offerts.</span>
+			</h1>
+
+			<p class="hero-in t-chapo text-ecru-100/80" style="--i: 2">
+				La Boîte à Bivouac est un module amovible qui transforme la remorque que vous avez déjà en
+				base de bivouac. Configurez-la à vos cotes&nbsp;: vous recevez gratuitement son dossier de
+				fabrication complet, à réaliser vous-même ou à confier à l'atelier de soudure de votre
+				choix.
+			</p>
+
+			<div class="hero-in flex flex-wrap gap-3" style="--i: 3">
+				<a
+					href="/configurateur/"
+					class="group inline-flex min-h-12 items-center gap-2 rounded-full bg-rouille-500 px-6 text-base font-semibold text-ecru-50 hover:bg-rouille-400"
+				>
+					Obtenir mes plans
+					<Icon name="tabler:arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
+				</a>
+				<button
+					type="button"
+					data-video-open
+					class="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full border border-ecru-50/30 px-6 text-base font-medium text-ecru-50 hover:border-ecru-50/60 hover:bg-ecru-50/10"
+				>
+					<Icon name="tabler:player-play" class="h-4 w-4" />
+					Voir la Boîte en vidéo
+				</button>
+			</div>
+
+			<p class="hero-in t-menu text-ecru-100/65" style="--i: 4">
+				Gratuit, sans compte, aux cotes de votre remorque.
+			</p>
+		</div>
+
+		<figure class="hero-photo m-0 min-w-0">
+			<img
+				src="/images/accueil-tente.webp"
+				alt="La Boîte à Bivouac sur sa remorque, tente de toit déployée et échelle posée"
+				width="1280"
+				height="720"
+				fetchpriority="high"
+				class="aspect-[16/10] w-full rounded-3xl object-cover"
+			/>
+		</figure>
+	</div>
+</section>
+
+{/* Fenêtre vidéo : rien n'est téléchargé tant qu'elle n'est pas ouverte
+    (preload="none"). Fermeture par le bouton, Échap ou un clic sur le fond. */}
+<dialog class="hero-video" aria-label="Vidéo de présentation de la Boîte à Bivouac">
+	<div class="relative">
+		<video src={videoSrc} poster={posterSrc} controls playsinline preload="none" class="block w-full rounded-2xl bg-brun-700"></video>
+		<button
+			type="button"
+			data-video-close
+			aria-label="Fermer la vidéo"
+			class="absolute -top-14 right-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-ecru-50 text-brun-700"
+		>
+			<Icon name="tabler:x" class="h-5 w-5" />
+		</button>
+	</div>
+</dialog>
+
+<style>
+	/* Entrée du texte : une fois, au chargement, en cascade courte. */
+	.hero-in {
+		animation: hero-monte 480ms var(--ease-out) both;
+		animation-delay: calc(var(--i, 0) * 60ms);
+	}
+
+	@keyframes hero-monte {
+		from {
+			opacity: 0;
+			transform: translateY(12px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	/* La photo se dévoile du haut vers le bas : un seul moment marquant sur
+	   la page, donc une durée plus longue que le reste de l'interface. */
+	.hero-photo img {
+		animation: hero-devoile 900ms var(--ease-in-out) 120ms both;
+	}
+
+	@keyframes hero-devoile {
+		from {
+			clip-path: inset(0 0 100% 0 round 1.5rem);
+		}
+		to {
+			clip-path: inset(0 0 0 0 round 1.5rem);
+		}
+	}
+
+	/* Fenêtre vidéo : centrée (une fenêtre n'a pas de déclencheur d'origine),
+	   entre en 200 ms, sort plus vite qu'elle n'entre. */
+	.hero-video {
+		width: min(64rem, calc(100vw - 2rem));
+		max-width: none;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		overflow: visible;
+		opacity: 1;
+		transform: none;
+		transition:
+			opacity 200ms var(--ease-out),
+			transform 200ms var(--ease-out),
+			overlay 200ms allow-discrete,
+			display 200ms allow-discrete;
+	}
+
+	.hero-video:not([open]) {
+		opacity: 0;
+		transform: scale(0.96);
+		transition-duration: 140ms;
+	}
+
+	@starting-style {
+		.hero-video[open] {
+			opacity: 0;
+			transform: scale(0.96);
+		}
+	}
+
+	.hero-video::backdrop {
+		background: rgb(10 22 16 / 0.8);
+		transition:
+			background-color 200ms ease,
+			overlay 200ms allow-discrete,
+			display 200ms allow-discrete;
+	}
+
+	@starting-style {
+		.hero-video[open]::backdrop {
+			background: rgb(10 22 16 / 0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hero-in {
+			animation-name: hero-fondu;
+			animation-duration: 200ms;
+			animation-delay: 0ms;
+		}
+		.hero-photo img {
+			animation: none;
+		}
+		.hero-video,
+		.hero-video:not([open]) {
+			transform: none;
+		}
+		@starting-style {
+			.hero-video[open] {
+				transform: none;
+			}
+		}
+	}
+
+	@keyframes hero-fondu {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+</style>
+
+<script>
+	const dialog = document.querySelector<HTMLDialogElement>(".hero-video");
+	const video = dialog?.querySelector("video");
+
+	document.querySelector("[data-video-open]")?.addEventListener("click", () => {
+		if (!dialog) return;
+		dialog.showModal();
+		video?.play().catch(() => {
+			/* Lecture refusée par le navigateur : les contrôles restent là. */
+		});
+	});
+
+	const fermer = () => dialog?.close();
+	dialog?.querySelector("[data-video-close]")?.addEventListener("click", fermer);
+	/* Clic sur le fond (hors de la vidéo) : ferme. */
+	dialog?.addEventListener("click", (event) => {
+		if (event.target === dialog) fermer();
+	});
+	dialog?.addEventListener("close", () => video?.pause());
+</script>

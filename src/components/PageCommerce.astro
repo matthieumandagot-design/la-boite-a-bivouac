@@ -33,7 +33,7 @@ const { title, description, publique = false } = Astro.props;
 <Layout title={title} description={description} noindex>
 	{
 		publique ? (
-			<section class="px-6 py-20 sm:px-8 lg:px-12" data-page-publique>
+			<section class="py-20 cadre-x" data-page-publique>
 				<h1 class="t-titre font-display font-semibold text-brun-700">{title}</h1>
 				<slot />
 			</section>
@@ -42,13 +42,13 @@ const { title, description, publique = false } = Astro.props;
 				{/* Le contenu ne s'affiche qu'une fois le module confirmé ouvert.
 				    Sans cela, la page clignoterait avant de disparaître à la
 				    redirection. */}
-				<section data-feature="commerce" hidden class="px-6 py-20 sm:px-8 lg:px-12">
+				<section data-feature="commerce" hidden class="py-20 cadre-x">
 					<h1 class="t-titre font-display font-semibold text-brun-700">{title}</h1>
 					<slot />
 				</section>
 
 				{/* Écran d'attente, le temps de savoir si la page a le droit d'exister. */}
-				<p data-commerce-attente class="t-petit px-6 py-20 text-center text-brun-400 sm:px-8 lg:px-12">
+				<p data-commerce-attente class="t-petit py-20 text-center text-brun-400 cadre-x">
 					Chargement…
 				</p>
 			</>
