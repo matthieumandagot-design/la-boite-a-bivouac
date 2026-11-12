@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/antispam.php';
+
 /**
  * Comptes clients : création, authentification, lecture
  * (docs/SPEC-module-commercial.md §6.1).
@@ -101,6 +103,10 @@ function validerInscription(array $donnees): array
 			// deux cas pour un prénom ou un nom, l'objectif n'étant que
 			// d'empêcher qu'on stocke un roman dans ce champ.
 			$erreurs[$champ] = $libelle . ' est trop long.';
+		} elseif (antispam_nb_liens($valeur) > 0 || preg_match('/[\r\n]/', $valeur)) {
+			// Le prénom est repris dans l'email de vérification envoyé à l'adresse
+			// saisie : un lien ici ferait du site un relais de spam (lib/antispam.php).
+			$erreurs[$champ] = $libelle . ' ne peut pas contenir de lien.';
 		}
 	}
 

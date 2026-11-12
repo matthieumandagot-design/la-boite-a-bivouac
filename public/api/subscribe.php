@@ -62,6 +62,12 @@ if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
 }
 
 $email = strtolower($email);
+
+// Anti-spam commun Macklos : adresse jetable → réponse normale, rien n'est enregistré ni envoyé.
+require_once __DIR__ . '/../lib/antispam.php';
+if (antispam_verifier_contenu('newsletter', ['email' => $email], ['quota' => false, 'doublons' => false])['statut'] !== 'ok') {
+	respond(200, ['success' => true]);
+}
 ['path' => $path, 'dataDir' => $dataDir] = subscribersPaths();
 
 try {
