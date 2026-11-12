@@ -63,11 +63,10 @@ if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
 
 $email = strtolower($email);
 
-// Anti-spam commun Macklos : adresse jetable → réponse normale, rien n'est enregistré ni envoyé.
+// Anti-spam commun Macklos : une adresse jetable est inscrite quand même, mais ne reçoit
+// pas l'email de bienvenue (on n'écrit pas à une adresse suspecte).
 require_once __DIR__ . '/../lib/antispam.php';
-if (antispam_verifier_contenu('newsletter', ['email' => $email], ['quota' => false, 'doublons' => false])['statut'] !== 'ok') {
-	respond(200, ['success' => true]);
-}
+$antispamSuspect = antispam_verifier_contenu('newsletter', ['email' => $email], ['quota' => false, 'doublons' => false])['statut'] !== 'ok';
 ['path' => $path, 'dataDir' => $dataDir] = subscribersPaths();
 
 try {
@@ -106,7 +105,7 @@ $unsubscribeUrl = 'https://laboiteabivouac.fr/api/unsubscribe.php?email=' . urle
 $body = "Vous êtes inscrit aux actualités de La Boîte à Bivouac. Vous serez alerté dès qu'une news est publiée.\n\n"
 	. "Pour vous désinscrire : {$unsubscribeUrl}\n";
 
-try {
+if (!$antispamSuspect) try {
 	$smtp = new SimpleSmtp(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS);
 	$smtp->connect();
 	$smtp->sendMail($email, 'Bienvenue — La Boîte à Bivouac', $body, $unsubscribeUrl);

@@ -40,11 +40,9 @@ if (strlen($question) > 1000) {
 }
 
 // Anti-spam commun Macklos : plus de 2 liens ou question déjà reçue dans les 7 jours →
-// réponse normale, rien n'est enregistré.
+// enregistrée quand même (modérée dans l'admin), avec le champ « antispam ».
 require_once __DIR__ . '/lib/antispam.php';
-if (antispam_verifier_contenu('question', ['texte' => $question], ['quota' => false])['statut'] !== 'ok') {
-	respond(200, ['success' => true]);
-}
+$antispam = antispam_verifier_contenu('question', ['texte' => $question], ['quota' => false]);
 
 $dataDir = __DIR__ . '/data';
 $questionsPath = $dataDir . '/questions.json';
@@ -79,6 +77,7 @@ $questions[] = [
 	'status' => 'pending',
 	'answer' => null,
 	'answeredAt' => null,
+	'antispam' => $antispam['statut'] === 'suspect' ? 'Spam probable : ' . $antispam['libelle'] : null,
 ];
 
 $encoded = json_encode($questions, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

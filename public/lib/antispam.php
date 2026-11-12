@@ -1,7 +1,13 @@
 <?php
 /**
  * Macklos — protection anti-spam des formulaires publics (module commun à tous les sites).
- * Version 1.1.1 — 12/11/2026 (fonctionne sans l'extension mbstring)
+ * Version 1.2.0 — 12/11/2026 (fonctionne sans l'extension mbstring)
+ *
+ * v1.2 (souhait de Matthieu) : AUCUN message n'est supprimé sur la base de son contenu. Les contrôles
+ * de contenu renvoient le statut « suspect » : le message est enregistré et transmis normalement,
+ * signalé « Spam probable » (sujet de la notification, admin), et on n'écrit pas à l'adresse saisie.
+ * Seuls les robots qui n'ont pas affiché le formulaire (champ piège, jeton absent ou faux, envoi en
+ * moins de 3 s) et le dépassement du quota par IP reçoivent le statut « robot » (ignorés en silence).
  *
  * Sans captcha, invisible pour le visiteur. Contrôles :
  *   1. Champ piège (honeypot) : invisible pour un humain, rempli par les robots.
@@ -10,23 +16,23 @@
  *        - envoyé en moins de ANTISPAM_DELAI_MIN secondes → robot ;
  *        - trop vieux (> ANTISPAM_DELAI_MAX) → on demande au visiteur de renvoyer.
  *   3. Limite par adresse IP (hachée, rien de personnel stocké) : par heure et par jour.
- *   4. Contenu : domaines d'e-mail jetables, injection d'en-têtes, lien dans un champ court
- *      (nom, sujet…), trop de liens dans le message, même message déjà reçu (7 jours).
- *      C'est ce contrôle qui arrête les robots pilotés par IA dans un vrai navigateur
- *      (cas du 11/11/2026) : ils passent le champ piège et le délai.
+ *   4. Contenu (statut « suspect », jamais de suppression) : domaines d'e-mail jetables, saut de
+ *      ligne dans un champ court, lien dans un champ court (nom, sujet…), trop de liens dans le
+ *      message, même message déjà reçu (7 jours). C'est ce contrôle qui repère les robots pilotés
+ *      par IA dans un vrai navigateur (cas du 11/11/2026) : ils passent le champ piège et le délai.
  *   5. antispam_copie_autorisee() : jamais de copie du message à l'expéditeur s'il contient
  *      un lien (empêche d'utiliser le site pour envoyer du spam à un tiers).
  *
- * Un robot rejeté reçoit la même réponse qu'un envoi réussi (il n'apprend rien) ;
- * rien n'est enregistré ni envoyé. Les rejets sont comptés dans data/antispam/journal.json.
+ * Un robot rejeté reçoit la même réponse qu'un envoi réussi (il n'apprend rien) ; rien n'est
+ * enregistré ni envoyé. Robots et messages suspects sont comptés dans <ANTISPAM_DIR>/journal.json.
  *
  * Utilisation (voir LISEZ-MOI) :
  *   Dans le <form> :   <?= antispam_champs('contact') ?>
  *   Au traitement :    $as = antispam_verifier('contact', $_POST, ['email' => $email, 'texte' => $message]);
  *                      if ($as['statut'] === 'robot')  { // faire comme si c'était envoyé, ne rien faire }
  *                      if ($as['statut'] === 'expire') { // afficher ANTISPAM_MSG_EXPIRE, garder la saisie }
- *                      if ($as['statut'] === 'ok')     { // enregistrer + envoyer ;
- *                          if (antispam_copie_autorisee($message)) { // copie à l'expéditeur } }
+ *                      // 'ok' ou 'suspect' : enregistrer + notifier (préfixe antispam_prefixe($as)) ;
+ *                      if ($as['statut'] === 'ok' && antispam_copie_autorisee($message)) { // copie à l'expéditeur }
  */
 
 if (!defined('ANTISPAM_DIR'))        define('ANTISPAM_DIR', dirname(__DIR__) . '/data/antispam');
@@ -109,12 +115,12 @@ function antispam_nb_liens(string $texte): int {
 
 /**
  * Vérifie un envoi. $donnees : ['email' => ..., 'texte' => ..., 'champs' => [valeurs courtes à protéger des sauts de ligne]].
- * Retour : ['statut' => 'ok'|'robot'|'expire', 'motif' => string].
+ * Retour : ['statut' => 'ok'|'suspect'|'robot'|'expire', 'motif' => string, 'libelle' => string].
  */
 function antispam_verifier(string $form, array $post, array $donnees = []): array {
     $rejet = function (string $motif) use ($form) {
         antispam_journal($form, $motif);
-        return ['statut' => 'robot', 'motif' => $motif];
+        return ['statut' => 'robot', 'motif' => $motif, 'libelle' => antispam_libelle($motif)];
     };
 
     // 1. Champ piège
@@ -129,7 +135,7 @@ function antispam_verifier(string $form, array $post, array $donnees = []): arra
     if ($age < ANTISPAM_DELAI_MIN) return $rejet('trop_rapide');
     if ($age > ANTISPAM_DELAI_MAX) {
         antispam_journal($form, 'expire');
-        return ['statut' => 'expire', 'motif' => 'expire'];
+        return ['statut' => 'expire', 'motif' => 'expire', 'libelle' => antispam_libelle('expire')];
     }
 
     return antispam_verifier_contenu($form, $donnees);
@@ -142,30 +148,53 @@ function antispam_verifier(string $form, array $post, array $donnees = []): arra
  */
 function antispam_verifier_contenu(string $form, array $donnees, array $opts = []): array {
     $opts += ['quota' => true, 'doublons' => true];
-    $rejet = function (string $motif) use ($form) {
-        antispam_journal($form, $motif);
-        return ['statut' => 'robot', 'motif' => $motif];
+    $suspect = function (string $motif) use ($form) {
+        antispam_journal($form, 'suspect_' . $motif);
+        return ['statut' => 'suspect', 'motif' => $motif, 'libelle' => antispam_libelle($motif)];
     };
+    // Le quota par IP reste un blocage : c'est un envoi en rafale, pas un message à lire.
+    if ($opts['quota'] && !antispam_quota($form)) {
+        antispam_journal($form, 'quota_ip');
+        return ['statut' => 'robot', 'motif' => 'quota_ip', 'libelle' => antispam_libelle('quota_ip')];
+    }
+    $texte = (string) ($donnees['texte'] ?? '');
+    $doublon = $opts['doublons'] && antispam_doublon($form, $texte);
+    if ($opts['doublons']) antispam_empreinte($form, $texte);
     $email = strtolower(trim((string) ($donnees['email'] ?? '')));
     if ($email !== '') {
         $dom = substr(strrchr($email, '@') ?: '', 1);
         foreach (antispam_domaines_bloques() as $b) {
-            if ($dom === $b || str_ends_with($dom, '.' . $b)) return $rejet('domaine_bloque');
+            if ($dom === $b || str_ends_with($dom, '.' . $b)) return $suspect('domaine_bloque');
         }
     }
     $champs = array_map('strval', (array) ($donnees['champs'] ?? []));
     foreach (array_merge([$email], $champs) as $v) {
-        if (preg_match('/[\r\n]/', $v)) return $rejet('injection');
+        if (preg_match('/[\r\n]/', $v)) return $suspect('injection');
     }
     foreach ($champs as $v) {
-        if (antispam_nb_liens($v) > 0) return $rejet('lien_champ_court');
+        if (antispam_nb_liens($v) > 0) return $suspect('lien_champ_court');
     }
-    $texte = (string) ($donnees['texte'] ?? '');
-    if (antispam_nb_liens($texte) > ANTISPAM_MAX_LIENS) return $rejet('trop_de_liens');
-    if ($opts['doublons'] && antispam_doublon($form, $texte)) return $rejet('doublon');
-    if ($opts['quota'] && !antispam_quota($form)) return $rejet('quota_ip');
-    if ($opts['doublons']) antispam_empreinte($form, $texte);
-    return ['statut' => 'ok', 'motif' => ''];
+    if (antispam_nb_liens($texte) > ANTISPAM_MAX_LIENS) return $suspect('trop_de_liens');
+    if ($doublon) return $suspect('doublon');
+    return ['statut' => 'ok', 'motif' => '', 'libelle' => ''];
+}
+
+/** Libellé en français d'un motif (journal, admin, notifications). */
+function antispam_libelle(string $motif): string {
+    $motif = preg_replace('/^suspect_/', '', $motif);
+    return [
+        'domaine_bloque' => 'adresse e-mail jetable', 'injection' => 'saut de ligne dans un champ court',
+        'lien_champ_court' => 'lien dans le nom ou un champ court', 'trop_de_liens' => 'plus de 2 liens',
+        'doublon' => 'message déjà reçu', 'quota_ip' => 'trop d\'envois depuis la même connexion',
+        'champ_piege' => 'robot (champ invisible rempli)', 'jeton_absent' => 'robot (envoi hors formulaire)',
+        'jeton_faux' => 'robot (envoi hors formulaire)', 'trop_rapide' => 'robot (envoi trop rapide)',
+        'expire' => 'page ouverte trop longtemps',
+    ][$motif] ?? $motif;
+}
+
+/** Préfixe à mettre devant le sujet d'une notification : '' si le message est normal. */
+function antispam_prefixe(array $resultat): string {
+    return ($resultat['statut'] ?? '') === 'suspect' ? '[Spam probable : ' . $resultat['libelle'] . '] ' : '';
 }
 
 function antispam_normaliser(string $texte): string {
@@ -246,14 +275,18 @@ function antispam_journal(string $form, string $motif): void {
     fflush($h); flock($h, LOCK_UN); fclose($h);
 }
 
-/** Résumé lisible des 30 derniers jours : [['jour' => ..., 'form' => ..., 'motif' => ..., 'n' => ...], ...] */
+/** Résumé des 30 derniers jours : [['jour', 'form', 'motif', 'n', 'suspect' => bool (transmis) ou false (bloqué), 'libelle'], ...] */
 function antispam_resume(int $jours = 30): array {
     $f = ANTISPAM_DIR . '/journal.json';
     $data = is_file($f) ? (json_decode((string) file_get_contents($f), true) ?: []) : [];
     $out = [];
     foreach (array_slice($data, -$jours, null, true) as $jour => $forms) {
         foreach ($forms as $form => $motifs) {
-            foreach ($motifs as $motif => $n) $out[] = compact('jour', 'form', 'motif', 'n');
+            foreach ($motifs as $motif => $n) {
+                $suspect = str_starts_with($motif, 'suspect_');
+                $libelle = antispam_libelle($motif);
+                $out[] = compact('jour', 'form', 'motif', 'n', 'suspect', 'libelle');
+            }
         }
     }
     return array_reverse($out);
