@@ -58,13 +58,10 @@ if ($errors !== []) {
 }
 
 // Anti-spam commun Macklos (lib/antispam.php) : adresse jetable, lien dans le nom,
-// plus de 2 liens, message déjà reçu dans les 7 jours. Comme pour le honeypot,
-// on répond « envoyé » sans rien envoyer : le robot n'apprend rien.
+// plus de 2 liens, message déjà reçu dans les 7 jours. Aucun message n'est supprimé :
+// un message suspect est envoyé quand même, avec « [Spam probable : motif] » en tête du sujet.
 require_once __DIR__ . '/lib/antispam.php';
 $antispam = antispam_verifier_contenu('contact', ['email' => $email, 'texte' => $message, 'champs' => [$name]], ['quota' => false]);
-if ($antispam['statut'] !== 'ok') {
-	respond(200, ['success' => true]);
-}
 $avecLien = !antispam_copie_autorisee($message);
 
 // Neutralise tout retour à la ligne pour empêcher l'injection d'en-têtes mail.
@@ -76,7 +73,7 @@ $safeEmail = $sanitizeHeader($email);
 $to = 'contact@laboiteabivouac.fr';
 // Encodage MIME manuel (RFC 2047) pour ne pas dépendre de l'extension mbstring,
 // pas toujours activée par défaut chez tous les hébergeurs.
-$subject = '=?UTF-8?B?' . base64_encode(($avecLien ? '[À vérifier : contient un lien] ' : '') . "Nouveau message depuis le site - {$safeName}") . '?=';
+$subject = '=?UTF-8?B?' . base64_encode((antispam_prefixe($antispam) ?: ($avecLien ? '[À vérifier : contient un lien] ' : '')) . "Nouveau message depuis le site - {$safeName}") . '?=';
 
 $body = "Nouveau message reçu depuis le formulaire de contact du site.\n\n"
 	. "Nom : {$name}\n"
