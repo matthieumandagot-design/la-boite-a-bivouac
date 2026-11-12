@@ -82,3 +82,6 @@ public/data/private/*.sqlite-shm
 config-dossier-atelier.*.php
 !config-dossier-atelier.example.php
 publication-resultat.txt
+
+# Anti-spam des formulaires (public/lib/antispam.php) : clé, quotas, journal. État serveur, jamais commité.
+public/data/antispam/

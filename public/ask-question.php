@@ -39,6 +39,13 @@ if (strlen($question) > 1000) {
 	respond(422, ['success' => false, 'error' => 'Votre question est trop longue (1000 caractères maximum).']);
 }
 
+// Anti-spam commun Macklos : plus de 2 liens ou question déjà reçue dans les 7 jours →
+// réponse normale, rien n'est enregistré.
+require_once __DIR__ . '/lib/antispam.php';
+if (antispam_verifier_contenu('question', ['texte' => $question], ['quota' => false])['statut'] !== 'ok') {
+	respond(200, ['success' => true]);
+}
+
 $dataDir = __DIR__ . '/data';
 $questionsPath = $dataDir . '/questions.json';
 
